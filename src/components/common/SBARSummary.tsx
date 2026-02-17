@@ -42,7 +42,7 @@ function getAbnormalLabs(patient: Patient): LabResult[] {
   const categories = patient.results;
   for (const key of Object.keys(categories) as (keyof typeof categories)[]) {
     for (const result of categories[key]) {
-      if (result.flag && result.flag !== 'normal' && result.flag !== '') {
+      if (result.flag && result.flag !== 'normal') {
         abnormal.push(result);
       }
     }

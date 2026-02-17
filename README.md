@@ -1,441 +1,195 @@
-# PowerChart EMR Simulation System
+# PowerChart EMR Simulation (SimCerner)
 
-## Overview
-
-This is a client-side Electronic Medical Record (EMR) simulation system designed to replicate the Cerner PowerChart interface for simulation training events at hospitals. The system provides a realistic EMR environment for educational purposes without requiring a backend server.
+A high-fidelity clinical EMR simulation modelled after Oracle Cerner PowerChart, built as a Progressive Web App for clinical education and training.
 
 ## Features
 
-### Core Functionality
-- **Patient Search**: Search and load patient records by name or MRN
-- **Doctor View**: Quick overview of vital signs and recent clinical notes
-- **Vital Signs/Deterioration View**: Comprehensive vital signs flow sheet
-- **Medication Administration Record (MAR)**: Read-only view of all medications
-- **Orders Workflow**: Add and sign pathology/laboratory orders
-- **Clinical Documentation**: Browse and read clinical notes
-- **Results View**: Display laboratory results (haematology and biochemistry)
+### Clinical Views
+- **Doctor View** — EW Score Table with 3 most recent vitals, NEWS2 score card, clinical notes
+- **Managing Deterioration** — NEWS2/Q-ADDS scoring, colour-coded vital signs flowsheet, escalation protocol, trend graph
+- **Interactive View (iView)** — Navigator bands, time-columned flowsheet, assessment documentation, structured input forms
+- **MAR** — Time-based medication grid, colour-coded administration status, give/hold/refuse workflow
+- **Orders** — Autocomplete order entry (70+ lab tests), priority selection, sign workflow
+- **Results** — Multi-category lab results (haematology, biochemistry, blood gas, coagulation, urinalysis, cardiac)
+- **Fluid Balance** — Intake/output summary cards, detailed fluid balance record
+- **Vitals Graph** — Interactive Recharts line graphs with normal range shading
+- **Documentation** — Expandable clinical notes viewer
+- **Handover Summary** — Auto-generated SBAR summary with print support
 
-### Technical Features
-- **100% Client-Side**: No backend required - runs entirely in the browser
-- **Comprehensive Logging**: All actions logged to browser console with timestamps
-- **Error Handling**: Graceful degradation with user-friendly error messages
-- **Modular Design**: Clean component structure for easy maintenance
-- **Responsive Interface**: Closely replicates Cerner PowerChart visual design
+### PWA Features
+- Offline-capable with service worker (Workbox)
+- Installable ("Add to Home Screen")
+- Cache-first patient data strategy
+- IndexedDB persistence layer
+- Offline indicator
+
+### Clinical Scoring
+- NEWS2 (National Early Warning Score 2) — full parameter scoring with colour coding
+- Q-ADDS (Queensland Adult Deterioration Detection System)
+- Escalation protocol recommendations by risk level
+- Score trend tracking over time
+
+### Simulation Features
+- Simulation clock with play/pause and speed controls (1x, 2x, 5x, 10x)
+- Time travel (+/- 15min, +/- 1hr)
+- Enhanced allergy banner with severity badges
+- Drug-allergy interaction warnings
+
+## Technology Stack
+
+| Concern | Technology |
+|---|---|
+| Framework | React 18 + TypeScript |
+| Build Tool | Vite 7 |
+| State Management | Zustand |
+| Routing | React Router v7 |
+| Charting | Recharts |
+| PWA | vite-plugin-pwa (Workbox) |
+| Persistence | IndexedDB |
+| Testing | Vitest + React Testing Library |
+| Deployment | Docker (nginx) |
+| CI/CD | GitHub Actions |
 
 ## Quick Start
 
-### Option 1: Shared Web Hosting
-1. Upload `emr-sim.html` to your web hosting
-2. Access via browser: `https://yourdomain.com/emr-sim.html`
-3. No server configuration needed - it's a static HTML file
+### Development
 
-### Option 2: Docker Container (VPS)
-
-Create a `Dockerfile`:
-```dockerfile
-FROM nginx:alpine
-COPY emr-sim.html /usr/share/nginx/html/index.html
-EXPOSE 80
-```
-
-Build and run:
 ```bash
-docker build -t emr-sim .
-docker run -d -p 8080:80 emr-sim
+# Install dependencies
+npm install
+
+# Start dev server
+npm run dev
+
+# Open in browser
+open http://localhost:5173
 ```
 
-Access at: `http://your-vps-ip:8080`
+### Production Build
 
-### Option 3: Local Development
-Simply open `emr-sim.html` in a web browser. All dependencies are loaded from CDNs.
+```bash
+# Build for production
+npm run build
 
-## Usage Instructions
-
-### Logging In
-1. Open the application in a web browser
-2. The patient search screen will appear automatically
-
-### Searching for Patients
-1. Enter patient name or MRN in the search box
-2. Click on a patient from the results list to load their record
-
-**Sample Patients Included:**
-- `CAMPBELL, NATALIE` (MRN: PAH599806) - Full patient record with vitals, medications, orders
-- `DUMMY, DUMMY` (MRN: LABH999999) - Empty template for testing
-
-### Navigating the Interface
-
-**Left Sidebar Menu:**
-- **Doctor View**: Overview dashboard with vitals and recent notes
-- **Managing Deterioration**: Detailed vital signs flow sheet
-- **Orders**: View existing orders and add new laboratory orders
-- **Results**: View laboratory test results
-- **Documentation**: Browse all clinical notes
-- **MAR**: View medication administration record
-
-**Top Menu Bar:**
-- Click **Patient** to return to patient search and change patients
-
-### Adding Laboratory Orders
-1. Navigate to **Orders** from the sidebar
-2. Fill in the order form:
-   - Order Type (Laboratory, Radiology, etc.)
-   - Order Details (e.g., "Full Blood Count")
-   - Priority (Routine, Urgent, STAT)
-3. Click **Add Order**
-4. Order will appear in the current orders table
-5. Click **Sign** to electronically sign the order
-
-### Viewing Clinical Notes
-1. Navigate to **Documentation** from the sidebar
-2. Click on any note header to expand/collapse the full text
-3. Notes display author, timestamp, and full content
-
-## Adding New Patients
-
-### Patient Data Structure
-
-Patient data is stored in the `SAMPLE_PATIENTS` object within the HTML file. Here's the structure:
-
-```javascript
-'MRN_NUMBER': {
-    // Demographics
-    mrn: 'PAH599806',
-    name: 'LASTNAME, FIRSTNAME',
-    dob: '16-Nov-1967',
-    age: '58 years',
-    gender: 'F',
-    allergies: 'penicillin',
-    location: 'PAH 01 1 WMAPU: S7: 01',
-    attending: 'PHYSICIAN NAME',
-    admission: '28-Dec-2025 23:27:48 AEST',
-    
-    // Vital Signs Array
-    vitals: [
-        {
-            datetime: '31-Dec-2025 14:00',
-            temp: '36.8',
-            hr: '82',
-            rr: '16',
-            bp_sys: '125',
-            bp_dia: '78',
-            spo2: '98',
-            avpu: 'Alert'
-        }
-    ],
-    
-    // Medications Array
-    medications: [
-        {
-            name: 'furosemide',
-            dose: '40 mg',
-            route: 'Oral',
-            frequency: 'THREE TIMES a day',
-            scheduled: true,
-            times: ['0800', '1400', '2000'],
-            lastGiven: '31-Dec-2025 08:00'
-        }
-    ],
-    
-    // Orders Array
-    orders: [
-        {
-            id: 'ORD001',
-            type: 'Laboratory',
-            name: 'Full Blood Count',
-            status: 'Completed',
-            ordered: '31-Dec-2025 15:07',
-            signed: true
-        }
-    ],
-    
-    // Laboratory Results
-    results: {
-        haematology: [
-            { 
-                test: 'Haemoglobin', 
-                value: '112', 
-                unit: 'g/L', 
-                range: '115-165', 
-                flag: 'Low' 
-            }
-        ],
-        biochemistry: [
-            { 
-                test: 'Sodium', 
-                value: '138', 
-                unit: 'mmol/L', 
-                range: '135-145', 
-                flag: '' 
-            }
-        ]
-    },
-    
-    // Clinical Notes Array
-    notes: [
-        {
-            id: 'NOTE001',
-            type: 'Progress Notes Inpatient',
-            title: 'MARU RN AM',
-            author: 'LODGE, THOMAS CHANDLER RN',
-            datetime: '31-Dec-2025 11:01:55 AEST',
-            content: `Patient assessment text here...`
-        }
-    ]
-}
+# Preview production build
+npm run preview
 ```
 
-### Adding a New Patient
+### Docker
 
-1. Open `emr-sim.html` in a text editor
-2. Locate the `SAMPLE_PATIENTS` constant (around line 300)
-3. Add a new patient object following the structure above
-4. Save the file
-5. Refresh the browser to see the new patient in search results
+```bash
+# Build and run with Docker Compose
+docker compose up -d
 
-### Creating Patient Data from JSON Files
-
-To keep patient data in separate JSON files:
-
-1. Create a JSON file (e.g., `patient-data.json`) with patient records
-2. Modify the application to load from external JSON:
-
-```javascript
-// Add this in the useEffect hook
-useEffect(() => {
-    fetch('patient-data.json')
-        .then(response => response.json())
-        .then(data => {
-            SAMPLE_PATIENTS = data;
-            Logger.info('Patient data loaded from external file');
-        })
-        .catch(error => {
-            Logger.error('Failed to load patient data', error);
-        });
-}, []);
+# Or build manually
+docker build -t simcerner .
+docker run -p 8080:80 simcerner
 ```
 
-## Security and Privacy
+The app will be available at `http://localhost:8080`.
 
-### IMPORTANT SECURITY NOTES
+### Testing
 
-⚠️ **CONFIDENTIAL DATA HANDLING**
+```bash
+# Run tests in watch mode
+npm test
 
-This system is designed for **simulation training only** and contains features for handling patient data. When using in production:
+# Run tests once
+npm run test:run
 
-1. **Never use real patient data** in the simulation system
-2. **Use de-identified or fictional patient records only**
-3. **Password protect** the directory containing the simulation files
-4. **Use HTTPS** for all access to the simulation
-5. **Restrict access** to authorized training personnel only
-6. **Clear browser cache** after training sessions
-7. **Do not index** the simulation site in search engines (use robots.txt)
-
-### Access Control Recommendations
-
-For shared web hosting:
-```apache
-# .htaccess file to password protect
-AuthType Basic
-AuthName "EMR Simulation Access"
-AuthUserFile /path/to/.htpasswd
-Require valid-user
+# Run tests with coverage
+npm run test:coverage
 ```
 
-For Docker deployment:
-```nginx
-# Add basic auth to nginx.conf
-location / {
-    auth_basic "EMR Simulation";
-    auth_basic_user_file /etc/nginx/.htpasswd;
-}
-```
-
-### robots.txt
-```
-User-agent: *
-Disallow: /
-```
-
-## Browser Logging
-
-All application events are logged to the browser console with the following format:
-```
-[2025-12-31T15:07:00.000Z] [INFO] Patient loaded successfully { mrn: 'PAH599806', name: 'CAMPBELL, NATALIE' }
-```
-
-### Log Levels
-- **INFO**: Normal operations (patient loaded, view changed)
-- **WARN**: Non-critical issues (patient not found)
-- **ERROR**: Critical failures (data loading errors)
-- **DEBUG**: Detailed diagnostic information
-
-### Accessing Logs
-1. Open browser Developer Tools (F12)
-2. Navigate to Console tab
-3. All application logs will be visible
-
-### Exporting Logs
-The Logger object maintains an in-memory log buffer. To export:
-```javascript
-// In browser console:
-console.log(Logger.exportLogs());
-```
-
-## Customization
-
-### Visual Styling
-
-The application uses CSS variables for the Cerner color scheme:
-```css
-:root {
-    --cerner-blue: #0066b2;
-    --cerner-dark-blue: #004578;
-    --cerner-light-blue: #e6f2ff;
-    --cerner-header-blue: #3a87ad;
-    --cerner-nav-bg: #2c3e50;
-    /* ... */
-}
-```
-
-Modify these values to match your institution's EMR branding.
-
-### Adding New Views
-
-To add a new section (e.g., Imaging):
-
-1. **Add sidebar menu item:**
-```javascript
-const menuItems = [
-    // ... existing items
-    { id: 'imaging', label: 'Imaging', section: 'Menu' },
-];
-```
-
-2. **Create component:**
-```javascript
-function ImagingView({ patient }) {
-    return (
-        <>
-            <div className="content-header">🔍 Imaging</div>
-            <div className="content-body">
-                {/* Your content here */}
-            </div>
-        </>
-    );
-}
-```
-
-3. **Add to main render:**
-```javascript
-{currentView === 'imaging' && (
-    <ImagingView patient={currentPatient} />
-)}
-```
-
-## File Structure
+## Project Structure
 
 ```
-emr-sim/
-├── emr-sim.html          # Complete standalone application
-├── README.md             # This documentation
-├── patient-template.json # Template for adding patients
-└── logs/                 # Optional: Server-side log storage
+simcerner/
+├── public/
+│   ├── patients/              # Patient JSON data files
+│   │   ├── patient-list.json  # Patient manifest
+│   │   └── jetson-judy.json   # Sample patient
+│   ├── icons/                 # PWA icons
+│   └── favicon.svg
+├── src/
+│   ├── main.tsx               # Entry point
+│   ├── App.tsx                # Root component + view routing
+│   ├── types/                 # TypeScript interfaces
+│   │   ├── patient.ts         # Patient data model
+│   │   ├── vitals.ts          # Vital signs config
+│   │   ├── medications.ts     # Medication types
+│   │   ├── news.ts            # NEWS2 scoring types
+│   │   └── iview.ts           # iView assessment types
+│   ├── stores/                # Zustand state management
+│   │   ├── patientStore.ts    # Patient data state
+│   │   ├── sessionStore.ts    # UI/session state
+│   │   └── clockStore.ts      # Simulation clock
+│   ├── services/              # Business logic
+│   │   ├── patientLoader.ts   # Patient data loading
+│   │   ├── newsCalculator.ts  # NEWS2/Q-ADDS scoring
+│   │   ├── alertEngine.ts     # Deterioration alerts
+│   │   ├── persistence.ts     # IndexedDB layer
+│   │   └── labTests.ts        # Lab test catalogue
+│   ├── hooks/                 # React hooks
+│   │   ├── usePatient.ts
+│   │   ├── useNewsScore.ts
+│   │   └── useClock.ts
+│   ├── components/
+│   │   ├── layout/            # TopNav, PatientBanner, Sidebar, StatusBar
+│   │   ├── common/            # DataTable, Autocomplete, AlertDialog, etc.
+│   │   ├── search/            # PatientSearch
+│   │   ├── doctor-view/       # DoctorView
+│   │   ├── deterioration/     # NEWS2 scoring views
+│   │   ├── iview/             # Interactive View (iView)
+│   │   ├── mar/               # Medication Administration Record
+│   │   ├── orders/            # Order entry
+│   │   ├── results/           # Lab results
+│   │   ├── documentation/     # Clinical notes
+│   │   ├── fluid-balance/     # Fluid balance
+│   │   └── vitals-graph/      # Vital signs graphs
+│   └── styles/                # CSS files
+│       ├── global.css
+│       ├── cerner-theme.css
+│       └── components/
+├── Dockerfile                 # Multi-stage production build
+├── docker-compose.yml         # Single-command deployment
+├── nginx.conf                 # SPA-ready nginx config
+├── vite.config.ts             # Vite + PWA configuration
+├── vitest.config.ts           # Test configuration
+└── tsconfig.json              # TypeScript configuration
 ```
 
-## Browser Compatibility
+## Patient Data
 
-Tested and working on:
-- Chrome/Edge 90+
-- Firefox 88+
-- Safari 14+
+Patient data is loaded from JSON files in `public/patients/`. The system supports both flat and hierarchical data formats.
 
-**Note:** Internet Explorer is not supported.
+### Adding Patients
 
-## Dependencies
+1. Create a JSON file in `public/patients/` following the format in `patient-template.json`
+2. Add the filename to `public/patients/patient-list.json`
+3. The patient will appear in the search
 
-All dependencies are loaded via CDN:
-- React 18 (production build)
-- ReactDOM 18 (production build)
-- Babel Standalone (for JSX transformation)
+### Default Patient
 
-No npm install or build process required.
+A default patient (CAMPBELL, NATALIE - MRN PAH599806) is embedded for offline use when external patient files are unavailable.
 
-## Troubleshooting
+## NEWS2 Scoring
 
-### Patient doesn't load
-- Check browser console for errors
-- Verify patient MRN exists in SAMPLE_PATIENTS object
-- Clear browser cache and reload
+The app implements the full NHS NEWS2 scoring system:
 
-### Styling looks incorrect
-- Ensure you're using a modern browser
-- Check for CSS conflicts if embedding in another page
-- Verify all styles loaded correctly in browser inspector
+| Parameter | Score 3 | Score 2 | Score 1 | Score 0 | Score 1 | Score 2 | Score 3 |
+|---|---|---|---|---|---|---|---|
+| Resp Rate | ≤8 | | 9-11 | 12-20 | | 21-24 | ≥25 |
+| SpO₂ Scale 1 | ≤91 | 92-93 | 94-95 | ≥96 | | | |
+| Systolic BP | ≤90 | 91-100 | 101-110 | 111-219 | | | ≥220 |
+| Heart Rate | ≤40 | | 41-50 | 51-90 | 91-110 | 111-130 | ≥131 |
+| Temperature | ≤35.0 | | 35.1-36.0 | 36.1-38.0 | 38.1-39.0 | ≥39.1 | |
+| Consciousness | | | | Alert | | | CVPU |
 
-### Orders not saving
-- Orders are only stored in memory during the session
-- Data will reset when page is refreshed
-- This is intentional for simulation purposes
+## Security Notes
 
-### Console shows errors
-- Check the error message in browser console
-- Review the Logger output for diagnostic information
-- Ensure patient data structure matches the template
+This is a **simulation tool** for education and training only. It does not connect to real clinical systems or contain real patient data. All patient data is fictional.
 
-## Support and Maintenance
+## License
 
-### Updating Patient Data
-Patient data is hard-coded in the HTML file. For frequent updates, consider:
-1. Moving patient data to external JSON files
-2. Creating a simple admin interface for data entry
-3. Using localStorage to persist changes across sessions
-
-### Performance Optimization
-For larger patient databases (100+ patients):
-1. Implement virtual scrolling for search results
-2. Add pagination to tables
-3. Lazy load patient notes and results
-
-### Adding Persistence
-To make data changes permanent:
-1. Add a backend API to save/load patient data
-2. Use localStorage API for client-side persistence
-3. Implement IndexedDB for larger datasets
-
-## License and Attribution
-
-This simulation system is designed for internal hospital training use. The visual design replicates Cerner PowerChart for educational purposes only.
-
-**Disclaimer:** This is a simulation system and should never be used for actual patient care or to store real patient information.
-
-## Change Log
-
-### Version 1.0 (2025-12-31)
-- Initial release
-- Patient search functionality
-- Core EMR views (Doctor View, Vitals, MAR, Orders, Results, Documentation)
-- Orders workflow with signature capability
-- Comprehensive logging
-- Cerner PowerChart visual replication
-
-## Future Enhancements
-
-Potential features for future versions:
-- [ ] Print functionality for clinical notes
-- [ ] Export patient data to PDF
-- [ ] Medication administration workflow
-- [ ] Advanced search with filters
-- [ ] User authentication system
-- [ ] Multi-user support with roles
-- [ ] Audit trail for all actions
-- [ ] Custom form builder for notes
-- [ ] Integration with actual EMR for read-only access
-
-## Contact
-
-For questions, issues, or suggestions regarding this simulation system, please contact your hospital's IT simulation coordinator.
-
----
-
-**Remember:** This is a training simulation. Never use real patient data.
+Proprietary — for clinical education use only.

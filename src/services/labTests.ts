@@ -19,6 +19,8 @@ export interface LabTest {
   type: string;
   /** Broad order category (typically "Laboratory"). */
   category: string;
+  /** Index signature for Autocomplete compatibility. */
+  [key: string]: unknown;
 }
 
 // ---------------------------------------------------------------------------

@@ -402,3 +402,390 @@
   color: var(--cerner-muted);
   font-size: 12px;
 }
+
+/* ========================================================================
+   Patient Banner Wrapper (with Allergy Banner)
+   ======================================================================== */
+
+.patient-banner-wrapper {
+  flex-shrink: 0;
+}
+
+/* ========================================================================
+   Simulation Clock (Status Bar)
+   ======================================================================== */
+
+.sim-clock {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sim-clock__display {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-right: 4px;
+}
+
+.sim-clock__time {
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--cerner-font-mono);
+  letter-spacing: 0.5px;
+}
+
+.sim-clock__date {
+  font-size: var(--cerner-font-size-sm);
+  color: #95a5a6;
+}
+
+.sim-clock__btn {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--cerner-nav-text);
+  font-size: 9px;
+  padding: 1px 5px;
+  cursor: pointer;
+  border-radius: var(--cerner-radius-sm);
+  transition: all var(--cerner-transition-fast);
+  font-family: inherit;
+  line-height: 1.4;
+  min-width: 22px;
+  text-align: center;
+}
+
+.sim-clock__btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.sim-clock__btn--active {
+  background: var(--cerner-blue);
+  border-color: var(--cerner-blue);
+  color: white;
+}
+
+.sim-clock__btn--play {
+  font-size: 10px;
+  min-width: 24px;
+}
+
+.sim-clock__speed-group,
+.sim-clock__travel-group {
+  display: flex;
+  gap: 1px;
+}
+
+.sim-clock__speed-group .sim-clock__btn:first-child,
+.sim-clock__travel-group .sim-clock__btn:first-child {
+  border-radius: var(--cerner-radius-sm) 0 0 var(--cerner-radius-sm);
+}
+
+.sim-clock__speed-group .sim-clock__btn:last-child,
+.sim-clock__travel-group .sim-clock__btn:last-child {
+  border-radius: 0 var(--cerner-radius-sm) var(--cerner-radius-sm) 0;
+}
+
+.sim-clock__speed-group .sim-clock__btn:not(:first-child):not(:last-child),
+.sim-clock__travel-group .sim-clock__btn:not(:first-child):not(:last-child) {
+  border-radius: 0;
+}
+
+.sim-clock__btn--reset {
+  font-size: 12px;
+  padding: 0 4px;
+}
+
+/* Status bar height bump for clock controls */
+.status-bar {
+  height: auto;
+  min-height: 28px;
+  padding: 3px 15px;
+}
+
+/* ========================================================================
+   Allergy Banner
+   ======================================================================== */
+
+.allergy-banner {
+  display: flex;
+  align-items: center;
+  padding: 4px 15px;
+  font-size: var(--cerner-font-size-base);
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.allergy-banner--nkda {
+  background-color: #d4edda;
+  border-bottom: 1px solid #b8d4be;
+}
+
+.allergy-banner--danger {
+  background-color: #fce4e4;
+  border-bottom: 1px solid #f0b8b8;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.allergy-banner__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.allergy-banner__icon {
+  font-size: 14px;
+  color: var(--cerner-danger);
+}
+
+.allergy-banner__label {
+  font-size: var(--cerner-font-size-base);
+  color: var(--cerner-success);
+}
+
+.allergy-banner__label--danger {
+  color: var(--cerner-danger);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.allergy-banner__badge--nkda {
+  background-color: var(--cerner-success);
+  color: white;
+  padding: 1px 8px;
+  border-radius: var(--cerner-radius-sm);
+  font-weight: 700;
+  font-size: var(--cerner-font-size-sm);
+  letter-spacing: 0.5px;
+}
+
+.allergy-banner__tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.allergy-banner__tag {
+  background-color: var(--cerner-danger);
+  color: white;
+  padding: 1px 8px;
+  border-radius: var(--cerner-radius-sm);
+  font-size: var(--cerner-font-size-sm);
+  font-weight: 600;
+}
+
+.allergy-banner__tag--severe {
+  background-color: #c0392b;
+}
+
+.allergy-banner__tag--moderate {
+  background-color: var(--cerner-warning);
+  color: #333;
+}
+
+.allergy-banner__tag--mild {
+  background-color: #f39c12;
+  color: #333;
+}
+
+.allergy-banner__alerts {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.allergy-banner__alert-badge {
+  background-color: #e74c3c;
+  color: white;
+  padding: 1px 6px;
+  border-radius: var(--cerner-radius-sm);
+  font-size: var(--cerner-font-size-sm);
+  font-weight: 700;
+  animation: pulse-alert 1.5s infinite;
+}
+
+@keyframes pulse-alert {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.allergy-banner__expand-icon {
+  margin-left: auto;
+  font-size: 9px;
+  color: var(--cerner-danger);
+}
+
+.allergy-banner__details {
+  padding: 6px 0 4px 0;
+}
+
+.allergy-banner__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--cerner-font-size-base);
+}
+
+.allergy-banner__table th {
+  text-align: left;
+  padding: 3px 8px;
+  border-bottom: 1px solid #e0a0a0;
+  color: #8b2020;
+  font-size: var(--cerner-font-size-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.allergy-banner__table td {
+  padding: 3px 8px;
+  border-bottom: 1px solid #f0c8c8;
+}
+
+.allergy-banner__severity {
+  padding: 1px 6px;
+  border-radius: var(--cerner-radius-sm);
+  font-size: var(--cerner-font-size-sm);
+  font-weight: 600;
+}
+
+.allergy-banner__severity--severe {
+  background-color: #c0392b;
+  color: white;
+}
+
+.allergy-banner__severity--moderate {
+  background-color: var(--cerner-warning);
+  color: #333;
+}
+
+.allergy-banner__severity--mild {
+  background-color: #f9e79f;
+  color: #7d6608;
+}
+
+.allergy-banner__severity--unknown {
+  background-color: #bdc3c7;
+  color: #333;
+}
+
+/* ========================================================================
+   SBAR Summary
+   ======================================================================== */
+
+.sbar {
+  max-width: 800px;
+}
+
+.sbar__header-block {
+  margin-bottom: 16px;
+}
+
+.sbar__main-title {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  color: var(--cerner-dark-blue);
+}
+
+.sbar__meta {
+  font-size: var(--cerner-font-size-sm);
+  color: var(--cerner-muted);
+}
+
+.sbar__section {
+  margin-bottom: 14px;
+}
+
+.sbar__section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  background-color: var(--cerner-grid-header);
+  border-left: 4px solid #333;
+  margin-bottom: 6px;
+}
+
+.sbar__letter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--cerner-radius-sm);
+  color: white;
+  font-weight: 700;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.sbar__title {
+  font-weight: 700;
+  font-size: var(--cerner-font-size-md);
+  color: var(--cerner-dark-blue);
+}
+
+.sbar__section-body {
+  padding-left: 12px;
+}
+
+.sbar__item {
+  padding: 2px 0;
+  font-size: var(--cerner-font-size-base);
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+/* SBAR Modal */
+
+.sbar-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.sbar-modal {
+  background: white;
+  border-radius: var(--cerner-radius-lg);
+  box-shadow: var(--cerner-shadow-lg);
+  width: 90%;
+  max-width: 800px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.sbar-modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--cerner-border);
+}
+
+.sbar-modal__header h3 {
+  margin: 0;
+  font-size: var(--cerner-font-size-lg);
+  color: var(--cerner-dark-blue);
+}
+
+.sbar-modal__actions {
+  display: flex;
+  gap: 6px;
+}
+
+.sbar-modal__body {
+  padding: 16px;
+  overflow-y: auto;
+  flex: 1;
+}

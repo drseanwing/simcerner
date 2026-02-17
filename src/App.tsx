@@ -26,6 +26,8 @@ import MARView from './components/mar/MARView';
 import OrdersView from './components/orders/OrdersView';
 import ResultsView from './components/results/ResultsView';
 import DocumentationView from './components/documentation/DocumentationView';
+import InteractiveView from './components/iview/InteractiveView';
+import SBARSummary from './components/common/SBARSummary';
 import OfflineIndicator from './components/common/OfflineIndicator';
 import InstallPrompt from './components/common/InstallPrompt';
 import './styles/components/layout.css';
@@ -69,6 +71,7 @@ const VIEW_LABELS: Record<string, string> = {
   'mar': 'MAR',
   'iview': 'Interactive View',
   'deterioration': 'Deterioration Dashboard',
+  'handover': 'Handover Summary',
 };
 
 /**
@@ -94,6 +97,10 @@ function renderCurrentView(currentView: string): React.ReactNode {
       return <ResultsView />;
     case 'documentation':
       return <DocumentationView />;
+    case 'iview':
+      return <InteractiveView />;
+    case 'handover':
+      return <SBARSummary asView />;
     default:
       const label = VIEW_LABELS[currentView] ?? currentView;
       return <PlaceholderView name={label} />;

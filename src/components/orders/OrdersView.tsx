@@ -15,45 +15,9 @@
 import { useState, useCallback } from 'react';
 import { usePatientStore } from '../../stores/patientStore';
 import Autocomplete from '../common/Autocomplete';
+import { LAB_TESTS } from '../../services/labTests';
 import type { Order, OrderPriority, OrderType } from '../../types';
 import '../../styles/components/views.css';
-
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
-/** Lab tests database for the order search autocomplete. */
-const LAB_TESTS: Array<{ name: string; type: string; category: string }> = [
-  // Haematology
-  { name: 'Full Blood Count (FBC)', type: 'Haematology', category: 'Laboratory' },
-  { name: 'Coagulation Profile', type: 'Haematology', category: 'Laboratory' },
-  { name: 'INR', type: 'Haematology', category: 'Laboratory' },
-  // Biochemistry
-  { name: 'Liver Function Test (LFT)', type: 'Biochemistry', category: 'Laboratory' },
-  { name: 'Urea Electrolytes Creatinine (UEC)', type: 'Biochemistry', category: 'Laboratory' },
-  { name: 'Calcium', type: 'Biochemistry', category: 'Laboratory' },
-  { name: 'Magnesium', type: 'Biochemistry', category: 'Laboratory' },
-  { name: 'Phosphate', type: 'Biochemistry', category: 'Laboratory' },
-  { name: 'Troponin', type: 'Biochemistry', category: 'Laboratory' },
-  { name: 'CK', type: 'Biochemistry', category: 'Laboratory' },
-  // Toxicology
-  { name: 'Paracetamol Level', type: 'Toxicology', category: 'Laboratory' },
-  { name: 'Serum Ethanol', type: 'Toxicology', category: 'Laboratory' },
-  { name: 'Serum Digoxin', type: 'Toxicology', category: 'Laboratory' },
-  // Blood Gas
-  { name: 'Venous Blood Gas', type: 'Blood Gas', category: 'Laboratory' },
-  { name: 'Arterial Blood Gas', type: 'Blood Gas', category: 'Laboratory' },
-  // Vitamins
-  { name: 'Vitamin D', type: 'Vitamins', category: 'Laboratory' },
-  { name: 'B12 and Folate', type: 'Vitamins', category: 'Laboratory' },
-  { name: 'Iron Studies', type: 'Vitamins', category: 'Laboratory' },
-  // Microbiology
-  { name: 'Rapid PCR (COVID, Influenza, RSV)', type: 'Microbiology', category: 'Laboratory' },
-  { name: 'Respiratory Virus PCR', type: 'Microbiology', category: 'Laboratory' },
-  { name: 'Urine MCS', type: 'Microbiology', category: 'Laboratory' },
-  { name: 'Blood Culture', type: 'Microbiology', category: 'Laboratory' },
-  { name: 'Wound Swab MCS', type: 'Microbiology', category: 'Laboratory' },
-];
 
 // ---------------------------------------------------------------------------
 // Component

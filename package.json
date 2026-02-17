@@ -7,7 +7,12 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "docker:build": "docker build -t simcerner .",
+    "docker:run": "docker run -p 8080:80 simcerner"
   },
   "dependencies": {
     "idb": "^8.0.3",

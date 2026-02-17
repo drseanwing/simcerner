@@ -49,6 +49,12 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
       { id: 'deterioration', label: 'Deterioration Dashboard' },
     ],
   },
+  {
+    header: 'Tools',
+    items: [
+      { id: 'handover', label: 'Handover Summary' },
+    ],
+  },
 ];
 
 /**

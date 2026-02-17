@@ -196,7 +196,7 @@ function VitalSignGraph({
             tick={{ fontSize: 9 }}
           />
           <Tooltip
-            formatter={(value: number) => [`${value} ${config.unit}`, config.title]}
+            formatter={(value: number | undefined) => [`${value ?? 0} ${config.unit}`, config.title]}
             labelStyle={{ fontSize: 10 }}
             contentStyle={{ fontSize: 11 }}
           />

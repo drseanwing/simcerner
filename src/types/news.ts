@@ -16,13 +16,15 @@
 // ---------------------------------------------------------------------------
 
 /** Supported early warning scoring systems. */
-export enum ScoringSystem {
+export const ScoringSystem = {
   /** National Early Warning Score 2 (UK standard). */
-  NEWS2 = 'NEWS2',
+  NEWS2: 'NEWS2',
 
   /** Queensland Adult Deterioration Detection System (Australian). */
-  QADDS = 'QADDS',
-}
+  QADDS: 'QADDS',
+} as const;
+
+export type ScoringSystem = typeof ScoringSystem[keyof typeof ScoringSystem];
 
 // ---------------------------------------------------------------------------
 // Clinical Risk & Escalation

@@ -25,16 +25,18 @@
  * | NOT_GIVEN  | Dose was not given for another documented reason  |
  * | FUTURE     | Dose is scheduled for a future time window        |
  */
-export enum MedicationDoseStatus {
-  PENDING = 'PENDING',
-  DUE = 'DUE',
-  OVERDUE = 'OVERDUE',
-  GIVEN = 'GIVEN',
-  HELD = 'HELD',
-  REFUSED = 'REFUSED',
-  NOT_GIVEN = 'NOT_GIVEN',
-  FUTURE = 'FUTURE',
-}
+export const MedicationDoseStatus = {
+  PENDING: 'PENDING',
+  DUE: 'DUE',
+  OVERDUE: 'OVERDUE',
+  GIVEN: 'GIVEN',
+  HELD: 'HELD',
+  REFUSED: 'REFUSED',
+  NOT_GIVEN: 'NOT_GIVEN',
+  FUTURE: 'FUTURE',
+} as const;
+
+export type MedicationDoseStatus = typeof MedicationDoseStatus[keyof typeof MedicationDoseStatus];
 
 // ---------------------------------------------------------------------------
 // Administration Records

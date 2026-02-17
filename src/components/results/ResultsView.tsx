@@ -167,7 +167,7 @@ function LabResultSection({
         </thead>
         <tbody>
           {results.map((result, idx) => {
-            const isAbnormal = result.flag && result.flag !== '' && result.flag !== 'normal';
+            const isAbnormal = result.flag && result.flag !== 'normal';
             return (
               <tr key={idx}>
                 <td>{result.test}</td>

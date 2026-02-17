@@ -18,6 +18,14 @@ import { useSessionStore } from './stores/sessionStore';
 import { loadPatients } from './services/patientLoader';
 import { TopNav, PatientBanner, Sidebar, StatusBar } from './components/layout';
 import PatientSearch from './components/search/PatientSearch';
+import DoctorView from './components/doctor-view/DoctorView';
+import DeteriorationView from './components/deterioration/DeteriorationView';
+import VitalsGraphView from './components/vitals-graph/VitalsGraphView';
+import FluidBalanceView from './components/fluid-balance/FluidBalanceView';
+import MARView from './components/mar/MARView';
+import OrdersView from './components/orders/OrdersView';
+import ResultsView from './components/results/ResultsView';
+import DocumentationView from './components/documentation/DocumentationView';
 import './styles/components/layout.css';
 
 // ---------------------------------------------------------------------------
@@ -66,8 +74,28 @@ const VIEW_LABELS: Record<string, string> = {
  * Returns a PlaceholderView for views that are not yet implemented.
  */
 function renderCurrentView(currentView: string): React.ReactNode {
-  const label = VIEW_LABELS[currentView] ?? currentView;
-  return <PlaceholderView name={label} />;
+  switch (currentView) {
+    case 'doctor-view':
+      return <DoctorView />;
+    case 'vitals':
+    case 'deterioration':
+      return <DeteriorationView />;
+    case 'vitals-graph':
+      return <VitalsGraphView />;
+    case 'fluid-balance':
+      return <FluidBalanceView />;
+    case 'mar':
+      return <MARView />;
+    case 'orders':
+      return <OrdersView />;
+    case 'results':
+      return <ResultsView />;
+    case 'documentation':
+      return <DocumentationView />;
+    default:
+      const label = VIEW_LABELS[currentView] ?? currentView;
+      return <PlaceholderView name={label} />;
+  }
 }
 
 // ---------------------------------------------------------------------------

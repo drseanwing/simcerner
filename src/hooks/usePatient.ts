@@ -17,7 +17,7 @@ import { loadPatients as loadPatientsFromService } from '../services/patientLoad
 /** Shape returned by the {@link usePatient} hook. */
 export interface UsePatientResult {
   /** The currently selected patient, or null. */
-  currentPatient: ReturnType<typeof usePatientStore>['currentPatient'];
+  currentPatient: ReturnType<typeof usePatientStore.getState>['currentPatient'];
 
   /** Whether a patient data load is in progress. */
   loading: boolean;
@@ -26,7 +26,7 @@ export interface UsePatientResult {
   error: string | null;
 
   /** Full patient roster keyed by MRN. */
-  patients: ReturnType<typeof usePatientStore>['patients'];
+  patients: ReturnType<typeof usePatientStore.getState>['patients'];
 
   /**
    * Load a specific patient by MRN from the in-memory roster.
@@ -43,7 +43,7 @@ export interface UsePatientResult {
    * @param query - Search text.
    * @returns Array of patients matching the query.
    */
-  searchPatients: (query: string) => ReturnType<typeof usePatientStore>['currentPatient'][];
+  searchPatients: (query: string) => ReturnType<typeof usePatientStore.getState>['currentPatient'][];
 }
 
 // ---------------------------------------------------------------------------

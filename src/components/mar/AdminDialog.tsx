@@ -63,10 +63,10 @@ const NOT_GIVEN_REASONS = [
 
 /** Action options for the administration dialog. */
 type AdminAction =
-  | MedicationDoseStatus.GIVEN
-  | MedicationDoseStatus.HELD
-  | MedicationDoseStatus.REFUSED
-  | MedicationDoseStatus.NOT_GIVEN;
+  | typeof MedicationDoseStatus.GIVEN
+  | typeof MedicationDoseStatus.HELD
+  | typeof MedicationDoseStatus.REFUSED
+  | typeof MedicationDoseStatus.NOT_GIVEN;
 
 const ACTIONS: Array<{ label: string; status: AdminAction; colour: string }> = [
   { label: 'Give', status: MedicationDoseStatus.GIVEN, colour: '#4caf50' },

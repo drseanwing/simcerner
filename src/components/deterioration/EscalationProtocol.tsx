@@ -109,7 +109,6 @@ const ESCALATION_CARDS: EscalationCard[] = [
  * matching the current patient risk is visually highlighted.
  */
 export default function EscalationProtocol({
-  score,
   clinicalRisk,
 }: EscalationProtocolProps) {
   return (

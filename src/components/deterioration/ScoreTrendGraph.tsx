@@ -93,7 +93,7 @@ export default function ScoreTrendGraph({ vitals }: ScoreTrendGraphProps) {
             label={{ value: 'NEWS2', angle: -90, position: 'insideLeft', fontSize: 10 }}
           />
           <Tooltip
-            formatter={(value: number) => [`Score: ${value}`, 'NEWS2']}
+            formatter={(value: number | undefined) => [`Score: ${value ?? 0}`, 'NEWS2']}
             labelStyle={{ fontSize: 10 }}
             contentStyle={{ fontSize: 11 }}
           />

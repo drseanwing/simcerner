@@ -52,6 +52,17 @@ export type {
 } from './medications';
 export { MedicationDoseStatus } from './medications';
 
+// iView (Interactive View) clinical documentation
+export type {
+  AssessmentInputType,
+  AssessmentParameter,
+  IViewSection,
+  IViewBand,
+  AssessmentEntry,
+  TimeInterval,
+  IViewToolbarConfig,
+} from './iview';
+
 // NEWS2 / Q-ADDS scoring
 export type {
   ClinicalRisk,

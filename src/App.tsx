@@ -26,6 +26,8 @@ import MARView from './components/mar/MARView';
 import OrdersView from './components/orders/OrdersView';
 import ResultsView from './components/results/ResultsView';
 import DocumentationView from './components/documentation/DocumentationView';
+import OfflineIndicator from './components/common/OfflineIndicator';
+import InstallPrompt from './components/common/InstallPrompt';
 import './styles/components/layout.css';
 
 // ---------------------------------------------------------------------------
@@ -179,6 +181,8 @@ export default function App() {
   /* ---- Full EMR layout with selected patient ---- */
   return (
     <>
+      <OfflineIndicator />
+      <InstallPrompt />
       <TopNav />
       <PatientBanner patient={currentPatient} />
       <div className="main-container">

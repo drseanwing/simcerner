@@ -1,0 +1,2042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PowerChart Organizer - EMR Simulation</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 11px;
+            color: #333;
+            overflow: hidden;
+        }
+
+        /* Cerner-style color scheme */
+        :root {
+            --cerner-blue: #0066b2;
+            --cerner-dark-blue: #004578;
+            --cerner-light-blue: #e6f2ff;
+            --cerner-header-blue: #3a87ad;
+            --cerner-nav-bg: #2c3e50;
+            --cerner-nav-hover: #34495e;
+            --cerner-border: #ccc;
+            --cerner-grid-header: #f5f5f5;
+            --cerner-row-alt: #f9f9f9;
+            --cerner-selected: #d9edf7;
+        }
+
+        #root {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Navigation Bar */
+        .top-nav {
+            background: linear-gradient(to bottom, #4a4a4a 0%, #2b2b2b 100%);
+            color: white;
+            padding: 4px 8px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 11px;
+            border-bottom: 1px solid #000;
+        }
+
+        .top-nav-item {
+            padding: 2px 8px;
+            cursor: pointer;
+            border-radius: 2px;
+        }
+
+        .top-nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Patient Banner */
+        .patient-banner {
+            background: var(--cerner-header-blue);
+            color: white;
+            padding: 8px 12px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            font-size: 11px;
+            border-bottom: 2px solid var(--cerner-dark-blue);
+        }
+
+        .patient-banner-left, .patient-banner-right {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .patient-name {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .patient-detail {
+            display: flex;
+            gap: 15px;
+        }
+
+        .patient-detail-item {
+            display: flex;
+            gap: 5px;
+        }
+
+        .patient-detail-label {
+            font-weight: 600;
+        }
+
+        /* Main Layout */
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Left Sidebar */
+        .sidebar {
+            width: 130px;
+            background: var(--cerner-nav-bg);
+            color: white;
+            overflow-y: auto;
+            border-right: 1px solid #1a252f;
+        }
+
+        .sidebar-section {
+            border-bottom: 1px solid #1a252f;
+        }
+
+        .sidebar-header {
+            padding: 8px 10px;
+            background: #1a252f;
+            font-weight: 600;
+            font-size: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .sidebar-item {
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 11px;
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar-item:hover {
+            background: var(--cerner-nav-hover);
+        }
+
+        .sidebar-item.active {
+            background: var(--cerner-dark-blue);
+            border-left-color: #fff;
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            background: #fff;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content-header {
+            background: #f5f5f5;
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--cerner-border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 11px;
+        }
+
+        .content-tabs {
+            display: flex;
+            gap: 5px;
+            padding: 6px 12px;
+            background: #e8e8e8;
+            border-bottom: 1px solid var(--cerner-border);
+        }
+
+        .content-tab {
+            padding: 4px 12px;
+            background: #d0d0d0;
+            border: 1px solid #999;
+            border-bottom: none;
+            cursor: pointer;
+            border-radius: 3px 3px 0 0;
+            font-size: 11px;
+        }
+
+        .content-tab.active {
+            background: white;
+            border-bottom: 1px solid white;
+            margin-bottom: -1px;
+            font-weight: 600;
+        }
+
+        .content-body {
+            flex: 1;
+            padding: 12px;
+            overflow-y: auto;
+        }
+
+        /* Loading Indicator */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px;
+            color: #666;
+        }
+
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--cerner-blue);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Patient Search */
+        .patient-search {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+            background: white;
+            border: 1px solid var(--cerner-border);
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .patient-search h2 {
+            color: var(--cerner-dark-blue);
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--cerner-border);
+            border-radius: 3px;
+            font-size: 12px;
+            margin-bottom: 15px;
+        }
+
+        .patient-list {
+            border: 1px solid var(--cerner-border);
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .patient-list-item {
+            padding: 10px;
+            border-bottom: 1px solid var(--cerner-border);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .patient-list-item:hover {
+            background: var(--cerner-light-blue);
+        }
+
+        .patient-list-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid var(--cerner-border);
+            font-size: 11px;
+        }
+
+        .data-table th {
+            background: var(--cerner-grid-header);
+            padding: 6px 8px;
+            text-align: left;
+            border: 1px solid var(--cerner-border);
+            font-weight: 600;
+            font-size: 10px;
+        }
+
+        .data-table td {
+            padding: 5px 8px;
+            border: 1px solid var(--cerner-border);
+        }
+
+        .data-table tbody tr:nth-child(even) {
+            background: var(--cerner-row-alt);
+        }
+
+        .data-table tbody tr:hover {
+            background: var(--cerner-selected);
+        }
+
+        /* Vital Signs Chart */
+        .vitals-chart {
+            background: white;
+            border: 1px solid var(--cerner-border);
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+
+        .chart-header {
+            font-weight: 600;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid var(--cerner-dark-blue);
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 120px repeat(auto-fit, minmax(80px, 1fr));
+            gap: 1px;
+            background: var(--cerner-border);
+            border: 1px solid var(--cerner-border);
+        }
+
+        .chart-cell {
+            background: white;
+            padding: 6px;
+            font-size: 10px;
+        }
+
+        .chart-cell.header {
+            background: var(--cerner-grid-header);
+            font-weight: 600;
+        }
+
+        .chart-cell.label {
+            background: var(--cerner-grid-header);
+            font-weight: 600;
+        }
+
+        .chart-cell.abnormal {
+            color: #d9534f;
+            font-weight: 600;
+        }
+
+        /* Graphical Charts */
+        .vitals-graph-container {
+            margin-bottom: 20px;
+        }
+
+        .vital-graph {
+            background: white;
+            border: 1px solid var(--cerner-border);
+            margin-bottom: 15px;
+            padding: 10px;
+        }
+
+        .graph-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 11px;
+        }
+
+        .graph-canvas {
+            width: 100%;
+            height: 120px;
+            border: 1px solid #e0e0e0;
+        }
+
+        /* Orders Section */
+        .order-entry {
+            background: white;
+            border: 1px solid var(--cerner-border);
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 600;
+            font-size: 11px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 6px;
+            border: 1px solid var(--cerner-border);
+            border-radius: 3px;
+            font-size: 11px;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--cerner-blue);
+        }
+
+        /* Autocomplete */
+        .autocomplete-container {
+            position: relative;
+        }
+
+        .autocomplete-input {
+            width: 100%;
+            padding: 6px;
+            border: 1px solid var(--cerner-border);
+            border-radius: 3px;
+            font-size: 11px;
+        }
+
+        .autocomplete-input:focus {
+            outline: none;
+            border-color: var(--cerner-blue);
+        }
+
+        .autocomplete-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            background: white;
+            border: 1px solid var(--cerner-border);
+            border-top: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        .autocomplete-item {
+            padding: 8px;
+            cursor: pointer;
+            font-size: 11px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .autocomplete-item:hover {
+            background: var(--cerner-light-blue);
+        }
+
+        .autocomplete-item.selected {
+            background: var(--cerner-selected);
+        }
+
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+
+        .autocomplete-type {
+            font-size: 10px;
+            color: #666;
+            margin-left: 8px;
+        }
+
+        .btn {
+            padding: 6px 15px;
+            border: 1px solid var(--cerner-border);
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+            background: #f5f5f5;
+        }
+
+        .btn-primary {
+            background: var(--cerner-blue);
+            color: white;
+            border-color: var(--cerner-dark-blue);
+        }
+
+        .btn-primary:hover {
+            background: var(--cerner-dark-blue);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Clinical Notes */
+        .notes-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .note-item {
+            border: 1px solid var(--cerner-border);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .note-header {
+            background: var(--cerner-grid-header);
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            border-bottom: 1px solid var(--cerner-border);
+        }
+
+        .note-header:hover {
+            background: #e8e8e8;
+        }
+
+        .note-title {
+            font-weight: 600;
+            font-size: 11px;
+        }
+
+        .note-meta {
+            font-size: 10px;
+            color: #666;
+        }
+
+        .note-body {
+            padding: 12px;
+            font-size: 11px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+
+        .note-body.collapsed {
+            display: none;
+        }
+
+        /* Fluid Balance */
+        .fluid-summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .fluid-card {
+            background: white;
+            border: 1px solid var(--cerner-border);
+            border-radius: 4px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .fluid-card-label {
+            font-size: 10px;
+            color: #666;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .fluid-card-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--cerner-dark-blue);
+        }
+
+        .fluid-card-unit {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .fluid-card.positive {
+            border-left: 4px solid #28a745;
+        }
+
+        .fluid-card.negative {
+            border-left: 4px solid #dc3545;
+        }
+
+        .fluid-card.neutral {
+            border-left: 4px solid #6c757d;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            background: #f5f5f5;
+            border-top: 1px solid var(--cerner-border);
+            padding: 4px 12px;
+            font-size: 10px;
+            color: #666;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Utility Classes */
+        .text-danger {
+            color: #d9534f;
+        }
+
+        .text-warning {
+            color: #f0ad4e;
+        }
+
+        .text-success {
+            color: #5cb85c;
+        }
+
+        .text-muted {
+            color: #999;
+        }
+
+        .mt-10 {
+            margin-top: 10px;
+        }
+
+        .mb-10 {
+            margin-bottom: 10px;
+        }
+
+        /* Error Message */
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            margin: 20px;
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // ====================================================================
+        // LOGGING UTILITY
+        // ====================================================================
+        const Logger = {
+            logs: [],
+            
+            log(level, message, data = null) {
+                const timestamp = new Date().toISOString();
+                const logEntry = {
+                    timestamp,
+                    level,
+                    message,
+                    data
+                };
+                
+                this.logs.push(logEntry);
+                console.log(`[${timestamp}] [${level}] ${message}`, data || '');
+                
+                if (this.logs.length > 1000) {
+                    this.logs = this.logs.slice(-1000);
+                }
+            },
+            
+            info(message, data) { this.log('INFO', message, data); },
+            warn(message, data) { this.log('WARN', message, data); },
+            error(message, data) { this.log('ERROR', message, data); },
+            debug(message, data) { this.log('DEBUG', message, data); },
+            
+            exportLogs() {
+                return JSON.stringify(this.logs, null, 2);
+            }
+        };
+
+        // ====================================================================
+        // LAB TESTS DATABASE
+        // ====================================================================
+        const LAB_TESTS = [
+            // Haematology
+            { name: 'Full Blood Count (FBC)', type: 'Haematology', category: 'Laboratory' },
+            { name: 'Coagulation Profile', type: 'Haematology', category: 'Laboratory' },
+            { name: 'INR', type: 'Haematology', category: 'Laboratory' },
+            
+            // Biochemistry
+            { name: 'Liver Function Test (LFT)', type: 'Biochemistry', category: 'Laboratory' },
+            { name: 'Urea Electrolytes Creatinine (UEC)', type: 'Biochemistry', category: 'Laboratory' },
+            { name: 'Calcium', type: 'Biochemistry', category: 'Laboratory' },
+            { name: 'Magnesium', type: 'Biochemistry', category: 'Laboratory' },
+            { name: 'Phosphate', type: 'Biochemistry', category: 'Laboratory' },
+            { name: 'Troponin', type: 'Biochemistry', category: 'Laboratory' },
+            { name: 'CK', type: 'Biochemistry', category: 'Laboratory' },
+            
+            // Toxicology
+            { name: 'Paracetamol Level', type: 'Toxicology', category: 'Laboratory' },
+            { name: 'Serum Ethanol', type: 'Toxicology', category: 'Laboratory' },
+            { name: 'Serum Digoxin', type: 'Toxicology', category: 'Laboratory' },
+            
+            // Blood Gas
+            { name: 'Venous Blood Gas', type: 'Blood Gas', category: 'Laboratory' },
+            { name: 'Arterial Blood Gas', type: 'Blood Gas', category: 'Laboratory' },
+            
+            // Vitamins
+            { name: 'Vitamin D', type: 'Vitamins', category: 'Laboratory' },
+            { name: 'B12 and Folate', type: 'Vitamins', category: 'Laboratory' },
+            { name: 'Iron Studies', type: 'Vitamins', category: 'Laboratory' },
+            
+            // Microbiology
+            { name: 'Rapid PCR (COVID, Influenza, RSV)', type: 'Microbiology', category: 'Laboratory' },
+            { name: 'Respiratory Virus PCR', type: 'Microbiology', category: 'Laboratory' },
+            { name: 'Urine MCS', type: 'Microbiology', category: 'Laboratory' },
+            { name: 'Blood Culture', type: 'Microbiology', category: 'Laboratory' },
+            { name: 'Wound Swab MCS', type: 'Microbiology', category: 'Laboratory' },
+        ];
+
+        // ====================================================================
+        // PATIENT DATA LOADER
+        // ====================================================================
+        class PatientDataLoader {
+            constructor() {
+                this.patients = {};
+                this.loadAttempted = false;
+                this.loadError = null;
+            }
+
+            async loadPatients() {
+                try {
+                    Logger.info('Starting patient data load from external files');
+                    
+                    // Try to load patient list manifest
+                    const manifestResponse = await fetch('patients/patient-list.json');
+                    
+                    if (!manifestResponse.ok) {
+                        Logger.warn('Patient manifest not found, trying default patients');
+                        // Fall back to loading default embedded patients
+                        return this.loadDefaultPatients();
+                    }
+
+                    const manifest = await manifestResponse.json();
+                    Logger.info('Patient manifest loaded', { count: manifest.patients.length });
+
+                    // Load each patient file
+                    const patientPromises = manifest.patients.map(filename => 
+                        this.loadPatientFile(filename)
+                    );
+
+                    const results = await Promise.allSettled(patientPromises);
+                    
+                    // Process results
+                    results.forEach((result, index) => {
+                        if (result.status === 'fulfilled' && result.value) {
+                            const patient = result.value;
+                            this.patients[patient.mrn] = patient;
+                            Logger.info('Patient loaded', { mrn: patient.mrn, name: patient.name });
+                        } else {
+                            Logger.warn('Failed to load patient file', { 
+                                filename: manifest.patients[index],
+                                error: result.reason 
+                            });
+                        }
+                    });
+
+                    this.loadAttempted = true;
+                    
+                    if (Object.keys(this.patients).length === 0) {
+                        Logger.warn('No patients loaded from files, using defaults');
+                        return this.loadDefaultPatients();
+                    }
+
+                    Logger.info('Patient loading complete', { totalPatients: Object.keys(this.patients).length });
+                    return this.patients;
+
+                } catch (error) {
+                    Logger.error('Error loading patient data', { error: error.message });
+                    this.loadError = error.message;
+                    this.loadAttempted = true;
+                    
+                    // Fall back to default patients
+                    return this.loadDefaultPatients();
+                }
+            }
+
+            /**
+             * Normalize patient data from new hierarchical format to flat format expected by UI
+             * Supports both old format (flat) and new format (hierarchical with demographics, etc.)
+             */
+            normalizePatientData(rawPatient) {
+                // If already in old format (has mrn and name at root), return as-is
+                if (rawPatient.mrn && rawPatient.name) {
+                    return rawPatient;
+                }
+                
+                // Transform new format to old format
+                const patient = {};
+                
+                // Demographics
+                if (rawPatient.demographics) {
+                    const demo = rawPatient.demographics;
+                    patient.mrn = demo.mrn;
+                    patient.name = `${demo.lastName}, ${demo.firstName}`;
+                    patient.dob = demo.dateOfBirth;
+                    patient.age = demo.age;
+                    patient.gender = demo.gender;
+                    patient.allergies = demo.allergies;
+                }
+                
+                // Admission
+                if (rawPatient.admission) {
+                    const adm = rawPatient.admission;
+                    patient.location = adm.location;
+                    patient.attending = adm.attendingPhysician;
+                    patient.admission = adm.admissionDate;
+                }
+                
+                // Medical History (convert array to comma-separated string)
+                if (rawPatient.medicalHistory && Array.isArray(rawPatient.medicalHistory)) {
+                    patient.medicalHistory = rawPatient.medicalHistory.join('; ');
+                }
+                
+                // Vital Signs - transform field names
+                if (rawPatient.vitalSigns && Array.isArray(rawPatient.vitalSigns)) {
+                    patient.vitals = rawPatient.vitalSigns.map(vs => ({
+                        datetime: vs.timestamp,
+                        temp: vs.temperature,
+                        hr: vs.heartRate,
+                        rr: vs.respiratoryRate,
+                        bp_sys: vs.bloodPressureSystolic,
+                        bp_dia: vs.bloodPressureDiastolic,
+                        spo2: vs.oxygenSaturation,
+                        avpu: vs.avpu,
+                        supplementalO2: vs.supplementalOxygen,
+                        newsScore: vs.newsScore,
+                        painScore: vs.painScore
+                    }));
+                }
+                
+                // Fluid Balance
+                if (rawPatient.fluidBalance && Array.isArray(rawPatient.fluidBalance)) {
+                    patient.fluidBalance = rawPatient.fluidBalance.map(fb => ({
+                        datetime: fb.timestamp,
+                        intake: fb.intake,
+                        output: fb.output,
+                        balance: fb.balance,
+                        ivFluidType: fb.ivFluidType
+                    }));
+                }
+                
+                // Medications - transform to expected format
+                if (rawPatient.medications && Array.isArray(rawPatient.medications)) {
+                    patient.medications = rawPatient.medications.map(med => ({
+                        name: med.name,
+                        dose: med.dose,
+                        route: med.route,
+                        frequency: med.frequency,
+                        lastGiven: med.administeredTime,
+                        prescriber: med.prescriber,
+                        administeredBy: med.administeredBy,
+                        status: med.status,
+                        scheduled: !med.frequency?.includes('PRN'),
+                        times: [] // Could parse from frequency if needed
+                    }));
+                }
+                
+                // Orders
+                if (rawPatient.orders && Array.isArray(rawPatient.orders)) {
+                    patient.orders = rawPatient.orders.map(order => ({
+                        type: order.type,
+                        description: order.description,
+                        orderedBy: order.orderedBy,
+                        orderedTime: order.orderedTime,
+                        priority: order.priority,
+                        status: order.status
+                    }));
+                }
+                
+                // Lab Results - transform nested structure
+                if (rawPatient.labResults) {
+                    patient.results = {
+                        haematology: [],
+                        biochemistry: [],
+                        bloodGas: [],
+                        coagulation: [],
+                        urinalysis: []
+                    };
+                    
+                    // Transform haematology
+                    if (rawPatient.labResults.haematology) {
+                        for (const [key, data] of Object.entries(rawPatient.labResults.haematology)) {
+                            if (data && data.value !== undefined) {
+                                patient.results.haematology.push({
+                                    test: key,
+                                    value: data.value,
+                                    unit: data.unit,
+                                    normalRange: data.normalRange,
+                                    flag: data.flag
+                                });
+                            }
+                        }
+                    }
+                    
+                    // Transform biochemistry
+                    if (rawPatient.labResults.biochemistry) {
+                        for (const [key, data] of Object.entries(rawPatient.labResults.biochemistry)) {
+                            if (data && data.value !== undefined) {
+                                patient.results.biochemistry.push({
+                                    test: key,
+                                    value: data.value,
+                                    unit: data.unit,
+                                    normalRange: data.normalRange,
+                                    flag: data.flag
+                                });
+                            }
+                        }
+                    }
+                    
+                    // Transform blood gas
+                    if (rawPatient.labResults.bloodGas) {
+                        for (const [key, data] of Object.entries(rawPatient.labResults.bloodGas)) {
+                            if (data && data.value !== undefined) {
+                                patient.results.bloodGas.push({
+                                    test: key,
+                                    value: data.value,
+                                    unit: data.unit,
+                                    normalRange: data.normalRange,
+                                    flag: data.flag
+                                });
+                            }
+                        }
+                    }
+                    
+                    // Transform coagulation
+                    if (rawPatient.labResults.coagulation) {
+                        for (const [key, data] of Object.entries(rawPatient.labResults.coagulation)) {
+                            if (data && data.value !== undefined) {
+                                patient.results.coagulation.push({
+                                    test: key,
+                                    value: data.value,
+                                    unit: data.unit,
+                                    normalRange: data.normalRange,
+                                    flag: data.flag
+                                });
+                            }
+                        }
+                    }
+                    
+                    // Transform urinalysis
+                    if (rawPatient.labResults.urinalysis) {
+                        for (const [key, data] of Object.entries(rawPatient.labResults.urinalysis)) {
+                            if (data && data.value !== undefined) {
+                                patient.results.urinalysis.push({
+                                    test: key,
+                                    value: data.value,
+                                    unit: data.unit,
+                                    normalRange: data.normalRange,
+                                    flag: data.flag
+                                });
+                            }
+                        }
+                    }
+                    
+                    // Transform cardiac if present
+                    if (rawPatient.labResults.cardiac) {
+                        patient.results.cardiac = [];
+                        for (const [key, data] of Object.entries(rawPatient.labResults.cardiac)) {
+                            if (data && data.value !== undefined) {
+                                patient.results.cardiac.push({
+                                    test: key,
+                                    value: data.value,
+                                    unit: data.unit,
+                                    normalRange: data.normalRange,
+                                    flag: data.flag
+                                });
+                            }
+                        }
+                    }
+                }
+                
+                // Clinical Notes - transform structure
+                if (rawPatient.clinicalNotes && Array.isArray(rawPatient.clinicalNotes)) {
+                    patient.notes = rawPatient.clinicalNotes.map((note, idx) => ({
+                        id: `note-${idx}`,
+                        title: `${note.noteType} - ${note.role}`,
+                        author: note.author,
+                        datetime: note.timestamp,
+                        content: note.content,
+                        noteType: note.noteType,
+                        role: note.role
+                    }));
+                }
+                
+                // Ensure all required arrays exist (for old format compatibility)
+                patient.vitals = patient.vitals || [];
+                patient.fluidBalance = patient.fluidBalance || [];
+                patient.medications = patient.medications || [];
+                patient.orders = patient.orders || [];
+                patient.results = patient.results || { haematology: [], biochemistry: [] };
+                patient.notes = patient.notes || [];
+                
+                return patient;
+            }
+
+            async loadPatientFile(filename) {
+                try {
+                    const response = await fetch(`patients/${filename}`);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+
+                    const rawPatient = await response.json();
+                    
+                    // Normalize to expected format (supports both old and new formats)
+                    const patient = this.normalizePatientData(rawPatient);
+                    
+                    // Validate patient data has required fields
+                    if (!patient.mrn || !patient.name) {
+                        throw new Error('Invalid patient data: missing mrn or name');
+                    }
+
+                    return patient;
+
+                } catch (error) {
+                    Logger.error('Error loading patient file', { filename, error: error.message });
+                    throw error;
+                }
+            }
+
+            loadDefaultPatients() {
+                Logger.info('Loading default embedded patients');
+                
+                this.patients = {
+                    'PAH599806': {
+                        mrn: 'PAH599806',
+                        name: 'CAMPBELL, NATALIE',
+                        dob: '16-Nov-1967',
+                        age: '58 years',
+                        gender: 'F',
+                        allergies: 'penicillin',
+                        location: 'PAH 01 1 WMAPU: S7: 01',
+                        attending: 'KHOO, KEAN CHEANG SMO',
+                        admission: '28-Dec-2025 23:27:48 AEST',
+                        
+                        vitals: [
+                            { datetime: '31-Dec-2025 16:00', temp: '36.7', hr: '78', rr: '15', bp_sys: '122', bp_dia: '76', spo2: '99', avpu: 'Alert' },
+                            { datetime: '31-Dec-2025 14:00', temp: '36.8', hr: '82', rr: '16', bp_sys: '125', bp_dia: '78', spo2: '98', avpu: 'Alert' },
+                            { datetime: '31-Dec-2025 10:00', temp: '37.1', hr: '88', rr: '18', bp_sys: '132', bp_dia: '82', spo2: '97', avpu: 'Alert' },
+                            { datetime: '31-Dec-2025 06:00', temp: '36.9', hr: '76', rr: '16', bp_sys: '128', bp_dia: '80', spo2: '98', avpu: 'Alert' },
+                            { datetime: '31-Dec-2025 02:00', temp: '37.0', hr: '80', rr: '17', bp_sys: '130', bp_dia: '81', spo2: '97', avpu: 'Alert' }
+                        ],
+                        
+                        fluidBalance: [
+                            { datetime: '31-Dec-2025 14:00', intake_oral: 200, intake_iv: 500, output_urine: 450, output_other: 0 },
+                            { datetime: '31-Dec-2025 10:00', intake_oral: 150, intake_iv: 500, output_urine: 400, output_other: 0 },
+                            { datetime: '31-Dec-2025 06:00', intake_oral: 100, intake_iv: 500, output_urine: 380, output_other: 0 }
+                        ],
+                        
+                        medications: [
+                            { name: 'furosemide', dose: '40 mg', route: 'Oral', frequency: 'THREE TIMES a day', scheduled: true, times: ['0800', '1400', '2000'], lastGiven: '31-Dec-2025 08:00' },
+                            { name: 'ramipril', dose: '5 mg', route: 'Oral', frequency: 'TWICE a day', scheduled: true, times: ['0800', '2000'], lastGiven: '31-Dec-2025 08:00' },
+                            { name: 'paracetamol', dose: '1 g', route: 'Oral', frequency: 'PRN (up to 4 times daily)', scheduled: false, times: [], lastGiven: '30-Dec-2025 22:00' }
+                        ],
+                        
+                        orders: [
+                            { id: 'ORD001', type: 'Laboratory', name: 'Full Blood Count (FBC)', status: 'Completed', ordered: '31-Dec-2025 15:07', signed: true },
+                            { id: 'ORD002', type: 'Laboratory', name: 'Urea Electrolytes Creatinine (UEC)', status: 'Completed', ordered: '31-Dec-2025 15:07', signed: true }
+                        ],
+                        
+                        results: {
+                            haematology: [
+                                { test: 'Haemoglobin', value: '112', unit: 'g/L', range: '115-165', flag: 'Low' },
+                                { test: 'White Cell Count', value: '8.4', unit: '×10⁹/L', range: '4.0-11.0', flag: '' },
+                                { test: 'Platelets', value: '245', unit: '×10⁹/L', range: '150-400', flag: '' },
+                                { test: 'Neutrophils', value: '5.2', unit: '×10⁹/L', range: '2.0-7.5', flag: '' },
+                            ],
+                            biochemistry: [
+                                { test: 'Sodium', value: '138', unit: 'mmol/L', range: '135-145', flag: '' },
+                                { test: 'Potassium', value: '4.2', unit: 'mmol/L', range: '3.5-5.0', flag: '' },
+                                { test: 'Creatinine', value: '95', unit: 'µmol/L', range: '50-120', flag: '' },
+                                { test: 'eGFR', value: '62', unit: 'mL/min', range: '>60', flag: 'Low' },
+                            ]
+                        },
+                        
+                        notes: [
+                            {
+                                id: 'NOTE001',
+                                type: 'Progress Notes Inpatient',
+                                title: 'MARU RN AM',
+                                author: 'LODGE, THOMAS CHANDLER RN',
+                                datetime: '31-Dec-2025 11:01:55 AEST',
+                                content: `Taken over cares @0700
+Pt alert and orientated upon interaction
+Tolerating oral food/fluid
+PIVC intact, patent and flushing
+Vital signs as per interactive view
+PIVC needs patience and flushing
+Family in through out day
+RN concerns voiced ATOR`
+                            }
+                        ]
+                    }
+                };
+
+                return this.patients;
+            }
+
+            getPatients() {
+                return this.patients;
+            }
+
+            getPatient(mrn) {
+                return this.patients[mrn];
+            }
+        }
+
+        // Global patient loader instance
+        const patientLoader = new PatientDataLoader();
+
+        // ====================================================================
+        // AUTOCOMPLETE COMPONENT
+        // ====================================================================
+        function Autocomplete({ value, onChange, onSelect, placeholder, items, filterKey = 'name' }) {
+            const [isOpen, setIsOpen] = useState(false);
+            const [selectedIndex, setSelectedIndex] = useState(0);
+            const containerRef = useRef(null);
+
+            const filteredItems = items.filter(item => {
+                const searchValue = value.toLowerCase();
+                return item[filterKey].toLowerCase().includes(searchValue) ||
+                       (item.type && item.type.toLowerCase().includes(searchValue));
+            });
+
+            useEffect(() => {
+                function handleClickOutside(event) {
+                    if (containerRef.current && !containerRef.current.contains(event.target)) {
+                        setIsOpen(false);
+                    }
+                }
+                document.addEventListener('mousedown', handleClickOutside);
+                return () => document.removeEventListener('mousedown', handleClickOutside);
+            }, []);
+
+            const handleKeyDown = (e) => {
+                if (!isOpen && filteredItems.length > 0) {
+                    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                        setIsOpen(true);
+                    }
+                    return;
+                }
+
+                switch (e.key) {
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        setSelectedIndex(prev => 
+                            prev < filteredItems.length - 1 ? prev + 1 : prev
+                        );
+                        break;
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        setSelectedIndex(prev => prev > 0 ? prev - 1 : 0);
+                        break;
+                    case 'Enter':
+                        e.preventDefault();
+                        if (filteredItems[selectedIndex]) {
+                            handleSelect(filteredItems[selectedIndex]);
+                        }
+                        break;
+                    case 'Escape':
+                        setIsOpen(false);
+                        break;
+                }
+            };
+
+            const handleSelect = (item) => {
+                onSelect(item);
+                setIsOpen(false);
+                setSelectedIndex(0);
+            };
+
+            return (
+                <div className="autocomplete-container" ref={containerRef}>
+                    <input
+                        type="text"
+                        className="autocomplete-input"
+                        value={value}
+                        onChange={(e) => {
+                            onChange(e.target.value);
+                            setIsOpen(true);
+                            setSelectedIndex(0);
+                        }}
+                        onFocus={() => setIsOpen(true)}
+                        onKeyDown={handleKeyDown}
+                        placeholder={placeholder}
+                    />
+                    {isOpen && filteredItems.length > 0 && (
+                        <div className="autocomplete-dropdown">
+                            {filteredItems.map((item, index) => (
+                                <div
+                                    key={index}
+                                    className={`autocomplete-item ${index === selectedIndex ? 'selected' : ''}`}
+                                    onClick={() => handleSelect(item)}
+                                    onMouseEnter={() => setSelectedIndex(index)}
+                                >
+                                    {item[filterKey]}
+                                    {item.type && (
+                                        <span className="autocomplete-type">({item.type})</span>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // ====================================================================
+        // VITAL SIGNS GRAPH COMPONENT
+        // ====================================================================
+        function VitalSignGraph({ title, data, parameter, normalRange, unit }) {
+            const canvasRef = useRef(null);
+
+            useEffect(() => {
+                if (!canvasRef.current || !data || data.length === 0) return;
+
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                const width = canvas.width;
+                const height = canvas.height;
+
+                ctx.clearRect(0, 0, width, height);
+
+                const values = data.map(d => parseFloat(d[parameter])).reverse();
+                const maxVal = Math.max(...values, normalRange.max);
+                const minVal = Math.min(...values, normalRange.min);
+                const range = maxVal - minVal;
+                const padding = range * 0.1;
+
+                const drawZone = (yStart, yEnd, color) => {
+                    const y1 = height - ((yStart - (minVal - padding)) / (range + 2 * padding)) * height;
+                    const y2 = height - ((yEnd - (minVal - padding)) / (range + 2 * padding)) * height;
+                    ctx.fillStyle = color;
+                    ctx.fillRect(0, y2, width, y1 - y2);
+                };
+
+                drawZone(maxVal + padding, normalRange.max, 'rgba(255, 182, 193, 0.3)');
+                drawZone(normalRange.max, normalRange.min, 'rgba(255, 255, 224, 0.3)');
+                drawZone(normalRange.min, minVal - padding, 'rgba(255, 182, 193, 0.3)');
+
+                ctx.strokeStyle = '#e0e0e0';
+                ctx.lineWidth = 1;
+                for (let i = 0; i <= 4; i++) {
+                    const y = (height / 4) * i;
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(width, y);
+                    ctx.stroke();
+                }
+
+                ctx.strokeStyle = '#0066b2';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+
+                values.forEach((val, i) => {
+                    const x = (width / (values.length - 1)) * i;
+                    const y = height - ((val - (minVal - padding)) / (range + 2 * padding)) * height;
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                });
+
+                ctx.stroke();
+
+                values.forEach((val, i) => {
+                    const x = (width / (values.length - 1)) * i;
+                    const y = height - ((val - (minVal - padding)) / (range + 2 * padding)) * height;
+                    
+                    ctx.fillStyle = (val < normalRange.min || val > normalRange.max) ? '#dc3545' : '#0066b2';
+                    ctx.beginPath();
+                    ctx.arc(x, y, 4, 0, 2 * Math.PI);
+                    ctx.fill();
+                });
+
+            }, [data, parameter, normalRange]);
+
+            return (
+                <div className="vital-graph">
+                    <div className="graph-title">{title} ({unit})</div>
+                    <canvas 
+                        ref={canvasRef} 
+                        className="graph-canvas"
+                        width={800}
+                        height={120}
+                    />
+                </div>
+            );
+        }
+
+        // ====================================================================
+        // MAIN APP COMPONENT
+        // ====================================================================
+        function EMRSimulation() {
+            const [patients, setPatients] = useState({});
+            const [loading, setLoading] = useState(true);
+            const [loadError, setLoadError] = useState(null);
+            const [currentPatient, setCurrentPatient] = useState(null);
+            const [currentView, setCurrentView] = useState('search');
+            const [searchQuery, setSearchQuery] = useState('');
+            const [orderSearchQuery, setOrderSearchQuery] = useState('');
+            const [newOrder, setNewOrder] = useState({
+                type: 'Laboratory',
+                name: '',
+                priority: 'Routine'
+            });
+
+            useEffect(() => {
+                Logger.info('EMR Simulation Application Initialized');
+                loadPatientData();
+            }, []);
+
+            const loadPatientData = async () => {
+                try {
+                    setLoading(true);
+                    const loadedPatients = await patientLoader.loadPatients();
+                    setPatients(loadedPatients);
+                    setLoading(false);
+                    Logger.info('Patient data loaded successfully', { count: Object.keys(loadedPatients).length });
+                } catch (error) {
+                    Logger.error('Failed to load patient data', { error: error.message });
+                    setLoadError(error.message);
+                    setLoading(false);
+                }
+            };
+
+            const loadPatient = (mrn) => {
+                try {
+                    Logger.info('Loading patient', { mrn });
+                    const patient = patients[mrn];
+                    
+                    if (patient) {
+                        setCurrentPatient(patient);
+                        setCurrentView('doctor-view');
+                        Logger.info('Patient loaded successfully', { mrn, name: patient.name });
+                    } else {
+                        Logger.warn('Patient not found', { mrn });
+                        alert('Patient not found');
+                    }
+                } catch (error) {
+                    Logger.error('Error loading patient', { mrn, error: error.message });
+                    alert('Error loading patient data');
+                }
+            };
+
+            const filteredPatients = Object.values(patients).filter(p => {
+                const query = searchQuery.toLowerCase();
+                return p.name.toLowerCase().includes(query) || 
+                       p.mrn.toLowerCase().includes(query);
+            });
+
+            const handleSelectTest = (test) => {
+                setNewOrder({
+                    ...newOrder,
+                    type: test.category,
+                    name: test.name
+                });
+                setOrderSearchQuery(test.name);
+            };
+
+            const handleAddOrder = () => {
+                try {
+                    if (!newOrder.name) {
+                        alert('Please specify order details');
+                        return;
+                    }
+
+                    const order = {
+                        id: `ORD${String(currentPatient.orders.length + 1).padStart(3, '0')}`,
+                        type: newOrder.type,
+                        name: newOrder.name,
+                        status: 'Pending Signature',
+                        ordered: new Date().toLocaleString('en-AU', { 
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        }),
+                        signed: false
+                    };
+
+                    currentPatient.orders.push(order);
+                    Logger.info('Order added', { orderId: order.id, patientMrn: currentPatient.mrn });
+                    
+                    setNewOrder({ type: 'Laboratory', name: '', priority: 'Routine' });
+                    setOrderSearchQuery('');
+                    alert('Order added successfully');
+                } catch (error) {
+                    Logger.error('Error adding order', { error: error.message });
+                    alert('Error adding order');
+                }
+            };
+
+            const handleSignOrder = (orderId) => {
+                try {
+                    const order = currentPatient.orders.find(o => o.id === orderId);
+                    if (order) {
+                        order.signed = true;
+                        order.status = 'Active';
+                        Logger.info('Order signed', { orderId, patientMrn: currentPatient.mrn });
+                        alert('Order signed successfully');
+                    }
+                } catch (error) {
+                    Logger.error('Error signing order', { orderId, error: error.message });
+                    alert('Error signing order');
+                }
+            };
+
+            if (loading) {
+                return (
+                    <div className="loading">
+                        <div className="loading-spinner"></div>
+                        <div>Loading patient data...</div>
+                    </div>
+                );
+            }
+
+            if (loadError) {
+                return (
+                    <div className="error-message">
+                        <h3>Error Loading Patient Data</h3>
+                        <p>{loadError}</p>
+                        <p style={{ marginTop: '10px' }}>
+                            Default patient data has been loaded. To use external patient files, 
+                            create a <code>patients/</code> directory with a <code>patient-list.json</code> manifest.
+                        </p>
+                    </div>
+                );
+            }
+
+            if (currentView === 'search') {
+                return (
+                    <div className="patient-search">
+                        <h2>PowerChart Organizer - Patient Search</h2>
+                        <input 
+                            type="text"
+                            className="search-input"
+                            placeholder="Enter patient name or MRN..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            autoFocus
+                        />
+                        <div className="patient-list">
+                            {filteredPatients.length === 0 ? (
+                                <div style={{ padding: '20px', textAlign: 'center', color: '#999' }}>
+                                    No patients found
+                                </div>
+                            ) : (
+                                filteredPatients.map(patient => (
+                                    <div 
+                                        key={patient.mrn}
+                                        className="patient-list-item"
+                                        onClick={() => loadPatient(patient.mrn)}
+                                    >
+                                        <div style={{ fontWeight: '600', marginBottom: '4px' }}>
+                                            {patient.name}
+                                        </div>
+                                        <div style={{ fontSize: '10px', color: '#666' }}>
+                                            MRN: {patient.mrn} | DOB: {patient.dob} | {patient.gender}
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <>
+                    <TopNav onChangePatient={() => {
+                        setCurrentPatient(null);
+                        setCurrentView('search');
+                        setSearchQuery('');
+                    }} />
+                    
+                    <PatientBanner patient={currentPatient} />
+                    
+                    <div className="main-container">
+                        <Sidebar 
+                            currentView={currentView} 
+                            onViewChange={setCurrentView} 
+                        />
+                        
+                        <div className="content-area">
+                            {currentView === 'doctor-view' && <DoctorView patient={currentPatient} />}
+                            {currentView === 'vitals' && <VitalsView patient={currentPatient} />}
+                            {currentView === 'vitals-graph' && <VitalsGraphView patient={currentPatient} />}
+                            {currentView === 'fluid-balance' && <FluidBalanceView patient={currentPatient} />}
+                            {currentView === 'mar' && <MARView patient={currentPatient} />}
+                            {currentView === 'orders' && (
+                                <OrdersView 
+                                    patient={currentPatient}
+                                    orderSearchQuery={orderSearchQuery}
+                                    setOrderSearchQuery={setOrderSearchQuery}
+                                    newOrder={newOrder}
+                                    setNewOrder={setNewOrder}
+                                    onSelectTest={handleSelectTest}
+                                    onAddOrder={handleAddOrder}
+                                    onSignOrder={handleSignOrder}
+                                />
+                            )}
+                            {currentView === 'results' && <ResultsView patient={currentPatient} />}
+                            {currentView === 'documentation' && <DocumentationView patient={currentPatient} />}
+                        </div>
+                    </div>
+                    
+                    <StatusBar patient={currentPatient} />
+                </>
+            );
+        }
+
+        // ====================================================================
+        // SUB-COMPONENTS (TopNav, PatientBanner, Sidebar, etc.)
+        // [Component code continues as before - keeping the same structure]
+        // ====================================================================
+
+        function TopNav({ onChangePatient }) {
+            return (
+                <div className="top-nav">
+                    <div className="top-nav-item">Task</div>
+                    <div className="top-nav-item">Edit</div>
+                    <div className="top-nav-item">View</div>
+                    <div className="top-nav-item" onClick={onChangePatient}>Patient</div>
+                    <div className="top-nav-item">Chart</div>
+                    <div className="top-nav-item">Notifications</div>
+                    <div className="top-nav-item">Options</div>
+                    <div className="top-nav-item">Help</div>
+                </div>
+            );
+        }
+
+        function PatientBanner({ patient }) {
+            return (
+                <div className="patient-banner">
+                    <div className="patient-banner-left">
+                        <div className="patient-name">{patient.name}</div>
+                        <div className="patient-detail">
+                            <div className="patient-detail-item">
+                                <span className="patient-detail-label">URN-PAH:</span>
+                                <span>{patient.mrn}</span>
+                            </div>
+                            <div className="patient-detail-item">
+                                <span className="patient-detail-label">DOB:</span>
+                                <span>{patient.dob}</span>
+                            </div>
+                            <div className="patient-detail-item">
+                                <span className="patient-detail-label">{patient.age}</span>
+                            </div>
+                        </div>
+                        <div className="patient-detail">
+                            <div className="patient-detail-item">
+                                <span className="patient-detail-label">Allergies:</span>
+                                <span>{patient.allergies}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="patient-banner-right">
+                        {patient.admission && (
+                            <>
+                                <div className="patient-detail">
+                                    <div className="patient-detail-item">
+                                        <span className="patient-detail-label">Inpatient</span>
+                                        <span>[{patient.admission}]</span>
+                                    </div>
+                                </div>
+                                <div className="patient-detail">
+                                    <div className="patient-detail-item">
+                                        <span className="patient-detail-label">Location:</span>
+                                        <span>{patient.location}</span>
+                                    </div>
+                                </div>
+                                <div className="patient-detail">
+                                    <div className="patient-detail-item">
+                                        <span className="patient-detail-label">Attending Clinician:</span>
+                                        <span>{patient.attending}</span>
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        function Sidebar({ currentView, onViewChange }) {
+            const menuItems = [
+                { id: 'doctor-view', label: 'Doctor View', section: 'Menu' },
+                { id: 'vitals', label: 'Managing Deterioration', section: 'Menu' },
+                { id: 'vitals-graph', label: 'Vitals - Graphical', section: 'Menu' },
+                { id: 'fluid-balance', label: 'Fluid Balance', section: 'Menu' },
+                { id: 'orders', label: 'Orders', section: 'Menu' },
+                { id: 'results', label: 'Results', section: 'Menu' },
+                { id: 'documentation', label: 'Documentation', section: 'Menu' },
+                { id: 'mar', label: 'MAR', section: 'Menu' },
+            ];
+
+            const sections = {};
+            menuItems.forEach(item => {
+                if (!sections[item.section]) sections[item.section] = [];
+                sections[item.section].push(item);
+            });
+
+            return (
+                <div className="sidebar">
+                    {Object.entries(sections).map(([section, items]) => (
+                        <div key={section} className="sidebar-section">
+                            <div className="sidebar-header">▼ {section}</div>
+                            {items.map(item => (
+                                <div
+                                    key={item.id}
+                                    className={`sidebar-item ${currentView === item.id ? 'active' : ''}`}
+                                    onClick={() => onViewChange(item.id)}
+                                >
+                                    {item.label}
+                                </div>
+                            ))}
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+
+        // Simplified view components - keeping the same structure as before
+        function DoctorView({ patient }) {
+            const [expandedNote, setExpandedNote] = useState(null);
+            return (
+                <>
+                    <div className="content-header">🏠 Doctor View</div>
+                    <div className="content-body">
+                        <div className="vitals-chart mb-10">
+                            <div className="chart-header">EW Score Table</div>
+                            {patient.vitals.length > 0 ? (
+                                <div className="chart-grid" style={{ gridTemplateColumns: '120px repeat(3, 1fr)' }}>
+                                    <div className="chart-cell header">Parameter</div>
+                                    {patient.vitals.slice(0, 3).map((v, i) => (
+                                        <div key={i} className="chart-cell header">{v.datetime}</div>
+                                    ))}
+                                    <div className="chart-cell label">Temperature</div>
+                                    {patient.vitals.slice(0, 3).map((v, i) => (
+                                        <div key={i} className="chart-cell">{v.temp}°C</div>
+                                    ))}
+                                    <div className="chart-cell label">Heart Rate</div>
+                                    {patient.vitals.slice(0, 3).map((v, i) => (
+                                        <div key={i} className="chart-cell">{v.hr} bpm</div>
+                                    ))}
+                                    <div className="chart-cell label">Resp Rate</div>
+                                    {patient.vitals.slice(0, 3).map((v, i) => (
+                                        <div key={i} className="chart-cell">{v.rr} /min</div>
+                                    ))}
+                                    <div className="chart-cell label">Blood Pressure</div>
+                                    {patient.vitals.slice(0, 3).map((v, i) => (
+                                        <div key={i} className="chart-cell">{v.bp_sys}/{v.bp_dia}</div>
+                                    ))}
+                                    <div className="chart-cell label">SpO2</div>
+                                    {patient.vitals.slice(0, 3).map((v, i) => (
+                                        <div key={i} className="chart-cell">{v.spo2}%</div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-muted" style={{ padding: '10px' }}>No vital signs recorded</div>
+                            )}
+                        </div>
+                        <div className="vitals-chart mb-10">
+                            <div className="chart-header">Recent Clinical Notes</div>
+                            <div className="notes-list">
+                                {patient.notes.length > 0 ? (
+                                    patient.notes.slice(0, 3).map(note => (
+                                        <div key={note.id} className="note-item">
+                                            <div className="note-header" onClick={() => setExpandedNote(expandedNote === note.id ? null : note.id)}>
+                                                <div>
+                                                    <div className="note-title">{note.title}</div>
+                                                    <div className="note-meta">{note.author} - {note.datetime}</div>
+                                                </div>
+                                                <div>{expandedNote === note.id ? '▼' : '▶'}</div>
+                                            </div>
+                                            <div className={`note-body ${expandedNote === note.id ? '' : 'collapsed'}`}>{note.content}</div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="text-muted" style={{ padding: '10px' }}>No clinical notes available</div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </>
+            );
+        }
+
+        function VitalsView({ patient }) {
+            return (
+                <>
+                    <div className="content-header">📊 Managing Deterioration - Vital Signs</div>
+                    <div className="content-body">
+                        <div className="vitals-chart">
+                            <div className="chart-header">Vital Signs Flow Sheet</div>
+                            {patient.vitals.length > 0 ? (
+                                <table className="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date/Time</th><th>Temp (°C)</th><th>HR (bpm)</th><th>RR (/min)</th>
+                                            <th>BP (mmHg)</th><th>SpO₂ (%)</th><th>AVPU</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {patient.vitals.map((vital, idx) => (
+                                            <tr key={idx}>
+                                                <td>{vital.datetime}</td><td>{vital.temp}</td><td>{vital.hr}</td>
+                                                <td>{vital.rr}</td><td>{vital.bp_sys}/{vital.bp_dia}</td>
+                                                <td>{vital.spo2}</td><td>{vital.avpu}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            ) : (
+                                <div className="text-muted" style={{ padding: '20px', textAlign: 'center' }}>No vital signs recorded</div>
+                            )}
+                        </div>
+                    </div>
+                </>
+            );
+        }
+
+        function VitalsGraphView({ patient }) {
+            if (!patient.vitals || patient.vitals.length === 0) {
+                return (
+                    <>
+                        <div className="content-header">📈 Adult Q-ADDS - Graphical View</div>
+                        <div className="content-body">
+                            <div className="text-muted" style={{ padding: '20px', textAlign: 'center' }}>
+                                No vital signs data available for graphical display
+                            </div>
+                        </div>
+                    </>
+                );
+            }
+
+            return (
+                <>
+                    <div className="content-header">📈 Adult Q-ADDS - Graphical View</div>
+                    <div className="content-body">
+                        <div className="vitals-graph-container">
+                            <VitalSignGraph title="RR (bpm)" data={patient.vitals} parameter="rr" normalRange={{ min: 12, max: 20 }} unit="/min" />
+                            <VitalSignGraph title="SpO2 (%)" data={patient.vitals} parameter="spo2" normalRange={{ min: 95, max: 100 }} unit="%" />
+                            <VitalSignGraph title="Blood Pressure (SBP)" data={patient.vitals} parameter="bp_sys" normalRange={{ min: 100, max: 140 }} unit="mmHg" />
+                            <VitalSignGraph title="Heart Rate" data={patient.vitals} parameter="hr" normalRange={{ min: 60, max: 100 }} unit="bpm" />
+                        </div>
+                    </div>
+                </>
+            );
+        }
+
+        function FluidBalanceView({ patient }) {
+            const calculateTotals = () => {
+                if (!patient.fluidBalance || patient.fluidBalance.length === 0) {
+                    return { totalIntake: 0, totalOutput: 0, balance: 0 };
+                }
+                const totalIntake = patient.fluidBalance.reduce((sum, e) => sum + e.intake_oral + e.intake_iv, 0);
+                const totalOutput = patient.fluidBalance.reduce((sum, e) => sum + e.output_urine + e.output_other, 0);
+                return { totalIntake, totalOutput, balance: totalIntake - totalOutput };
+            };
+
+            const { totalIntake, totalOutput, balance } = calculateTotals();
+
+            return (
+                <>
+                    <div className="content-header">💧 Fluid Balance</div>
+                    <div className="content-body">
+                        <div className="fluid-summary">
+                            <div className="fluid-card positive">
+                                <div className="fluid-card-label">Total Intake (24h)</div>
+                                <div className="fluid-card-value">{totalIntake}<span className="fluid-card-unit"> mL</span></div>
+                            </div>
+                            <div className="fluid-card negative">
+                                <div className="fluid-card-label">Total Output (24h)</div>
+                                <div className="fluid-card-value">{totalOutput}<span className="fluid-card-unit"> mL</span></div>
+                            </div>
+                            <div className={`fluid-card ${balance > 0 ? 'positive' : balance < 0 ? 'negative' : 'neutral'}`}>
+                                <div className="fluid-card-label">Net Balance (24h)</div>
+                                <div className="fluid-card-value">{balance > 0 ? '+' : ''}{balance}<span className="fluid-card-unit"> mL</span></div>
+                            </div>
+                        </div>
+                        <div className="vitals-chart">
+                            <div className="chart-header">Fluid Balance Record</div>
+                            {patient.fluidBalance && patient.fluidBalance.length > 0 ? (
+                                <table className="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date/Time</th><th>Oral Intake (mL)</th><th>IV Intake (mL)</th><th>Total Intake (mL)</th>
+                                            <th>Urine Output (mL)</th><th>Other Output (mL)</th><th>Total Output (mL)</th><th>Balance (mL)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {patient.fluidBalance.map((entry, idx) => {
+                                            const intake = entry.intake_oral + entry.intake_iv;
+                                            const output = entry.output_urine + entry.output_other;
+                                            const entryBalance = intake - output;
+                                            return (
+                                                <tr key={idx}>
+                                                    <td>{entry.datetime}</td><td>{entry.intake_oral}</td><td>{entry.intake_iv}</td>
+                                                    <td style={{ fontWeight: '600' }}>{intake}</td><td>{entry.output_urine}</td>
+                                                    <td>{entry.output_other}</td><td style={{ fontWeight: '600' }}>{output}</td>
+                                                    <td className={entryBalance > 0 ? 'text-success' : entryBalance < 0 ? 'text-danger' : ''}>
+                                                        {entryBalance > 0 ? '+' : ''}{entryBalance}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            ) : (
+                                <div className="text-muted" style={{ padding: '20px', textAlign: 'center' }}>No fluid balance data recorded</div>
+                            )}
+                        </div>
+                    </div>
+                </>
+            );
+        }
+
+        function MARView({ patient }) {
+            return (
+                <>
+                    <div className="content-header">💊 Medication Administration Record</div>
+                    <div className="content-tabs"><div className="content-tab active">All Medications (System)</div></div>
+                    <div className="content-body">
+                        {patient.medications.length > 0 ? (
+                            <table className="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Medication</th><th>Dose</th><th>Route</th><th>Frequency</th>
+                                        <th>Schedule</th><th>Last Given</th><th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {patient.medications.map((med, idx) => (
+                                        <tr key={idx}>
+                                            <td style={{ fontWeight: '600' }}>{med.name}</td><td>{med.dose}</td><td>{med.route}</td>
+                                            <td>{med.frequency}</td><td>{med.scheduled ? med.times.join(', ') : 'PRN'}</td>
+                                            <td>{med.lastGiven || '-'}</td><td><span className="text-success">● Active</span></td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        ) : (
+                            <div className="text-muted" style={{ padding: '20px', textAlign: 'center' }}>No medications prescribed</div>
+                        )}
+                    </div>
+                </>
+            );
+        }
+
+        function OrdersView({ patient, orderSearchQuery, setOrderSearchQuery, newOrder, setNewOrder, onSelectTest, onAddOrder, onSignOrder }) {
+            return (
+                <>
+                    <div className="content-header">📋 Orders</div>
+                    <div className="content-tabs">
+                        <div className="content-tab active">Document in Plan</div>
+                        <div className="content-tab">Manage Infusions</div>
+                    </div>
+                    <div className="content-body">
+                        <div className="order-entry">
+                            <h3 style={{ marginBottom: '15px', fontSize: '13px' }}>Add New Order</h3>
+                            <div className="form-group">
+                                <label className="form-label">Search for test or procedure:</label>
+                                <Autocomplete
+                                    value={orderSearchQuery}
+                                    onChange={setOrderSearchQuery}
+                                    onSelect={onSelectTest}
+                                    placeholder="Type to search... (e.g., 'FBC', 'UEC', 'Troponin')"
+                                    items={LAB_TESTS}
+                                    filterKey="name"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Priority:</label>
+                                <select className="form-control" value={newOrder.priority} onChange={(e) => setNewOrder({...newOrder, priority: e.target.value})}>
+                                    <option>Routine</option>
+                                    <option>Urgent</option>
+                                    <option>STAT</option>
+                                </select>
+                            </div>
+                            <button className="btn btn-primary" onClick={onAddOrder} disabled={!newOrder.name}>Add Order</button>
+                        </div>
+                        <div className="mt-10">
+                            <h3 style={{ marginBottom: '10px', fontSize: '13px' }}>Current Orders</h3>
+                            {patient.orders.length > 0 ? (
+                                <table className="data-table">
+                                    <thead>
+                                        <tr><th>Order ID</th><th>Type</th><th>Order Name</th><th>Status</th><th>Ordered</th><th>Action</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        {patient.orders.map(order => (
+                                            <tr key={order.id}>
+                                                <td>{order.id}</td><td>{order.type}</td>
+                                                <td style={{ fontWeight: '600' }}>{order.name}</td>
+                                                <td>
+                                                    {order.signed ? (
+                                                        <span className="text-success">✓ {order.status}</span>
+                                                    ) : (
+                                                        <span className="text-warning">⚠ {order.status}</span>
+                                                    )}
+                                                </td>
+                                                <td>{order.ordered}</td>
+                                                <td>
+                                                    {!order.signed && (
+                                                        <button className="btn btn-primary" onClick={() => onSignOrder(order.id)}>Sign</button>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            ) : (
+                                <div className="text-muted" style={{ padding: '20px', textAlign: 'center' }}>No orders placed</div>
+                            )}
+                        </div>
+                    </div>
+                </>
+            );
+        }
+
+        function ResultsView({ patient }) {
+            return (
+                <>
+                    <div className="content-header">🔬 Results</div>
+                    <div className="content-tabs">
+                        <div className="content-tab active">Lab - Recent</div>
+                        <div className="content-tab">Lab - Extended</div>
+                        <div className="content-tab">Medical Imaging</div>
+                    </div>
+                    <div className="content-body">
+                        <div className="vitals-chart mb-10">
+                            <div className="chart-header">Haematology</div>
+                            {patient.results.haematology.length > 0 ? (
+                                <table className="data-table">
+                                    <thead>
+                                        <tr><th>Test</th><th>Result</th><th>Unit</th><th>Reference Range</th><th>Flag</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        {patient.results.haematology.map((result, idx) => (
+                                            <tr key={idx}>
+                                                <td>{result.test}</td>
+                                                <td className={result.flag ? 'text-danger' : ''}>{result.value}</td>
+                                                <td>{result.unit}</td><td>{result.range}</td>
+                                                <td className="text-danger">{result.flag}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            ) : (
+                                <div className="text-muted" style={{ padding: '10px' }}>No results available</div>
+                            )}
+                        </div>
+                        <div className="vitals-chart">
+                            <div className="chart-header">Biochemistry</div>
+                            {patient.results.biochemistry.length > 0 ? (
+                                <table className="data-table">
+                                    <thead>
+                                        <tr><th>Test</th><th>Result</th><th>Unit</th><th>Reference Range</th><th>Flag</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        {patient.results.biochemistry.map((result, idx) => (
+                                            <tr key={idx}>
+                                                <td>{result.test}</td>
+                                                <td className={result.flag ? 'text-danger' : ''}>{result.value}</td>
+                                                <td>{result.unit}</td><td>{result.range}</td>
+                                                <td className="text-danger">{result.flag}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            ) : (
+                                <div className="text-muted" style={{ padding: '10px' }}>No results available</div>
+                            )}
+                        </div>
+                    </div>
+                </>
+            );
+        }
+
+        function DocumentationView({ patient }) {
+            const [expandedNote, setExpandedNote] = useState(null);
+            return (
+                <>
+                    <div className="content-header">📝 Documentation</div>
+                    <div className="content-tabs"><div className="content-tab active">All</div></div>
+                    <div className="content-body">
+                        <div className="notes-list">
+                            {patient.notes.length > 0 ? (
+                                patient.notes.map(note => (
+                                    <div key={note.id} className="note-item">
+                                        <div className="note-header" onClick={() => setExpandedNote(expandedNote === note.id ? null : note.id)}>
+                                            <div>
+                                                <div className="note-title">{note.title}</div>
+                                                <div className="note-meta">{note.type} | {note.author} | {note.datetime}</div>
+                                            </div>
+                                            <div>{expandedNote === note.id ? '▼' : '▶'}</div>
+                                        </div>
+                                        <div className={`note-body ${expandedNote === note.id ? '' : 'collapsed'}`}>{note.content}</div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="text-muted" style={{ padding: '20px', textAlign: 'center' }}>No clinical documentation available</div>
+                            )}
+                        </div>
+                    </div>
+                </>
+            );
+        }
+
+        function StatusBar({ patient }) {
+            return (
+                <div className="status-bar">
+                    <div>P0239 WINGS 31 December 2025 {new Date().toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })}</div>
+                    <div>EMR Simulation - Training Mode</div>
+                </div>
+            );
+        }
+
+        // ====================================================================
+        // RENDER APPLICATION
+        // ====================================================================
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<EMRSimulation />);
+    </script>
+</body>
+</html>

@@ -1,0 +1,411 @@
+{
+  "MRN_TEMPLATE": {
+    "_instructions": "Copy this template and replace all values with your patient data. Remove this _instructions field before use.",
+    
+    "mrn": "MRN000001",
+    "name": "LASTNAME, FIRSTNAME",
+    "dob": "DD-MMM-YYYY",
+    "age": "XX years",
+    "gender": "M/F/Other",
+    "allergies": "List allergies or 'Allergies Not Recorded'",
+    "location": "Ward/Unit location",
+    "attending": "Attending physician name",
+    "admission": "DD-MMM-YYYY HH:MM:SS AEST",
+    
+    "vitals": [
+      {
+        "_note": "Add multiple vital sign entries in reverse chronological order (most recent first)",
+        "datetime": "DD-MMM-YYYY HH:MM",
+        "temp": "36.5",
+        "hr": "75",
+        "rr": "16",
+        "bp_sys": "120",
+        "bp_dia": "80",
+        "spo2": "98",
+        "avpu": "Alert/Voice/Pain/Unresponsive"
+      }
+    ],
+    
+    "medications": [
+      {
+        "_note": "Add all current medications",
+        "name": "medication name (lowercase)",
+        "dose": "dosage with units",
+        "route": "Oral/IV/IM/SC/etc",
+        "frequency": "Frequency description",
+        "scheduled": true,
+        "times": ["0800", "1400", "2000"],
+        "lastGiven": "DD-MMM-YYYY HH:MM or empty string"
+      },
+      {
+        "_note": "Example PRN medication",
+        "name": "paracetamol",
+        "dose": "1 g",
+        "route": "Oral",
+        "frequency": "PRN (up to 4 times daily)",
+        "scheduled": false,
+        "times": [],
+        "lastGiven": ""
+      }
+    ],
+    
+    "orders": [
+      {
+        "_note": "Add existing orders - new orders will be added through the UI",
+        "id": "ORD001",
+        "type": "Laboratory/Radiology/Medication/Consultation",
+        "name": "Order description",
+        "status": "Completed/Active/Pending",
+        "ordered": "DD-MMM-YYYY HH:MM",
+        "signed": true
+      }
+    ],
+    
+    "results": {
+      "haematology": [
+        {
+          "_note": "Add laboratory results - leave flag empty if normal",
+          "test": "Test name",
+          "value": "numeric value",
+          "unit": "units",
+          "range": "reference range",
+          "flag": "Low/High/Critical or empty"
+        },
+        {
+          "test": "Haemoglobin",
+          "value": "145",
+          "unit": "g/L",
+          "range": "115-165",
+          "flag": ""
+        },
+        {
+          "test": "White Cell Count",
+          "value": "7.2",
+          "unit": "×10⁹/L",
+          "range": "4.0-11.0",
+          "flag": ""
+        }
+      ],
+      "biochemistry": [
+        {
+          "test": "Sodium",
+          "value": "140",
+          "unit": "mmol/L",
+          "range": "135-145",
+          "flag": ""
+        },
+        {
+          "test": "Potassium",
+          "value": "4.0",
+          "unit": "mmol/L",
+          "range": "3.5-5.0",
+          "flag": ""
+        },
+        {
+          "test": "Creatinine",
+          "value": "80",
+          "unit": "µmol/L",
+          "range": "50-120",
+          "flag": ""
+        }
+      ]
+    },
+    
+    "notes": [
+      {
+        "_note": "Add clinical notes in reverse chronological order",
+        "id": "NOTE001",
+        "type": "Progress Notes Inpatient/Medical Progress Note/Nursing Note/etc",
+        "title": "Brief title for the note",
+        "author": "Author name and credentials",
+        "datetime": "DD-MMM-YYYY HH:MM:SS AEST",
+        "content": "Full text of the clinical note.\n\nUse \\n\\n for paragraph breaks.\nUse \\n for line breaks.\n\nYou can use multiple paragraphs."
+      }
+    ]
+  },
+
+  "EXAMPLE_SIMPLE_PATIENT": {
+    "_description": "A minimal patient example with just basic information",
+    
+    "mrn": "MRN000002",
+    "name": "SMITH, JOHN",
+    "dob": "15-Mar-1980",
+    "age": "45 years",
+    "gender": "M",
+    "allergies": "NKDA",
+    "location": "ED Resus Bay 2",
+    "attending": "DR SMITH, JANE",
+    "admission": "31-Dec-2025 14:30:00 AEST",
+    
+    "vitals": [
+      {
+        "datetime": "31-Dec-2025 15:00",
+        "temp": "37.2",
+        "hr": "88",
+        "rr": "18",
+        "bp_sys": "135",
+        "bp_dia": "85",
+        "spo2": "96",
+        "avpu": "Alert"
+      }
+    ],
+    
+    "medications": [
+      {
+        "name": "aspirin",
+        "dose": "100 mg",
+        "route": "Oral",
+        "frequency": "ONCE daily",
+        "scheduled": true,
+        "times": ["0800"],
+        "lastGiven": "31-Dec-2025 08:00"
+      }
+    ],
+    
+    "orders": [],
+    
+    "results": {
+      "haematology": [],
+      "biochemistry": []
+    },
+    
+    "notes": [
+      {
+        "id": "NOTE001",
+        "type": "Emergency Department Note",
+        "title": "Initial Assessment",
+        "author": "DR SMITH, JANE - Emergency Consultant",
+        "datetime": "31-Dec-2025 14:45:00 AEST",
+        "content": "45M presenting with chest pain.\n\nO/E: Alert and oriented. Cardiovascularly stable.\n\nPlan:\n- Serial ECGs\n- Cardiac enzymes\n- Observation"
+      }
+    ]
+  },
+
+  "EXAMPLE_COMPLEX_PATIENT": {
+    "_description": "A more complex patient with multiple entries",
+    
+    "mrn": "PAH123456",
+    "name": "JOHNSON, MARY",
+    "dob": "22-Aug-1955",
+    "age": "70 years",
+    "gender": "F",
+    "allergies": "Penicillin (rash), Morphine (nausea)",
+    "location": "Ward 3A Bed 12",
+    "attending": "PROF BROWN, ROBERT - Cardiology",
+    "admission": "29-Dec-2025 10:15:30 AEST",
+    
+    "vitals": [
+      {
+        "datetime": "31-Dec-2025 16:00",
+        "temp": "36.7",
+        "hr": "72",
+        "rr": "14",
+        "bp_sys": "128",
+        "bp_dia": "76",
+        "spo2": "99",
+        "avpu": "Alert"
+      },
+      {
+        "datetime": "31-Dec-2025 12:00",
+        "temp": "36.8",
+        "hr": "75",
+        "rr": "16",
+        "bp_sys": "130",
+        "bp_dia": "78",
+        "spo2": "98",
+        "avpu": "Alert"
+      },
+      {
+        "datetime": "31-Dec-2025 08:00",
+        "temp": "36.9",
+        "hr": "78",
+        "rr": "16",
+        "bp_sys": "132",
+        "bp_dia": "80",
+        "spo2": "98",
+        "avpu": "Alert"
+      },
+      {
+        "datetime": "31-Dec-2025 04:00",
+        "temp": "37.0",
+        "hr": "80",
+        "rr": "18",
+        "bp_sys": "135",
+        "bp_dia": "82",
+        "spo2": "97",
+        "avpu": "Alert"
+      }
+    ],
+    
+    "medications": [
+      {
+        "name": "metoprolol",
+        "dose": "50 mg",
+        "route": "Oral",
+        "frequency": "TWICE a day",
+        "scheduled": true,
+        "times": ["0800", "2000"],
+        "lastGiven": "31-Dec-2025 08:00"
+      },
+      {
+        "name": "atorvastatin",
+        "dose": "40 mg",
+        "route": "Oral",
+        "frequency": "ONCE a day at night",
+        "scheduled": true,
+        "times": ["2000"],
+        "lastGiven": "30-Dec-2025 20:00"
+      },
+      {
+        "name": "enoxaparin",
+        "dose": "40 mg",
+        "route": "SC",
+        "frequency": "ONCE a day",
+        "scheduled": true,
+        "times": ["0800"],
+        "lastGiven": "31-Dec-2025 08:00"
+      },
+      {
+        "name": "paracetamol",
+        "dose": "1 g",
+        "route": "Oral",
+        "frequency": "PRN (max 4 times daily)",
+        "scheduled": false,
+        "times": [],
+        "lastGiven": "30-Dec-2025 22:00"
+      }
+    ],
+    
+    "orders": [
+      {
+        "id": "ORD001",
+        "type": "Laboratory",
+        "name": "Full Blood Count",
+        "status": "Completed",
+        "ordered": "30-Dec-2025 06:00",
+        "signed": true
+      },
+      {
+        "id": "ORD002",
+        "type": "Laboratory",
+        "name": "Troponin",
+        "status": "Completed",
+        "ordered": "30-Dec-2025 06:00",
+        "signed": true
+      },
+      {
+        "id": "ORD003",
+        "type": "Radiology",
+        "name": "Chest X-Ray PA",
+        "status": "Completed",
+        "ordered": "29-Dec-2025 11:00",
+        "signed": true
+      },
+      {
+        "id": "ORD004",
+        "type": "Laboratory",
+        "name": "Lipid Profile",
+        "status": "Active",
+        "ordered": "31-Dec-2025 08:00",
+        "signed": true
+      }
+    ],
+    
+    "results": {
+      "haematology": [
+        {
+          "test": "Haemoglobin",
+          "value": "128",
+          "unit": "g/L",
+          "range": "115-165",
+          "flag": ""
+        },
+        {
+          "test": "White Cell Count",
+          "value": "6.8",
+          "unit": "×10⁹/L",
+          "range": "4.0-11.0",
+          "flag": ""
+        },
+        {
+          "test": "Platelets",
+          "value": "220",
+          "unit": "×10⁹/L",
+          "range": "150-400",
+          "flag": ""
+        },
+        {
+          "test": "Neutrophils",
+          "value": "4.2",
+          "unit": "×10⁹/L",
+          "range": "2.0-7.5",
+          "flag": ""
+        }
+      ],
+      "biochemistry": [
+        {
+          "test": "Sodium",
+          "value": "142",
+          "unit": "mmol/L",
+          "range": "135-145",
+          "flag": ""
+        },
+        {
+          "test": "Potassium",
+          "value": "4.1",
+          "unit": "mmol/L",
+          "range": "3.5-5.0",
+          "flag": ""
+        },
+        {
+          "test": "Creatinine",
+          "value": "75",
+          "unit": "µmol/L",
+          "range": "50-120",
+          "flag": ""
+        },
+        {
+          "test": "eGFR",
+          "value": "72",
+          "unit": "mL/min",
+          "range": ">60",
+          "flag": ""
+        },
+        {
+          "test": "Troponin I",
+          "value": "0.02",
+          "unit": "ng/mL",
+          "range": "<0.04",
+          "flag": ""
+        }
+      ]
+    },
+    
+    "notes": [
+      {
+        "id": "NOTE001",
+        "type": "Progress Notes Inpatient",
+        "title": "Cardiology Ward Round",
+        "author": "PROF BROWN, ROBERT - Cardiology Consultant",
+        "datetime": "31-Dec-2025 09:30:00 AEST",
+        "content": "Ward round review Day 3 post admission.\n\nPatient progressing well. Chest pain resolved. Serial troponins negative.\n\nContinue current medications.\nPlan for stress test tomorrow.\nAim for discharge day after tomorrow if stress test satisfactory.\n\nDiscussed with patient and family."
+      },
+      {
+        "id": "NOTE002",
+        "type": "Progress Notes Inpatient",
+        "title": "Nursing PM Shift",
+        "author": "WILSON, SARAH RN - Registered Nurse",
+        "datetime": "30-Dec-2025 20:00:00 AEST",
+        "content": "Evening shift handover.\n\nPatient comfortable. No chest pain reported since admission.\nVital signs stable and within normal parameters.\nMedications administered as charted.\nMobilising independently to bathroom.\nFamily visited this evening.\n\nPlan: Continue observations 4-hourly overnight."
+      },
+      {
+        "id": "NOTE003",
+        "type": "Medical Admission Note",
+        "title": "Admission via ED",
+        "author": "DR SMITH, JANE - Cardiology Registrar",
+        "datetime": "29-Dec-2025 11:00:00 AEST",
+        "content": "Presenting Complaint:\n70F presenting with central chest pain, radiating to left arm, 3 hours duration.\n\nHistory of Presenting Illness:\nOnset at rest this morning. Associated with nausea, no vomiting. Denies SOB. Pain 6/10 intensity.\n\nPast Medical History:\nHypertension, Hyperlipidaemia\n\nMedications:\nMetoprolol 50mg BD\nAtorvastatin 40mg nocte\n\nAllergies:\nPenicillin - rash\nMorphine - nausea\n\nExamination:\nAlert and oriented. Comfortable at rest.\nCardiovascular: HS dual, no murmurs. BP 135/82, HR 80 regular.\nRespiratory: Clear breath sounds bilaterally.\nAbdomen: Soft, non-tender.\n\nInvestigations:\nECG: NSR, no acute changes\nTroponin I: 0.03 (pending serial)\nCXR: Clear lung fields\n\nImpression:\nAcute chest pain, ?ACS\n\nPlan:\n- Admit to Cardiology\n- Serial ECGs and troponins\n- Continue beta blocker and statin\n- Add enoxaparin 40mg SC daily\n- Consider stress test if troponins negative\n- Cardiology consult"
+      }
+    ]
+  }
+}

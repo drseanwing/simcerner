@@ -23,18 +23,19 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # Copy patient data
 COPY --from=builder /app/public/patients /usr/share/nginx/html/patients
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget -qO- http://localhost:80/ || exit 1
-
-# Non-root user
-RUN addgroup -g 1001 -S simcerner && \
+# Install curl for health checks, set up non-root user
+RUN apk add --no-cache curl && \
+    addgroup -g 1001 -S simcerner && \
     adduser -S simcerner -u 1001 -G simcerner && \
     chown -R simcerner:simcerner /usr/share/nginx/html && \
     chown -R simcerner:simcerner /var/cache/nginx && \
     chown -R simcerner:simcerner /var/log/nginx && \
     touch /var/run/nginx.pid && \
     chown -R simcerner:simcerner /var/run/nginx.pid
+
+# Health check using curl
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD curl -sf http://localhost:80/ > /dev/null || exit 1
 
 USER simcerner
 

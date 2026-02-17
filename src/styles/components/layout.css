@@ -1,0 +1,404 @@
+/**
+ * @file layout.css
+ * @description Styles for all layout components (TopNav, PatientBanner, Sidebar,
+ *              StatusBar, main container, content area) in the SimCerner EMR.
+ *
+ * Extracted from emr-sim-v2.html and ported to use CSS custom properties
+ * defined in cerner-theme.css.
+ */
+
+/* ========================================================================
+   Top Navigation Bar
+   ======================================================================== */
+
+/** Primary navigation bar fixed at the top of the application shell. */
+.top-nav {
+  display: flex;
+  align-items: center;
+  background-color: var(--cerner-blue);
+  color: white;
+  padding: 0 10px;
+  height: 32px;
+  font-size: var(--cerner-font-size-base);
+  flex-shrink: 0;
+  gap: 0;
+}
+
+/** Individual clickable menu item in the top nav bar. */
+.top-nav-item {
+  padding: 6px 12px;
+  cursor: pointer;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  transition: background-color var(--cerner-transition-fast);
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.top-nav-item:hover {
+  background-color: var(--cerner-dark-blue);
+}
+
+/** Pushes the right-aligned nav items to the far right. */
+.top-nav-spacer {
+  flex: 1;
+}
+
+/** Top nav application title / branding area. */
+.top-nav-title {
+  font-weight: 600;
+  padding: 0 12px;
+  white-space: nowrap;
+}
+
+/* ========================================================================
+   Patient Banner
+   ======================================================================== */
+
+/**
+ * Banner strip displayed below the top nav showing the selected patient's
+ * key demographics and admission info at a glance.
+ */
+.patient-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--cerner-light-blue);
+  border-bottom: 1px solid var(--cerner-border);
+  padding: 8px 15px;
+  flex-shrink: 0;
+}
+
+/** Left section: patient name, MRN, DOB, age, allergies. */
+.patient-banner-left {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cerner-space-xs);
+}
+
+/** Patient full name displayed prominently. */
+.patient-banner-name {
+  font-weight: bold;
+  font-size: var(--cerner-font-size-lg);
+  color: var(--cerner-dark-blue);
+}
+
+/** Row of secondary demographic identifiers (MRN, DOB, age). */
+.patient-banner-details {
+  display: flex;
+  gap: 15px;
+  font-size: var(--cerner-font-size-base);
+  color: #555;
+}
+
+/** Individual detail item with a label + value pair. */
+.patient-banner-detail {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.patient-banner-detail-label {
+  font-weight: 600;
+  color: #666;
+}
+
+/** Allergy display — highlighted red when allergies are present. */
+.patient-banner-allergies {
+  font-size: var(--cerner-font-size-base);
+  color: var(--cerner-danger);
+  font-weight: 600;
+}
+
+.patient-banner-allergies--nkda {
+  color: var(--cerner-success);
+  font-weight: normal;
+}
+
+/** Right section: admission date, location, attending. */
+.patient-banner-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--cerner-space-xs);
+  font-size: var(--cerner-font-size-base);
+  color: #555;
+}
+
+.patient-banner-right-item {
+  display: flex;
+  gap: 4px;
+}
+
+/* ========================================================================
+   Main Container (Sidebar + Content Area)
+   ======================================================================== */
+
+/** Horizontal layout holding the sidebar and the content area. */
+.main-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ========================================================================
+   Sidebar
+   ======================================================================== */
+
+/** Left-hand navigation sidebar listing chart views. */
+.sidebar {
+  width: 180px;
+  min-width: 180px;
+  background-color: var(--cerner-nav-bg);
+  color: var(--cerner-nav-text);
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+/** Logical grouping of sidebar menu items. */
+.sidebar-section {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/** Section header label inside the sidebar. */
+.sidebar-header {
+  padding: 10px 12px 6px;
+  font-size: var(--cerner-font-size-sm);
+  text-transform: uppercase;
+  color: #95a5a6;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+/** Individual clickable item within a sidebar section. */
+.sidebar-item {
+  display: block;
+  width: 100%;
+  padding: 8px 12px 8px 16px;
+  cursor: pointer;
+  transition: background-color var(--cerner-transition-fast);
+  font-size: var(--cerner-font-size-base);
+  border: none;
+  background: none;
+  color: inherit;
+  text-align: left;
+  font-family: inherit;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-item:hover {
+  background-color: var(--cerner-nav-hover);
+}
+
+/** Currently active/selected sidebar item. */
+.sidebar-item.active {
+  background-color: var(--cerner-nav-active);
+  border-left: 3px solid var(--cerner-blue);
+  padding-left: 13px; /* compensate for border */
+}
+
+/* ========================================================================
+   Content Area
+   ======================================================================== */
+
+/** Scrollable main content region to the right of the sidebar. */
+.content-area {
+  flex: 1;
+  overflow-y: auto;
+  background-color: var(--cerner-panel-bg);
+  display: flex;
+  flex-direction: column;
+}
+
+/** Header bar at the top of a content view (view title, actions). */
+.content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  border-bottom: 1px solid var(--cerner-border);
+  background-color: var(--cerner-grid-header);
+  flex-shrink: 0;
+}
+
+.content-header h2 {
+  margin: 0;
+  font-size: var(--cerner-font-size-lg);
+  color: var(--cerner-dark-blue);
+}
+
+/** Tab bar used within content views for sub-navigation. */
+.content-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--cerner-border);
+  background-color: var(--cerner-grid-header);
+  flex-shrink: 0;
+}
+
+/** Individual tab in the content tab bar. */
+.content-tab {
+  padding: 8px 16px;
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-size: var(--cerner-font-size-base);
+  color: #555;
+  font-family: inherit;
+  border-bottom: 2px solid transparent;
+  transition: all var(--cerner-transition-fast);
+}
+
+.content-tab:hover {
+  color: var(--cerner-blue);
+  background-color: var(--cerner-light-blue);
+}
+
+.content-tab.active {
+  color: var(--cerner-blue);
+  border-bottom-color: var(--cerner-blue);
+  font-weight: 600;
+}
+
+/** Scrollable body area below the content header / tabs. */
+.content-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 15px;
+}
+
+/* ========================================================================
+   Status Bar
+   ======================================================================== */
+
+/** Footer strip showing simulation metadata and training mode indicator. */
+.status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--cerner-nav-bg);
+  color: var(--cerner-nav-text);
+  padding: 4px 15px;
+  font-size: var(--cerner-font-size-sm);
+  height: 24px;
+  flex-shrink: 0;
+}
+
+/** Left section of the status bar (ward, date, time). */
+.status-bar-left {
+  display: flex;
+  gap: 15px;
+}
+
+/** Individual info item in the status bar. */
+.status-bar-item {
+  display: flex;
+  gap: 4px;
+}
+
+.status-bar-label {
+  color: #95a5a6;
+}
+
+/** Right section of the status bar (training mode badge). */
+.status-bar-right {
+  color: #f0ad4e;
+  font-weight: 600;
+}
+
+/* ========================================================================
+   Patient Search Screen
+   ======================================================================== */
+
+/** Full-screen patient search overlay / view. */
+.patient-search {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 40px 20px;
+  height: 100vh;
+  background-color: var(--cerner-app-bg);
+}
+
+/** Search view title. */
+.patient-search-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--cerner-dark-blue);
+  margin-bottom: 20px;
+}
+
+/** Text input for name or MRN search. */
+.search-input {
+  width: 100%;
+  max-width: 500px;
+  padding: 10px 14px;
+  font-size: 13px;
+  border: 2px solid var(--cerner-border);
+  border-radius: var(--cerner-radius-md);
+  outline: none;
+  transition: border-color var(--cerner-transition-fast);
+  font-family: var(--cerner-font-family);
+}
+
+.search-input:focus {
+  border-color: var(--cerner-blue);
+  box-shadow: 0 0 0 3px rgba(0, 102, 178, 0.15);
+}
+
+/** Scrollable list of matching patients below the search input. */
+.patient-list {
+  width: 100%;
+  max-width: 500px;
+  margin-top: 15px;
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid var(--cerner-border);
+  border-radius: var(--cerner-radius-md);
+  background: white;
+}
+
+/** Single patient row in the search results list. */
+.patient-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--cerner-border-light);
+  transition: background-color var(--cerner-transition-fast);
+}
+
+.patient-list-item:last-child {
+  border-bottom: none;
+}
+
+.patient-list-item:hover {
+  background-color: var(--cerner-light-blue);
+}
+
+/** Patient name inside the search result row. */
+.patient-list-item-name {
+  font-weight: 600;
+  color: var(--cerner-dark-blue);
+}
+
+/** Secondary info (MRN, location) in the search result row. */
+.patient-list-item-detail {
+  font-size: var(--cerner-font-size-sm);
+  color: #666;
+}
+
+/** Empty state message when no patients match the search. */
+.patient-search-empty {
+  text-align: center;
+  padding: 20px;
+  color: var(--cerner-muted);
+  font-size: 12px;
+}

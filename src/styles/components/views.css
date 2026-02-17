@@ -1,0 +1,734 @@
+/**
+ * @file views.css
+ * @description Styles for all view components in the SimCerner EMR application.
+ *
+ * Covers vitals charts, graphs, fluid balance cards, clinical notes,
+ * NEWS2 score card, vital signs flowsheet, MAR grid, escalation protocol,
+ * orders, and administration dialog.
+ *
+ * Uses CSS custom properties from cerner-theme.css.
+ */
+
+/* ========================================================================
+   Vitals Chart (EW Score Table & wrapper panels)
+   ======================================================================== */
+
+/** Panel wrapper for vital sign displays and section panels. */
+.vitals-chart {
+  background: white;
+  border: 1px solid var(--cerner-border);
+  padding: 10px;
+  margin-bottom: 15px;
+}
+
+/** Section header with bottom border accent. */
+.chart-header {
+  font-weight: 600;
+  margin-bottom: 10px;
+  padding-bottom: 5px;
+  border-bottom: 2px solid var(--cerner-dark-blue);
+  font-size: var(--cerner-font-size-md);
+}
+
+/** Grid layout for the EW Score Table. */
+.chart-grid {
+  display: grid;
+  gap: 1px;
+  background: var(--cerner-border);
+  border: 1px solid var(--cerner-border);
+}
+
+/** Individual cell in the chart grid. */
+.chart-cell {
+  background: white;
+  padding: 6px;
+  font-size: var(--cerner-font-size-sm);
+}
+
+/** Header cell styling (date/time columns). */
+.chart-cell.header {
+  background: var(--cerner-grid-header);
+  font-weight: 600;
+}
+
+/** Label cell styling (parameter names). */
+.chart-cell.label {
+  background: var(--cerner-grid-header);
+  font-weight: 600;
+}
+
+/** Abnormal value cell highlighting. */
+.chart-cell.abnormal {
+  color: var(--cerner-danger);
+  font-weight: 600;
+}
+
+/* ========================================================================
+   Vitals Graph View
+   ======================================================================== */
+
+/** Container for the set of vital sign graphs. */
+.vitals-graph-container {
+  margin-bottom: 20px;
+}
+
+/** Individual graph panel. */
+.vital-graph {
+  background: white;
+  border: 1px solid var(--cerner-border);
+  margin-bottom: 15px;
+  padding: 10px;
+}
+
+/** Graph title text. */
+.graph-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-size: var(--cerner-font-size-base);
+}
+
+/* ========================================================================
+   Fluid Balance
+   ======================================================================== */
+
+/** Grid layout for the three summary cards. */
+.fluid-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+/** Individual fluid balance summary card. */
+.fluid-card {
+  background: white;
+  border: 1px solid var(--cerner-border);
+  border-radius: var(--cerner-radius-md);
+  padding: 15px;
+  text-align: center;
+}
+
+/** Positive balance accent (green left border). */
+.fluid-card.positive {
+  border-left: 4px solid var(--cerner-success);
+}
+
+/** Negative balance accent (red left border). */
+.fluid-card.negative {
+  border-left: 4px solid var(--cerner-danger);
+}
+
+/** Neutral balance accent (grey left border). */
+.fluid-card.neutral {
+  border-left: 4px solid #6c757d;
+}
+
+/** Card label text (uppercase). */
+.fluid-card-label {
+  font-size: var(--cerner-font-size-sm);
+  color: var(--cerner-muted);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+/** Large numeric value in the card. */
+.fluid-card-value {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--cerner-dark-blue);
+}
+
+/** Unit suffix text. */
+.fluid-card-unit {
+  font-size: 12px;
+  color: var(--cerner-muted);
+}
+
+/* ========================================================================
+   Orders Entry
+   ======================================================================== */
+
+/** Order entry form panel. */
+.order-entry {
+  background: white;
+  border: 1px solid var(--cerner-border);
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+/* ========================================================================
+   Clinical Notes
+   ======================================================================== */
+
+/** Vertical list of note items. */
+.notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/** Individual note item container. */
+.note-item {
+  border: 1px solid var(--cerner-border);
+  border-radius: var(--cerner-radius-sm);
+  overflow: hidden;
+}
+
+/** Clickable note header for expand/collapse. */
+.note-header {
+  background: var(--cerner-grid-header);
+  padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  border-bottom: 1px solid var(--cerner-border);
+  transition: background-color var(--cerner-transition-fast);
+}
+
+.note-header:hover {
+  background: #e8e8e8;
+}
+
+/** Note title text. */
+.note-title {
+  font-weight: 600;
+  font-size: var(--cerner-font-size-base);
+}
+
+/** Note metadata (author, date). */
+.note-meta {
+  font-size: var(--cerner-font-size-sm);
+  color: var(--cerner-muted);
+}
+
+/** Note body content area. */
+.note-body {
+  padding: 12px;
+  font-size: var(--cerner-font-size-base);
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+/** Collapsed (hidden) note body. */
+.note-body.collapsed {
+  display: none;
+}
+
+/* ========================================================================
+   NEWS2 Score Card
+   ======================================================================== */
+
+/** Main score card container. */
+.news-score-card {
+  background: white;
+  border: 1px solid var(--cerner-border);
+  border-radius: var(--cerner-radius-lg);
+  overflow: hidden;
+  min-width: 260px;
+  max-width: 320px;
+}
+
+/** Large score display area with colour-coded background. */
+.news-score-card__score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  gap: 6px;
+}
+
+/** The large numeric score. */
+.news-score-card__number {
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/** Risk level badge. */
+.news-score-card__risk-badge {
+  font-size: var(--cerner-font-size-md);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 10px;
+  border-radius: 10px;
+}
+
+/** Scoring system toggle button group. */
+.news-score-card__system-toggle {
+  display: flex;
+  gap: 4px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--cerner-border-light);
+  justify-content: center;
+}
+
+/** Sub-score breakdown section. */
+.news-score-card__breakdown {
+  padding: 12px;
+}
+
+.news-score-card__breakdown-title {
+  font-weight: 600;
+  font-size: var(--cerner-font-size-sm);
+  margin-bottom: 8px;
+  color: #555;
+  text-transform: uppercase;
+}
+
+.news-score-card__breakdown-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.news-score-card__breakdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: var(--cerner-font-size-base);
+  border-bottom: 1px solid var(--cerner-border-light);
+}
+
+.news-score-card__breakdown-item:last-child {
+  border-bottom: none;
+}
+
+.news-score-card__param-name {
+  flex: 1;
+  font-weight: 500;
+}
+
+.news-score-card__param-value {
+  margin: 0 8px;
+  color: var(--cerner-muted);
+  font-family: var(--cerner-font-mono);
+}
+
+.news-score-card__param-score {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: var(--cerner-font-size-sm);
+}
+
+/* ========================================================================
+   Vital Signs Flowsheet
+   ======================================================================== */
+
+/** Scrollable wrapper for the flowsheet grid. */
+.flowsheet-wrapper {
+  overflow-x: auto;
+}
+
+/** Grid layout for the colour-coded flowsheet. */
+.flowsheet-grid {
+  display: grid;
+  gap: 1px;
+  background: var(--cerner-border);
+  border: 1px solid var(--cerner-border);
+  min-width: fit-content;
+}
+
+/** Individual flowsheet cell. */
+.flowsheet-cell {
+  padding: 6px 8px;
+  font-size: var(--cerner-font-size-sm);
+  background: white;
+}
+
+/** Header cell (date/time). */
+.flowsheet-cell--header {
+  background: var(--cerner-grid-header);
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/** Label cell (parameter name). */
+.flowsheet-cell--label {
+  background: var(--cerner-grid-header);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ========================================================================
+   Escalation Protocol
+   ======================================================================== */
+
+/** Section title. */
+.escalation-protocol__title {
+  font-weight: 600;
+  font-size: var(--cerner-font-size-md);
+  margin-bottom: 10px;
+}
+
+/** Container for the escalation cards. */
+.escalation-protocol__cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/** Individual escalation card. */
+.escalation-card {
+  border: 1px solid var(--cerner-border);
+  border-left: 5px solid #ccc;
+  border-radius: var(--cerner-radius-md);
+  padding: 12px;
+  background: white;
+  transition: all var(--cerner-transition-fast);
+  opacity: 0.7;
+}
+
+/** Active (matching) escalation card highlight. */
+.escalation-card--active {
+  opacity: 1;
+  box-shadow: var(--cerner-shadow-md);
+  transform: scale(1.01);
+}
+
+/** Card header with icon and title. */
+.escalation-card__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.escalation-card__icon {
+  font-size: 16px;
+}
+
+.escalation-card__risk-title {
+  font-weight: 600;
+  font-size: var(--cerner-font-size-md);
+  flex: 1;
+}
+
+.escalation-card__score-range {
+  font-size: var(--cerner-font-size-sm);
+  font-weight: 600;
+}
+
+/** Monitoring frequency line. */
+.escalation-card__frequency {
+  font-size: var(--cerner-font-size-base);
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #555;
+}
+
+/** Action list within the card. */
+.escalation-card__actions {
+  list-style: disc;
+  padding-left: 18px;
+  margin: 0;
+  font-size: var(--cerner-font-size-base);
+  line-height: 1.5;
+  color: #444;
+}
+
+/* ========================================================================
+   Score Trend Graph
+   ======================================================================== */
+
+.score-trend-graph {
+  padding: 10px 0;
+}
+
+.score-trend-graph__title {
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-size: var(--cerner-font-size-base);
+}
+
+/* ========================================================================
+   Deterioration View Layout
+   ======================================================================== */
+
+/** Top row layout: score card + escalation protocol side by side. */
+.deterioration-top-row {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 15px;
+  align-items: flex-start;
+}
+
+.deterioration-top-row > .news-score-card {
+  flex-shrink: 0;
+}
+
+.deterioration-top-row > .escalation-protocol {
+  flex: 1;
+}
+
+/* ========================================================================
+   MAR Grid
+   ======================================================================== */
+
+/** Scrollable wrapper for the MAR grid. */
+.mar-grid-wrapper {
+  overflow-x: auto;
+}
+
+/** Grid layout for the MAR time-based display. */
+.mar-grid {
+  display: grid;
+  gap: 1px;
+  background: var(--cerner-border);
+  border: 1px solid var(--cerner-border);
+  min-width: fit-content;
+}
+
+/** MAR grid header cell. */
+.mar-grid__header-cell {
+  background: var(--cerner-grid-header);
+  padding: 6px 8px;
+  font-weight: 600;
+  font-size: var(--cerner-font-size-sm);
+  text-align: center;
+  white-space: nowrap;
+}
+
+/** Time header cell variant. */
+.mar-grid__header-cell--time {
+  font-family: var(--cerner-font-mono);
+}
+
+/** Medication info cell in the first column. */
+.mar-grid__med-cell {
+  background: white;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/** Medication name in the MAR. */
+.mar-grid__med-name {
+  font-weight: 600;
+  font-size: var(--cerner-font-size-base);
+}
+
+/** Medication detail line (dose, route, frequency). */
+.mar-grid__med-detail {
+  font-size: var(--cerner-font-size-sm);
+  color: var(--cerner-muted);
+}
+
+/* ========================================================================
+   MAR Cell
+   ======================================================================== */
+
+/** Individual time-slot cell in the MAR grid. */
+.mar-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  cursor: pointer;
+  transition: opacity var(--cerner-transition-fast);
+  font-size: var(--cerner-font-size-md);
+}
+
+.mar-cell:hover {
+  opacity: 0.8;
+}
+
+/** Status icon within the cell. */
+.mar-cell__icon {
+  font-size: 14px;
+}
+
+/** Future slot dithered pattern. */
+.mar-cell--future {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.03) 2px,
+    rgba(0, 0, 0, 0.03) 4px
+  );
+}
+
+/* ========================================================================
+   Admin Dialog (Medication Administration)
+   ======================================================================== */
+
+/** Dialog container (positioned over the overlay). */
+.admin-dialog {
+  background: white;
+  border-radius: var(--cerner-radius-lg);
+  box-shadow: var(--cerner-shadow-lg);
+  min-width: 400px;
+  max-width: 500px;
+  overflow: hidden;
+}
+
+/** Dialog header strip. */
+.admin-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--cerner-dark-blue);
+  color: white;
+}
+
+.admin-dialog__title {
+  font-weight: 600;
+  font-size: var(--cerner-font-size-md);
+}
+
+.admin-dialog__close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.admin-dialog__close:hover {
+  opacity: 0.7;
+}
+
+/** Dialog body. */
+.admin-dialog__body {
+  padding: 16px;
+}
+
+/** Medication info display within the dialog. */
+.admin-dialog__med-info {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--cerner-border-light);
+}
+
+.admin-dialog__med-name {
+  font-weight: 700;
+  font-size: var(--cerner-font-size-lg);
+  text-transform: capitalize;
+}
+
+.admin-dialog__med-detail {
+  font-size: var(--cerner-font-size-base);
+  color: var(--cerner-muted);
+  margin-top: 4px;
+}
+
+/** Action button group. */
+.admin-dialog__actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.admin-dialog__action-btn {
+  flex: 1;
+  padding: 8px;
+  font-weight: 600;
+}
+
+.admin-dialog__action-btn--selected {
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);
+}
+
+/** Dialog footer with cancel/confirm buttons. */
+.admin-dialog__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--cerner-border-light);
+  background: var(--cerner-grid-header);
+}
+
+/* ========================================================================
+   Utility Spacing
+   ======================================================================== */
+
+.mb-10 {
+  margin-bottom: 10px;
+}
+
+.mt-10 {
+  margin-top: 10px;
+}
+
+/* ========================================================================
+   Utility Text
+   ======================================================================== */
+
+.text-danger {
+  color: var(--cerner-danger);
+}
+
+.text-warning {
+  color: var(--cerner-warning);
+}
+
+.text-success {
+  color: var(--cerner-success);
+}
+
+.text-muted {
+  color: var(--cerner-muted);
+}
+
+/* ========================================================================
+   Content Layout (shared across views)
+   ======================================================================== */
+
+.content-header {
+  background: #f5f5f5;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--cerner-border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--cerner-font-size-base);
+  font-weight: 600;
+}
+
+.content-tabs {
+  display: flex;
+  gap: 5px;
+  padding: 6px 12px;
+  background: #e8e8e8;
+  border-bottom: 1px solid var(--cerner-border);
+}
+
+.content-tab {
+  padding: 4px 12px;
+  background: #d0d0d0;
+  border: 1px solid #999;
+  border-bottom: none;
+  cursor: pointer;
+  border-radius: 3px 3px 0 0;
+  font-size: var(--cerner-font-size-base);
+  transition: background-color var(--cerner-transition-fast);
+}
+
+.content-tab.active {
+  background: white;
+  border-bottom: 1px solid white;
+  margin-bottom: -1px;
+  font-weight: 600;
+}
+
+.content-body {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+}

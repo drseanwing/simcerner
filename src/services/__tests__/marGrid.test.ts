@@ -68,10 +68,6 @@ function getCellStatus(
     return MedicationDoseStatus.DUE;
   }
 
-  if (slotMinutes > currentMinutes) {
-    return MedicationDoseStatus.PENDING;
-  }
-
   return MedicationDoseStatus.PENDING;
 }
 

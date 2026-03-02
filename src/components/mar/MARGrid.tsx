@@ -129,7 +129,7 @@ export default function MARGrid({
     nurse: string,
   ) {
     if (!dialog) return;
-    const id = `adm-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const id = crypto.randomUUID();
     saveAdministration({
       id,
       patientMrn,
@@ -138,8 +138,9 @@ export default function MARGrid({
       nurse,
       status: action,
       notes: reason || undefined,
-    }).catch(() => {
-      // Silently ignore persistence errors — in-memory state still updates
+    }).catch((err: unknown) => {
+      // Log persistence errors for debugging without blocking the UI
+      console.warn('[MARGrid] Failed to persist administration record:', err);
     });
     setDialog(null);
   }

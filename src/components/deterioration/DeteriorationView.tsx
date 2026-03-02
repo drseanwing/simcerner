@@ -7,8 +7,13 @@
  *   2. Warning banner (when vitals incomplete)
  *   3. Score Card + Escalation Protocol (side by side)
  *   4. Vital Signs Flowsheet (colour-coded table)
- *   5. Score Trend Graph
- *   6. AlertDialog overlay when alertStore.activeAlert is set
+ *   5. Score Trend Graph (EW Score Graph)
+ *   6. MEO Plan Section (MET-MEO status and dialog link)
+ *   7. Sedation Score Section (reference table and assessment timeline)
+ *   8. AlertDialog overlay when alertStore.activeAlert is set
+ *   9. MeoPlanDialog (conditional, when showMeoDialog is true)
+ *  10. MetMeoPlanOrderForm (conditional, when showMetMeoForm is true)
+ *  11. ModifiedObsFrequencyForm (conditional, when showMofForm is true)
  *
  * On mount, the most recent vitals are evaluated by the alert engine and
  * any resulting alerts are pushed into the alert store.
@@ -28,6 +33,12 @@ import { EscalationProtocol } from '@/components/deterioration/EscalationProtoco
 import { VitalSignsFlowsheet } from '@/components/deterioration/VitalSignsFlowsheet'
 import { ScoreTrendGraph } from '@/components/deterioration/ScoreTrendGraph'
 import { AlertDialog } from '@/components/deterioration/AlertDialog'
+import { MeoPlanSection } from '@/components/deterioration/MeoPlanSection'
+import { SedationScore } from '@/components/deterioration/SedationScore'
+import { MeoPlanDialog } from '@/components/deterioration/MeoPlanDialog'
+import { MetMeoPlanOrderForm } from '@/components/deterioration/MetMeoPlanOrderForm'
+import { ModifiedObsFrequencyForm } from '@/components/deterioration/ModifiedObsFrequencyForm'
+import { useMeoStore } from '@/stores/meoStore'
 
 interface DeteriorationViewProps {
   patient: Patient
@@ -51,6 +62,20 @@ export function DeteriorationView({ patient }: DeteriorationViewProps) {
   const setActiveAlert = useAlertStore((s) => s.setActiveAlert)
   const acknowledgeAlert = useAlertStore((s) => s.acknowledgeAlert)
   const clearAlerts = useAlertStore((s) => s.clearAlerts)
+
+  const {
+    showMeoDialog, showMetMeoForm, showMofForm,
+    openMeoDialog, closeMeoDialog,
+    openMetMeoForm, closeMetMeoForm,
+    openMofForm, closeMofForm,
+    addMetMeoOrder, cancelMetMeoOrder,
+    addMofOrder, cancelMofOrder,
+    getActiveMetMeo, getActiveMof,
+    sedationAssessments,
+  } = useMeoStore()
+
+  const activeMetMeo = getActiveMetMeo()
+  const activeMof = getActiveMof()
 
   const [variant, setVariant] = useState<ChartVariant>('standard')
   const [patientStatus, setPatientStatus] = useState<PatientStatus>('stable')
@@ -259,11 +284,47 @@ export function DeteriorationView({ patient }: DeteriorationViewProps) {
         <div style={{ marginBottom: '12px' }}>
           <ScoreTrendGraph vitals={patient.vitals} variant={variant} />
         </div>
+
+        {/* MEO Plan Section */}
+        <MeoPlanSection activeMetMeo={activeMetMeo} onOpenDialog={openMeoDialog} />
+
+        {/* Sedation Score Section */}
+        <SedationScore assessments={sedationAssessments} />
       </div>
 
       {/* Alert Dialog overlay (renders only when activeAlert is set) */}
       {activeAlert && (
         <AlertDialog alert={activeAlert} onDismiss={handleDismissAlert} />
+      )}
+
+      {/* MEO Plan Dialog */}
+      {showMeoDialog && (
+        <MeoPlanDialog
+          onClose={closeMeoDialog}
+          onOpenMetMeoForm={() => { closeMeoDialog(); openMetMeoForm(); }}
+          onOpenMofForm={() => { closeMeoDialog(); openMofForm(); }}
+          onCancelMetMeo={() => { if (activeMetMeo) cancelMetMeoOrder(activeMetMeo.orderId); }}
+          onCancelMof={() => { if (activeMof) cancelMofOrder(activeMof.orderId); }}
+          hasActiveMetMeo={activeMetMeo !== null}
+          hasActiveMof={activeMof !== null}
+        />
+      )}
+
+      {/* MET-MEO Plan Order Form */}
+      {showMetMeoForm && (
+        <MetMeoPlanOrderForm
+          onClose={closeMetMeoForm}
+          onSubmit={(order) => { addMetMeoOrder(order); closeMetMeoForm(); }}
+          chartVariant={variant}
+        />
+      )}
+
+      {/* Modified Observation Frequency Form */}
+      {showMofForm && (
+        <ModifiedObsFrequencyForm
+          onClose={closeMofForm}
+          onSubmit={(order) => { addMofOrder(order); closeMofForm(); }}
+        />
       )}
     </>
   )

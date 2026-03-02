@@ -53,3 +53,14 @@ export type {
   ScoringSystemConfig,
   QaddsRiskThreshold,
 } from './news';
+
+// MET-MEO (Modified Escalation and Observation) — orders, assessments, sedation
+export type {
+  MetMeoOrder,
+  ModifiedObsFrequencyOrder,
+  MeoOrder,
+  NursingAssessment,
+  SedationLevel,
+  SedationAssessment,
+  EZoneVitalSignOption,
+} from './meo';

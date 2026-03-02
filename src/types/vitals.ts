@@ -5,7 +5,7 @@
  *
  * Provides the canonical list of monitored vital parameters with their
  * units, normal ranges, and display metadata used by the vitals chart,
- * observation table, and NEWS2 scoring engine.
+ * observation table, and Q-ADDS EWS scoring engine.
  */
 
 // ---------------------------------------------------------------------------
@@ -69,7 +69,7 @@ export interface VitalSignDisplayConfig {
   /** Maximum number of historical observations to show in the table. */
   maxHistoryRows: number;
 
-  /** Whether to display the calculated NEWS2 score row. */
+  /** Whether to display the calculated EWS score row. */
   showNewsScore: boolean;
 }
 
@@ -80,7 +80,7 @@ export interface VitalSignDisplayConfig {
 /**
  * Canonical list of standard vital sign parameters monitored in the
  * SimCerner application. Normal ranges are based on standard adult
- * clinical reference values and align with NEWS2 scoring boundaries.
+ * clinical reference values and align with Q-ADDS scoring boundaries.
  */
 export const VITAL_PARAMETERS: readonly VitalParameter[] = [
   {

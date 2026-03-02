@@ -1,11 +1,12 @@
 /**
  * @file ScoreTrendGraph.tsx
- * @description Line graph showing NEWS2 score over time using Recharts.
+ * @description Line graph showing EWS score over time using Recharts.
  *
  * Displays:
  * - X-axis: observation date/time
- * - Y-axis: NEWS2 score (0–20)
- * - Colour zones: green (0–4), yellow (5–6), red (7+)
+ * - Y-axis: EWS score (0–20)
+ * - Colour zones (Q-ADDS): green (0–1), yellow (1–4), orange (4–6),
+ *   deep-orange (6–8), purple (8–20)
  * - Data points from patient vital signs history
  */
 
@@ -21,7 +22,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import type { VitalSign } from '../../types';
-import { calculateNEWS2 } from '../../services/newsCalculator';
+import { calculateQADDS } from '../../services/newsCalculator';
 import '../../styles/components/views.css';
 
 // ---------------------------------------------------------------------------
@@ -45,8 +46,8 @@ interface TrendDataPoint {
 // ---------------------------------------------------------------------------
 
 /**
- * ScoreTrendGraph renders a line chart of NEWS2 aggregate scores over time
- * with colour-coded background zones indicating clinical risk tiers.
+ * ScoreTrendGraph renders a line chart of EWS aggregate scores over time
+ * with colour-coded background zones indicating Q-ADDS clinical risk tiers.
  */
 export default function ScoreTrendGraph({ vitals }: ScoreTrendGraphProps) {
   /** Transform vitals into chronological chart data. */
@@ -56,7 +57,7 @@ export default function ScoreTrendGraph({ vitals }: ScoreTrendGraphProps) {
       .reverse()
       .map((v) => ({
         time: v.datetime,
-        score: calculateNEWS2(v).totalScore,
+        score: calculateQADDS(v).totalScore,
       }));
   }, [vitals]);
 
@@ -70,15 +71,17 @@ export default function ScoreTrendGraph({ vitals }: ScoreTrendGraphProps) {
 
   return (
     <div className="score-trend-graph">
-      <div className="score-trend-graph__title">NEWS2 Score Trend</div>
+      <div className="score-trend-graph__title">EWS Score Trend</div>
       <ResponsiveContainer width="100%" height={200}>
         <LineChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
 
-          {/* Risk zone backgrounds */}
-          <ReferenceArea y1={0} y2={4} fill="#e8f5e9" fillOpacity={0.5} />
-          <ReferenceArea y1={4} y2={6} fill="#fff8e1" fillOpacity={0.5} />
-          <ReferenceArea y1={6} y2={20} fill="#fef2f2" fillOpacity={0.5} />
+          {/* Q-ADDS risk zone backgrounds */}
+          <ReferenceArea y1={0} y2={1} fill="#e8f5e9" fillOpacity={0.5} />
+          <ReferenceArea y1={1} y2={4} fill="#fff8e1" fillOpacity={0.5} />
+          <ReferenceArea y1={4} y2={6} fill="#fff3e0" fillOpacity={0.5} />
+          <ReferenceArea y1={6} y2={8} fill="#ffe0b2" fillOpacity={0.5} />
+          <ReferenceArea y1={8} y2={20} fill="#f3e5f5" fillOpacity={0.5} />
 
           <XAxis
             dataKey="time"
@@ -90,10 +93,10 @@ export default function ScoreTrendGraph({ vitals }: ScoreTrendGraphProps) {
           <YAxis
             domain={[0, 20]}
             tick={{ fontSize: 10 }}
-            label={{ value: 'NEWS2', angle: -90, position: 'insideLeft', fontSize: 10 }}
+            label={{ value: 'EWS', angle: -90, position: 'insideLeft', fontSize: 10 }}
           />
           <Tooltip
-            formatter={(value: number | undefined) => [`Score: ${value ?? 0}`, 'NEWS2']}
+            formatter={(value: number | undefined) => [`Score: ${value ?? 0}`, 'EWS']}
             labelStyle={{ fontSize: 10 }}
             contentStyle={{ fontSize: 11 }}
           />

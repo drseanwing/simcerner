@@ -1,14 +1,18 @@
 import { describe, it, expect } from 'vitest';
 import {
-  calculateNEWS2,
+  calculateQADDS,
   calculateSubScore,
-  getClinicalRisk,
+  getQADDSRiskLevel,
   getEscalationRecommendation,
+  getObservationFrequency,
+  // Backward-compatible aliases
+  calculateNEWS2,
+  getClinicalRisk,
 } from '../newsCalculator';
 import type { VitalSign } from '../../types/patient';
 
 // ---------------------------------------------------------------------------
-// Helper: build a VitalSign with defaults
+// Helper: build a VitalSign with sensible defaults (all normal)
 // ---------------------------------------------------------------------------
 
 function makeVital(overrides: Partial<VitalSign> = {}): VitalSign {
@@ -20,70 +24,218 @@ function makeVital(overrides: Partial<VitalSign> = {}): VitalSign {
     bp_sys: 120,
     spo2: 98,
     avpu: 'A',
-    supplementalO2: false,
+    o2FlowRate: 0,
     ...overrides,
   };
 }
 
-// ---------------------------------------------------------------------------
-// Individual parameter scoring
-// ---------------------------------------------------------------------------
+// ===========================================================================
+// 1. calculateSubScore -- All 7 parameters with boundary values
+// ===========================================================================
 
 describe('calculateSubScore', () => {
+  // -------------------------------------------------------------------------
+  // Respiratory Rate
+  // -------------------------------------------------------------------------
   describe('Respiratory Rate', () => {
-    it('scores 3 for RR <= 8', () => {
-      expect(calculateSubScore('respiratoryRate', 8)).toBe(3);
-      expect(calculateSubScore('respiratoryRate', 5)).toBe(3);
+    it('returns E for RR <= 8', () => {
+      expect(calculateSubScore('respiratoryRate', 8)).toBe('E');
+      expect(calculateSubScore('respiratoryRate', 5)).toBe('E');
     });
 
-    it('scores 1 for RR 9-11', () => {
+    it('scores 1 for RR 9-12', () => {
       expect(calculateSubScore('respiratoryRate', 9)).toBe(1);
-      expect(calculateSubScore('respiratoryRate', 11)).toBe(1);
+      expect(calculateSubScore('respiratoryRate', 12)).toBe(1);
     });
 
-    it('scores 0 for RR 12-20', () => {
-      expect(calculateSubScore('respiratoryRate', 12)).toBe(0);
+    it('scores 0 for RR 13-20', () => {
+      expect(calculateSubScore('respiratoryRate', 13)).toBe(0);
       expect(calculateSubScore('respiratoryRate', 16)).toBe(0);
       expect(calculateSubScore('respiratoryRate', 20)).toBe(0);
     });
 
-    it('scores 2 for RR 21-24', () => {
-      expect(calculateSubScore('respiratoryRate', 21)).toBe(2);
-      expect(calculateSubScore('respiratoryRate', 24)).toBe(2);
+    it('scores 1 for RR 21-24', () => {
+      expect(calculateSubScore('respiratoryRate', 21)).toBe(1);
+      expect(calculateSubScore('respiratoryRate', 24)).toBe(1);
     });
 
-    it('scores 3 for RR >= 25', () => {
-      expect(calculateSubScore('respiratoryRate', 25)).toBe(3);
-      expect(calculateSubScore('respiratoryRate', 40)).toBe(3);
-    });
-  });
-
-  describe('SpO2 Scale 1', () => {
-    it('scores 3 for SpO2 <= 91', () => {
-      expect(calculateSubScore('spo2Scale1', 91)).toBe(3);
-      expect(calculateSubScore('spo2Scale1', 85)).toBe(3);
+    it('scores 2 for RR 25-30', () => {
+      expect(calculateSubScore('respiratoryRate', 25)).toBe(2);
+      expect(calculateSubScore('respiratoryRate', 30)).toBe(2);
     });
 
-    it('scores 2 for SpO2 92-93', () => {
-      expect(calculateSubScore('spo2Scale1', 92)).toBe(2);
-      expect(calculateSubScore('spo2Scale1', 93)).toBe(2);
+    it('scores 4 for RR 31-35', () => {
+      expect(calculateSubScore('respiratoryRate', 31)).toBe(4);
+      expect(calculateSubScore('respiratoryRate', 35)).toBe(4);
     });
 
-    it('scores 1 for SpO2 94-95', () => {
-      expect(calculateSubScore('spo2Scale1', 94)).toBe(1);
-      expect(calculateSubScore('spo2Scale1', 95)).toBe(1);
-    });
-
-    it('scores 0 for SpO2 >= 96', () => {
-      expect(calculateSubScore('spo2Scale1', 96)).toBe(0);
-      expect(calculateSubScore('spo2Scale1', 100)).toBe(0);
+    it('returns E for RR >= 36', () => {
+      expect(calculateSubScore('respiratoryRate', 36)).toBe('E');
+      expect(calculateSubScore('respiratoryRate', 40)).toBe('E');
     });
   });
 
+  // -------------------------------------------------------------------------
+  // SpO2 Standard
+  // -------------------------------------------------------------------------
+  describe('SpO2 Standard', () => {
+    it('scores 4 for SpO2 <= 84', () => {
+      expect(calculateSubScore('spo2Standard', 84)).toBe(4);
+      expect(calculateSubScore('spo2Standard', 80)).toBe(4);
+    });
+
+    it('scores 2 for SpO2 85-89', () => {
+      expect(calculateSubScore('spo2Standard', 85)).toBe(2);
+      expect(calculateSubScore('spo2Standard', 89)).toBe(2);
+    });
+
+    it('scores 1 for SpO2 90-91', () => {
+      expect(calculateSubScore('spo2Standard', 90)).toBe(1);
+      expect(calculateSubScore('spo2Standard', 91)).toBe(1);
+    });
+
+    it('scores 0 for SpO2 >= 92', () => {
+      expect(calculateSubScore('spo2Standard', 92)).toBe(0);
+      expect(calculateSubScore('spo2Standard', 98)).toBe(0);
+      expect(calculateSubScore('spo2Standard', 100)).toBe(0);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // O2 Delivery (flow rate L/min)
+  // -------------------------------------------------------------------------
+  describe('O2 Delivery', () => {
+    it('scores 0 for flow rate < 2', () => {
+      expect(calculateSubScore('o2Delivery', 0)).toBe(0);
+      expect(calculateSubScore('o2Delivery', 1)).toBe(0);
+    });
+
+    it('scores 1 for flow rate 2-5', () => {
+      expect(calculateSubScore('o2Delivery', 2)).toBe(1);
+      expect(calculateSubScore('o2Delivery', 5)).toBe(1);
+    });
+
+    it('scores 2 for flow rate 6-11', () => {
+      expect(calculateSubScore('o2Delivery', 6)).toBe(2);
+      expect(calculateSubScore('o2Delivery', 11)).toBe(2);
+    });
+
+    it('scores 4 for flow rate 12-14', () => {
+      expect(calculateSubScore('o2Delivery', 12)).toBe(4);
+      expect(calculateSubScore('o2Delivery', 14)).toBe(4);
+    });
+
+    it('returns E for flow rate >= 15', () => {
+      expect(calculateSubScore('o2Delivery', 15)).toBe('E');
+      expect(calculateSubScore('o2Delivery', 20)).toBe('E');
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Systolic Blood Pressure
+  // -------------------------------------------------------------------------
+  describe('Systolic BP', () => {
+    it('returns E for BP <= 79', () => {
+      expect(calculateSubScore('systolicBP', 59)).toBe('E');
+      expect(calculateSubScore('systolicBP', 60)).toBe('E');
+      expect(calculateSubScore('systolicBP', 79)).toBe('E');
+    });
+
+    it('scores 4 for BP 80-89', () => {
+      expect(calculateSubScore('systolicBP', 80)).toBe(4);
+      expect(calculateSubScore('systolicBP', 89)).toBe(4);
+    });
+
+    it('scores 2 for BP 90-99', () => {
+      expect(calculateSubScore('systolicBP', 90)).toBe(2);
+      expect(calculateSubScore('systolicBP', 99)).toBe(2);
+    });
+
+    it('scores 1 for BP 100-109', () => {
+      expect(calculateSubScore('systolicBP', 100)).toBe(1);
+      expect(calculateSubScore('systolicBP', 109)).toBe(1);
+    });
+
+    it('scores 0 for BP 110-159', () => {
+      expect(calculateSubScore('systolicBP', 110)).toBe(0);
+      expect(calculateSubScore('systolicBP', 140)).toBe(0);
+      expect(calculateSubScore('systolicBP', 159)).toBe(0);
+    });
+
+    it('scores 1 for BP 160-169', () => {
+      expect(calculateSubScore('systolicBP', 160)).toBe(1);
+      expect(calculateSubScore('systolicBP', 169)).toBe(1);
+    });
+
+    it('scores 2 for BP 170-199', () => {
+      expect(calculateSubScore('systolicBP', 170)).toBe(2);
+      expect(calculateSubScore('systolicBP', 199)).toBe(2);
+    });
+
+    it('scores 4 for BP >= 200', () => {
+      expect(calculateSubScore('systolicBP', 200)).toBe(4);
+      expect(calculateSubScore('systolicBP', 250)).toBe(4);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Heart Rate
+  // -------------------------------------------------------------------------
+  describe('Heart Rate', () => {
+    it('returns E for HR <= 39', () => {
+      expect(calculateSubScore('heartRate', 39)).toBe('E');
+      expect(calculateSubScore('heartRate', 30)).toBe('E');
+    });
+
+    it('scores 2 for HR 40-49', () => {
+      expect(calculateSubScore('heartRate', 40)).toBe(2);
+      expect(calculateSubScore('heartRate', 49)).toBe(2);
+    });
+
+    it('scores 0 for HR 50-99', () => {
+      expect(calculateSubScore('heartRate', 50)).toBe(0);
+      expect(calculateSubScore('heartRate', 75)).toBe(0);
+      expect(calculateSubScore('heartRate', 99)).toBe(0);
+    });
+
+    it('scores 1 for HR 100-109', () => {
+      expect(calculateSubScore('heartRate', 100)).toBe(1);
+      expect(calculateSubScore('heartRate', 109)).toBe(1);
+    });
+
+    it('scores 2 for HR 110-129', () => {
+      expect(calculateSubScore('heartRate', 110)).toBe(2);
+      expect(calculateSubScore('heartRate', 129)).toBe(2);
+    });
+
+    it('scores 3 for HR 130-139', () => {
+      expect(calculateSubScore('heartRate', 130)).toBe(3);
+      expect(calculateSubScore('heartRate', 139)).toBe(3);
+    });
+
+    it('scores 4 for HR 140-159', () => {
+      expect(calculateSubScore('heartRate', 140)).toBe(4);
+      expect(calculateSubScore('heartRate', 159)).toBe(4);
+    });
+
+    it('returns E for HR >= 160', () => {
+      expect(calculateSubScore('heartRate', 160)).toBe('E');
+      expect(calculateSubScore('heartRate', 200)).toBe('E');
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Temperature
+  // -------------------------------------------------------------------------
   describe('Temperature', () => {
-    it('scores 3 for temp <= 35.0', () => {
-      expect(calculateSubScore('temperature', 35.0)).toBe(3);
-      expect(calculateSubScore('temperature', 34.0)).toBe(3);
+    it('scores 4 for temp <= 34.0', () => {
+      expect(calculateSubScore('temperature', 34.0)).toBe(4);
+      expect(calculateSubScore('temperature', 33.0)).toBe(4);
+    });
+
+    it('scores 2 for temp 34.1-35.0', () => {
+      expect(calculateSubScore('temperature', 34.1)).toBe(2);
+      expect(calculateSubScore('temperature', 35.0)).toBe(2);
     });
 
     it('scores 1 for temp 35.1-36.0', () => {
@@ -91,106 +243,56 @@ describe('calculateSubScore', () => {
       expect(calculateSubScore('temperature', 36.0)).toBe(1);
     });
 
-    it('scores 0 for temp 36.1-38.0', () => {
+    it('scores 0 for temp 36.1-37.9', () => {
       expect(calculateSubScore('temperature', 36.1)).toBe(0);
       expect(calculateSubScore('temperature', 37.0)).toBe(0);
-      expect(calculateSubScore('temperature', 38.0)).toBe(0);
+      expect(calculateSubScore('temperature', 37.9)).toBe(0);
     });
 
-    it('scores 1 for temp 38.1-39.0', () => {
-      expect(calculateSubScore('temperature', 38.1)).toBe(1);
-      expect(calculateSubScore('temperature', 39.0)).toBe(1);
+    it('scores 1 for temp 38.0-38.4', () => {
+      expect(calculateSubScore('temperature', 38.0)).toBe(1);
+      expect(calculateSubScore('temperature', 38.4)).toBe(1);
     });
 
-    it('scores 2 for temp >= 39.1', () => {
-      expect(calculateSubScore('temperature', 39.1)).toBe(2);
+    it('scores 2 for temp 38.5-39.4', () => {
+      expect(calculateSubScore('temperature', 38.5)).toBe(2);
+      expect(calculateSubScore('temperature', 39.4)).toBe(2);
+    });
+
+    it('scores 2 for temp >= 39.5', () => {
+      expect(calculateSubScore('temperature', 39.5)).toBe(2);
       expect(calculateSubScore('temperature', 41.0)).toBe(2);
     });
   });
 
-  describe('Heart Rate', () => {
-    it('scores 3 for HR <= 40', () => {
-      expect(calculateSubScore('heartRate', 40)).toBe(3);
-      expect(calculateSubScore('heartRate', 30)).toBe(3);
-    });
-
-    it('scores 1 for HR 41-50', () => {
-      expect(calculateSubScore('heartRate', 41)).toBe(1);
-      expect(calculateSubScore('heartRate', 50)).toBe(1);
-    });
-
-    it('scores 0 for HR 51-90', () => {
-      expect(calculateSubScore('heartRate', 51)).toBe(0);
-      expect(calculateSubScore('heartRate', 75)).toBe(0);
-      expect(calculateSubScore('heartRate', 90)).toBe(0);
-    });
-
-    it('scores 1 for HR 91-110', () => {
-      expect(calculateSubScore('heartRate', 91)).toBe(1);
-      expect(calculateSubScore('heartRate', 110)).toBe(1);
-    });
-
-    it('scores 2 for HR 111-130', () => {
-      expect(calculateSubScore('heartRate', 111)).toBe(2);
-      expect(calculateSubScore('heartRate', 130)).toBe(2);
-    });
-
-    it('scores 3 for HR >= 131', () => {
-      expect(calculateSubScore('heartRate', 131)).toBe(3);
-      expect(calculateSubScore('heartRate', 200)).toBe(3);
-    });
-  });
-
-  describe('Systolic BP', () => {
-    it('scores 3 for BP <= 90', () => {
-      expect(calculateSubScore('systolicBP', 90)).toBe(3);
-      expect(calculateSubScore('systolicBP', 60)).toBe(3);
-    });
-
-    it('scores 2 for BP 91-100', () => {
-      expect(calculateSubScore('systolicBP', 91)).toBe(2);
-      expect(calculateSubScore('systolicBP', 100)).toBe(2);
-    });
-
-    it('scores 1 for BP 101-110', () => {
-      expect(calculateSubScore('systolicBP', 101)).toBe(1);
-      expect(calculateSubScore('systolicBP', 110)).toBe(1);
-    });
-
-    it('scores 0 for BP 111-219', () => {
-      expect(calculateSubScore('systolicBP', 111)).toBe(0);
-      expect(calculateSubScore('systolicBP', 120)).toBe(0);
-      expect(calculateSubScore('systolicBP', 219)).toBe(0);
-    });
-
-    it('scores 3 for BP >= 220', () => {
-      expect(calculateSubScore('systolicBP', 220)).toBe(3);
-      expect(calculateSubScore('systolicBP', 280)).toBe(3);
-    });
-  });
-
-  describe('Supplemental O2', () => {
-    it('scores 0 when not on supplemental O2', () => {
-      expect(calculateSubScore('supplementalO2', 0)).toBe(0);
-    });
-
-    it('scores 2 when on supplemental O2', () => {
-      expect(calculateSubScore('supplementalO2', 1)).toBe(2);
-    });
-  });
-
-  describe('Consciousness (AVPU)', () => {
+  // -------------------------------------------------------------------------
+  // Consciousness (via AVPU numeric mapping)
+  // -------------------------------------------------------------------------
+  describe('Consciousness', () => {
     it('scores 0 for Alert (numeric 0)', () => {
       expect(calculateSubScore('consciousness', 0)).toBe(0);
     });
 
-    it('scores 3 for non-Alert states (numeric 1-3)', () => {
-      expect(calculateSubScore('consciousness', 1)).toBe(3);
-      expect(calculateSubScore('consciousness', 2)).toBe(3);
-      expect(calculateSubScore('consciousness', 3)).toBe(3);
+    it('scores 1 for Voice (numeric 1)', () => {
+      expect(calculateSubScore('consciousness', 1)).toBe(1);
+    });
+
+    it('scores 4 for Confusion (numeric 4)', () => {
+      expect(calculateSubScore('consciousness', 4)).toBe(4);
+    });
+
+    it('returns E for Pain (numeric 5)', () => {
+      expect(calculateSubScore('consciousness', 5)).toBe('E');
+    });
+
+    it('returns E for Unresponsive (numeric 6)', () => {
+      expect(calculateSubScore('consciousness', 6)).toBe('E');
     });
   });
 
+  // -------------------------------------------------------------------------
+  // Edge cases
+  // -------------------------------------------------------------------------
   describe('edge cases', () => {
     it('returns 0 for unknown parameter', () => {
       expect(calculateSubScore('nonExistentParam', 42)).toBe(0);
@@ -198,155 +300,232 @@ describe('calculateSubScore', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// Aggregate scoring
-// ---------------------------------------------------------------------------
+// ===========================================================================
+// 2. calculateQADDS -- Aggregate scoring
+// ===========================================================================
 
-describe('calculateNEWS2', () => {
-  it('calculates total score of 0 for normal vitals', () => {
-    const result = calculateNEWS2(makeVital());
+describe('calculateQADDS', () => {
+  it('calculates totalScore 0, riskLevel Normal, escalationLevel 0 for normal vitals', () => {
+    const result = calculateQADDS(makeVital());
     expect(result.totalScore).toBe(0);
-    expect(result.clinicalRisk).toBe('Low');
+    expect(result.riskLevel).toBe('Normal');
     expect(result.escalationLevel).toBe(0);
   });
 
   it('includes all 7 sub-scores for complete vitals', () => {
-    const result = calculateNEWS2(makeVital());
+    const result = calculateQADDS(makeVital());
     expect(result.subScores).toHaveLength(7);
     const params = result.subScores.map((s) => s.parameter);
     expect(params).toContain('Respiratory Rate');
     expect(params).toContain('SpO2');
-    expect(params).toContain('Supplemental O2');
-    expect(params).toContain('Temperature');
+    expect(params).toContain('O2 Delivery');
     expect(params).toContain('Systolic BP');
     expect(params).toContain('Heart Rate');
+    expect(params).toContain('Temperature');
     expect(params).toContain('Consciousness');
   });
 
-  it('handles missing vitals gracefully', () => {
-    const result = calculateNEWS2({
+  it('handles missing vitals gracefully (partial charting)', () => {
+    const result = calculateQADDS({
       datetime: '2026-02-17T08:00:00',
-      supplementalO2: false,
+      // No vitals provided at all -- only O2 Delivery defaults to 0
     });
-    // Only supplemental O2 should produce a sub-score
+    // O2 Delivery is always included (defaults to 0 flow rate)
     expect(result.subScores).toHaveLength(1);
+    expect(result.subScores[0].parameter).toBe('O2 Delivery');
     expect(result.totalScore).toBe(0);
   });
 
-  it('calculates High risk for critically abnormal vitals', () => {
-    const result = calculateNEWS2(
-      makeVital({
-        temp: 39.5, // 2
-        hr: 135,    // 3
-        rr: 26,     // 3
-        bp_sys: 85, // 3
-        spo2: 90,   // 3
-        avpu: 'V',  // 3
-        supplementalO2: true, // 2
-      }),
-    );
-    expect(result.totalScore).toBeGreaterThanOrEqual(7);
-    expect(result.clinicalRisk).toBe('High');
-    expect(result.escalationLevel).toBe(3);
+  it('detects E-zone: HR=35 -> hasEZone=true, eZoneParameters includes Heart Rate', () => {
+    const result = calculateQADDS(makeVital({ hr: 35 }));
+    expect(result.hasEZone).toBe(true);
+    expect(result.eZoneParameters).toContain('Heart Rate');
+    expect(result.riskLevel).toBe('MET');
   });
 
-  it('detects Low-Medium risk when a single parameter scores 3 but total < 5', () => {
-    const result = calculateNEWS2(
-      makeVital({
-        rr: 7, // scores 3
-        // all others normal = 0
-      }),
-    );
-    expect(result.totalScore).toBe(3);
-    expect(result.clinicalRisk).toBe('Low-Medium');
-    expect(result.escalationLevel).toBe(1);
+  it('E-zone does NOT add to totalScore (numeric sum only)', () => {
+    // HR=35 is E-zone, all other vitals normal (score 0 each)
+    const result = calculateQADDS(makeVital({ hr: 35 }));
+    // E contributes 0 to numeric sum; all other params are normal = 0
+    expect(result.totalScore).toBe(0);
+    expect(result.hasEZone).toBe(true);
   });
 
-  it('calculates Medium risk for total 5-6', () => {
-    const result = calculateNEWS2(
+  it('detects multiple E-zones simultaneously', () => {
+    const result = calculateQADDS(
       makeVital({
-        temp: 38.5,  // 1
-        hr: 95,      // 1
-        rr: 22,      // 2
-        bp_sys: 105, // 1
+        hr: 30,     // E zone (HR <= 39)
+        rr: 5,      // E zone (RR <= 8)
+        bp_sys: 50,  // E zone (BP <= 79)
       }),
     );
-    expect(result.totalScore).toBe(5);
-    expect(result.clinicalRisk).toBe('Medium');
-    expect(result.escalationLevel).toBe(2);
+    expect(result.hasEZone).toBe(true);
+    expect(result.eZoneParameters).toContain('Heart Rate');
+    expect(result.eZoneParameters).toContain('Respiratory Rate');
+    expect(result.eZoneParameters).toContain('Systolic BP');
+    expect(result.eZoneParameters).toHaveLength(3);
+    expect(result.totalScore).toBe(0); // E zones contribute 0
+    expect(result.riskLevel).toBe('MET');
   });
 
-  it('records supplemental O2 as "Yes"/"No" string in sub-score value', () => {
-    const onO2 = calculateNEWS2(makeVital({ supplementalO2: true }));
-    const o2Sub = onO2.subScores.find((s) => s.parameter === 'Supplemental O2');
-    expect(o2Sub?.value).toBe('Yes');
-    expect(o2Sub?.score).toBe(2);
+  it('high score scenario: totalScore >= 8 -> riskLevel MET', () => {
+    const result = calculateQADDS(
+      makeVital({
+        temp: 33.0,  // 4
+        hr: 140,     // 4
+        bp_sys: 80,  // 4
+        // rr=16 (0), spo2=98 (0), o2FlowRate=0 (0), avpu=A (0)
+      }),
+    );
+    expect(result.totalScore).toBe(12);
+    expect(result.riskLevel).toBe('MET');
+    expect(result.escalationLevel).toBe(4);
+  });
 
-    const noO2 = calculateNEWS2(makeVital({ supplementalO2: false }));
-    const noO2Sub = noO2.subScores.find((s) => s.parameter === 'Supplemental O2');
-    expect(noO2Sub?.value).toBe('No');
-    expect(noO2Sub?.score).toBe(0);
+  it('o2FlowRate=10 scores 2 for O2 Delivery', () => {
+    const result = calculateQADDS(makeVital({ o2FlowRate: 10 }));
+    const o2Sub = result.subScores.find((s) => s.parameter === 'O2 Delivery');
+    expect(o2Sub).toBeDefined();
+    expect(o2Sub!.value).toBe(10);
+    expect(o2Sub!.score).toBe(2);
   });
 });
 
-// ---------------------------------------------------------------------------
-// Clinical risk classification
-// ---------------------------------------------------------------------------
+// ===========================================================================
+// 3. getQADDSRiskLevel
+// ===========================================================================
 
-describe('getClinicalRisk', () => {
-  it('returns Low for score 0-4 with no red score', () => {
-    expect(getClinicalRisk(0)).toBe('Low');
-    expect(getClinicalRisk(4)).toBe('Low');
+describe('getQADDSRiskLevel', () => {
+  it('returns Normal for score 0, no E-zone', () => {
+    expect(getQADDSRiskLevel(0, false)).toBe('Normal');
   });
 
-  it('returns Low-Medium when hasRedScore is true and total < 5', () => {
-    expect(getClinicalRisk(3, true)).toBe('Low-Medium');
-    expect(getClinicalRisk(4, true)).toBe('Low-Medium');
+  it('returns Low for score 1-3, no E-zone', () => {
+    expect(getQADDSRiskLevel(1, false)).toBe('Low');
+    expect(getQADDSRiskLevel(2, false)).toBe('Low');
+    expect(getQADDSRiskLevel(3, false)).toBe('Low');
   });
 
-  it('returns Medium for score 5-6', () => {
-    expect(getClinicalRisk(5)).toBe('Medium');
-    expect(getClinicalRisk(6)).toBe('Medium');
+  it('returns Moderate for score 4-5, no E-zone', () => {
+    expect(getQADDSRiskLevel(4, false)).toBe('Moderate');
+    expect(getQADDSRiskLevel(5, false)).toBe('Moderate');
   });
 
-  it('returns High for score >= 7', () => {
-    expect(getClinicalRisk(7)).toBe('High');
-    expect(getClinicalRisk(12)).toBe('High');
-    expect(getClinicalRisk(20)).toBe('High');
+  it('returns High for score 6-7, no E-zone', () => {
+    expect(getQADDSRiskLevel(6, false)).toBe('High');
+    expect(getQADDSRiskLevel(7, false)).toBe('High');
   });
 
-  it('returns High for score >= 7 even with no red score', () => {
-    expect(getClinicalRisk(7, false)).toBe('High');
+  it('returns MET for score >= 8, no E-zone', () => {
+    expect(getQADDSRiskLevel(8, false)).toBe('MET');
+    expect(getQADDSRiskLevel(12, false)).toBe('MET');
+    expect(getQADDSRiskLevel(20, false)).toBe('MET');
   });
 
-  it('returns Medium for score 5 with red score (High takes precedence only at >= 7)', () => {
-    expect(getClinicalRisk(5, true)).toBe('Medium');
+  it('returns MET for any score when E-zone is present', () => {
+    expect(getQADDSRiskLevel(0, true)).toBe('MET');
+    expect(getQADDSRiskLevel(3, true)).toBe('MET');
+    expect(getQADDSRiskLevel(5, true)).toBe('MET');
+    expect(getQADDSRiskLevel(7, true)).toBe('MET');
   });
 });
 
-// ---------------------------------------------------------------------------
-// Escalation recommendations
-// ---------------------------------------------------------------------------
+// ===========================================================================
+// 4. getEscalationRecommendation
+// ===========================================================================
 
 describe('getEscalationRecommendation', () => {
-  it('returns routine monitoring for Low risk', () => {
+  it('Normal -> contains "routine" and "8-hourly"', () => {
+    const rec = getEscalationRecommendation('Normal');
+    expect(rec).toContain('routine');
+    expect(rec).toContain('8-hourly');
+  });
+
+  it('Low -> contains "Team Leader" and "4-hourly"', () => {
     const rec = getEscalationRecommendation('Low');
-    expect(rec).toContain('routine monitoring');
+    expect(rec).toContain('Team Leader');
+    expect(rec).toContain('4-hourly');
   });
 
-  it('returns increased observation for Low-Medium risk', () => {
-    const rec = getEscalationRecommendation('Low-Medium');
-    expect(rec).toContain('1-hourly');
+  it('Moderate -> contains "RMO" and "30 min"', () => {
+    const rec = getEscalationRecommendation('Moderate');
+    expect(rec).toContain('RMO');
+    expect(rec).toContain('30 min');
   });
 
-  it('returns urgent review for Medium risk', () => {
-    const rec = getEscalationRecommendation('Medium');
-    expect(rec).toContain('Urgent');
-  });
-
-  it('returns emergency response for High risk', () => {
+  it('High -> contains "Registrar" and "30 min"', () => {
     const rec = getEscalationRecommendation('High');
-    expect(rec).toContain('Emergency');
-    expect(rec).toContain('critical care');
+    expect(rec).toContain('Registrar');
+    expect(rec).toContain('30 min');
+  });
+
+  it('MET -> contains "MET Call" and "10-minutely"', () => {
+    const rec = getEscalationRecommendation('MET');
+    expect(rec).toContain('MET Call');
+    expect(rec).toContain('10-minutely');
+  });
+});
+
+// ===========================================================================
+// 5. getObservationFrequency
+// ===========================================================================
+
+describe('getObservationFrequency', () => {
+  it('Normal, stable -> 8-hourly', () => {
+    expect(getObservationFrequency('Normal', false)).toBe('8-hourly');
+  });
+
+  it('Low, deteriorating -> 1-hourly', () => {
+    expect(getObservationFrequency('Low', true)).toBe('1-hourly');
+  });
+
+  it('Low, stable -> 4-hourly', () => {
+    expect(getObservationFrequency('Low', false)).toBe('4-hourly');
+  });
+
+  it('Moderate, deteriorating -> 1-hourly', () => {
+    expect(getObservationFrequency('Moderate', true)).toBe('1-hourly');
+  });
+
+  it('Moderate, stable -> 2-hourly', () => {
+    expect(getObservationFrequency('Moderate', false)).toBe('2-hourly');
+  });
+
+  it('High, deteriorating -> Half-hourly', () => {
+    expect(getObservationFrequency('High', true)).toBe('Half-hourly');
+  });
+
+  it('High, stable -> 1-hourly', () => {
+    expect(getObservationFrequency('High', false)).toBe('1-hourly');
+  });
+
+  it('MET, deteriorating -> 10-minutely', () => {
+    expect(getObservationFrequency('MET', true)).toBe('10-minutely');
+  });
+
+  it('MET, stable -> 10-minutely', () => {
+    expect(getObservationFrequency('MET', false)).toBe('10-minutely');
+  });
+});
+
+// ===========================================================================
+// 6. Backward compatibility
+// ===========================================================================
+
+describe('backward compatibility', () => {
+  it('calculateNEWS2 is exported and works as alias for calculateQADDS', () => {
+    const vital = makeVital();
+    const qaddsResult = calculateQADDS(vital);
+    const news2Result = calculateNEWS2(vital);
+    expect(news2Result).toEqual(qaddsResult);
+  });
+
+  it('getClinicalRisk is exported and works as alias for getQADDSRiskLevel', () => {
+    expect(getClinicalRisk(0, false)).toBe('Normal');
+    expect(getClinicalRisk(3, false)).toBe('Low');
+    expect(getClinicalRisk(4, false)).toBe('Moderate');
+    expect(getClinicalRisk(7, false)).toBe('High');
+    expect(getClinicalRisk(8, false)).toBe('MET');
+    expect(getClinicalRisk(0, true)).toBe('MET');
   });
 });

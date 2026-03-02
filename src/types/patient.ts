@@ -16,7 +16,7 @@
 export type Gender = 'Male' | 'Female' | 'Other' | 'Unknown';
 
 /** AVPU consciousness scale used in vital sign observations. */
-export type AVPUScale = 'A' | 'V' | 'P' | 'U';
+export type AVPUScale = 'A' | 'C' | 'V' | 'P' | 'U';
 
 /**
  * Core patient demographic and identity information.
@@ -107,8 +107,11 @@ export interface VitalSign {
   /** Whether the patient is receiving supplemental oxygen. */
   supplementalO2?: boolean;
 
-  /** Calculated NEWS2 aggregate score for this observation set. */
-  newsScore?: number;
+  /** Oxygen flow rate in L/min (0 = room air). */
+  o2FlowRate?: number;
+
+  /** Calculated EWS aggregate score for this observation set. */
+  ewsScore?: number;
 
   /** Patient-reported pain score (0-10 numeric rating scale). */
   painScore?: number;

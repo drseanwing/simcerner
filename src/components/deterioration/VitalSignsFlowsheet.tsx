@@ -5,14 +5,14 @@
  * Renders a grid where:
  * - Rows represent vital sign parameters (Temp, HR, RR, BP, SpO2, AVPU, O2)
  * - Columns represent time-based observation sets (most recent first)
- * - Each cell is background-coloured by its NEWS2 sub-score:
- *   white (0), yellow (1), orange (2), red (3)
+ * - Each cell is background-coloured by its Q-ADDS sub-score:
+ *   green (0), yellow (1), orange (2), deep-orange (3), purple (4/E)
  */
 
 import { useMemo } from 'react';
-import type { VitalSign, NEWS2SubScore } from '../../types';
-import { calculateNEWS2 } from '../../services/newsCalculator';
-import type { NEWS2Result } from '../../types';
+import type { VitalSign, QADDSSubScore, QADDSScore } from '../../types';
+import { calculateQADDS } from '../../services/newsCalculator';
+import type { QADDSResult } from '../../types';
 import '../../styles/components/views.css';
 
 // ---------------------------------------------------------------------------
@@ -25,6 +25,30 @@ export interface VitalSignsFlowsheetProps {
   vitals: VitalSign[];
   /** Maximum number of time columns to display. */
   maxColumns?: number;
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Map a Q-ADDS sub-score to a CSS variable level.
+ * 0→0, 1→1, 2→2, 3→3, 4→4, E→4
+ */
+function subScoreToLevel(score: QADDSScore): number {
+  if (score === 'E') return 4;
+  return score;
+}
+
+/**
+ * Map an aggregate total score to a CSS variable level (Q-ADDS zones).
+ */
+function totalScoreToLevel(score: number): number {
+  if (score >= 8) return 4;  // purple
+  if (score >= 6) return 3;  // deep orange
+  if (score >= 4) return 2;  // orange
+  if (score >= 1) return 1;  // yellow
+  return 0;                  // green
 }
 
 // ---------------------------------------------------------------------------
@@ -52,7 +76,7 @@ const FLOWSHEET_PARAMS: Array<{
 
 /**
  * VitalSignsFlowsheet renders a colour-coded grid of vital sign observations
- * with NEWS2 sub-score colouring per cell.
+ * with Q-ADDS sub-score colouring per cell.
  */
 export default function VitalSignsFlowsheet({
   vitals,
@@ -60,9 +84,9 @@ export default function VitalSignsFlowsheet({
 }: VitalSignsFlowsheetProps) {
   const displayVitals = vitals.slice(0, maxColumns);
 
-  /** Pre-compute NEWS2 results for each vital observation. */
-  const newsResults = useMemo<NEWS2Result[]>(
-    () => displayVitals.map((v) => calculateNEWS2(v)),
+  /** Pre-compute Q-ADDS results for each vital observation. */
+  const newsResults = useMemo<QADDSResult[]>(
+    () => displayVitals.map((v) => calculateQADDS(v)),
     [displayVitals],
   );
 
@@ -75,11 +99,11 @@ export default function VitalSignsFlowsheet({
   }
 
   /**
-   * Look up the sub-score for a given parameter name from a NEWS2 result.
+   * Look up the sub-score for a given parameter name from a Q-ADDS result.
    */
-  function getSubScore(result: NEWS2Result, paramName: string): number {
+  function getSubScore(result: QADDSResult, paramName: string): QADDSScore {
     const sub = result.subScores.find(
-      (s: NEWS2SubScore) => s.parameter === paramName,
+      (s: QADDSSubScore) => s.parameter === paramName,
     );
     return sub?.score ?? 0;
   }
@@ -113,13 +137,13 @@ export default function VitalSignsFlowsheet({
           />
         ))}
 
-        {/* Aggregate NEWS2 row */}
+        {/* Aggregate EWS row */}
         <div className="flowsheet-cell flowsheet-cell--label" style={{ fontWeight: 700 }}>
-          NEWS2 Total
+          EWS Total
         </div>
         {newsResults.map((result, i) => {
           const score = result.totalScore;
-          const scoreLevel = score >= 7 ? 3 : score >= 5 ? 2 : score >= 1 ? 1 : 0;
+          const scoreLevel = totalScoreToLevel(score);
           return (
             <div
               key={i}
@@ -156,22 +180,23 @@ function FlowsheetRow({
   label: string;
   newsParam: string;
   vitals: VitalSign[];
-  newsResults: NEWS2Result[];
+  newsResults: QADDSResult[];
   render: (v: VitalSign) => string;
-  getSubScore: (result: NEWS2Result, param: string) => number;
+  getSubScore: (result: QADDSResult, param: string) => QADDSScore;
 }) {
   return (
     <>
       <div className="flowsheet-cell flowsheet-cell--label">{label}</div>
       {vitals.map((v, i) => {
         const score = getSubScore(newsResults[i], newsParam);
+        const level = subScoreToLevel(score);
         return (
           <div
             key={i}
             className="flowsheet-cell"
             style={{
-              backgroundColor: `var(--news-score-${score})`,
-              color: score >= 2 ? 'var(--news-score-text-light)' : 'var(--news-score-text-dark)',
+              backgroundColor: `var(--news-score-${level})`,
+              color: level >= 2 ? 'var(--news-score-text-light)' : 'var(--news-score-text-dark)',
               textAlign: 'center',
             }}
           >

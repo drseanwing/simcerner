@@ -1,21 +1,23 @@
 /**
  * @file DeteriorationView.tsx
- * @description Deterioration / vital signs view composing NEWS2 scoring,
+ * @description Deterioration / vital signs view composing Q-ADDS scoring,
  * colour-coded vital signs flowsheet, escalation protocol, and score trend.
  *
  * Replaces and enhances the original VitalsView from emr-sim-v2.html by
- * integrating the NEWS2 scoring engine and providing richer clinical
+ * integrating the Q-ADDS scoring engine and providing richer clinical
  * decision support visualisations.
  */
 
 import { useMemo } from 'react';
 import { usePatientStore } from '../../stores/patientStore';
-import { calculateNEWS2 } from '../../services/newsCalculator';
-import type { NEWS2Result } from '../../types';
+import { calculateQADDS } from '../../services/newsCalculator';
+import type { QADDSResult } from '../../types';
 import NewsScoreCard from './NewsScoreCard';
 import VitalSignsFlowsheet from './VitalSignsFlowsheet';
 import EscalationProtocol from './EscalationProtocol';
 import ScoreTrendGraph from './ScoreTrendGraph';
+import METCallBanner from '../met-meo/METCallBanner';
+import METMEOPanel from '../met-meo/METMEOPanel';
 import '../../styles/components/views.css';
 
 // ---------------------------------------------------------------------------
@@ -34,10 +36,10 @@ import '../../styles/components/views.css';
 export default function DeteriorationView() {
   const patient = usePatientStore((s) => s.currentPatient);
 
-  /** NEWS2 result from the most recent vital sign set. */
-  const latestResult: NEWS2Result | null = useMemo(() => {
+  /** Q-ADDS result from the most recent vital sign set. */
+  const latestResult: QADDSResult | null = useMemo(() => {
     if (!patient?.vitals?.length) return null;
-    return calculateNEWS2(patient.vitals[0]);
+    return calculateQADDS(patient.vitals[0]);
   }, [patient?.vitals]);
 
   if (!patient) {
@@ -50,22 +52,39 @@ export default function DeteriorationView() {
 
   return (
     <>
-      <div className="content-header">Managing Deterioration - Vital Signs</div>
+      <div className="content-header">Managing Deterioration</div>
       <div className="content-body">
         {latestResult ? (
           <>
-            {/* Score card + flowsheet side-by-side on wide screens */}
+            {/* MET Call Banner — shown when EWS >= 8 or E-zone */}
+            <METCallBanner
+              ewsScore={latestResult.totalScore}
+              hasEZone={latestResult.hasEZone}
+              eZoneParameters={latestResult.eZoneParameters}
+            />
+
+            {/* Score card + escalation side-by-side on wide screens */}
             <div className="deterioration-top-row">
               <NewsScoreCard result={latestResult} />
               <EscalationProtocol
                 score={latestResult.totalScore}
-                clinicalRisk={latestResult.clinicalRisk}
+                clinicalRisk={latestResult.riskLevel}
               />
             </div>
 
+            {/* MET-MEO Plan panel — below escalation protocol */}
+            {(latestResult.hasEZone || latestResult.totalScore >= 8) && (
+              <METMEOPanel
+                patientId={patient.mrn}
+                ewsScore={latestResult.totalScore}
+                hasEZone={latestResult.hasEZone}
+                eZoneParameters={latestResult.eZoneParameters}
+              />
+            )}
+
             {/* Colour-coded vital signs flowsheet */}
             <div className="vitals-chart mb-10">
-              <div className="chart-header">Vital Signs Flowsheet (NEWS2 Colour-Coded)</div>
+              <div className="chart-header">Vital Signs Flowsheet</div>
               <VitalSignsFlowsheet vitals={patient.vitals} />
             </div>
 

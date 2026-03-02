@@ -11,7 +11,7 @@
 import { useState, useMemo, useCallback, useRef } from 'react';
 import { usePatientStore } from '../../stores/patientStore';
 import { useClockStore } from '../../stores/clockStore';
-import { calculateNEWS2, getEscalationRecommendation } from '../../services/newsCalculator';
+import { calculateQADDS, getEscalationRecommendation } from '../../services/newsCalculator';
 import type { Patient, VitalSign, LabResult } from '../../types';
 
 // ---------------------------------------------------------------------------
@@ -132,8 +132,8 @@ function generateSBAR(patient: Patient, simTime: Date): SBARData {
     assessment.push(`Latest Vitals (${latestVital.datetime}):`);
     assessment.push(`  ${formatVitals(latestVital)}`);
 
-    const news2 = calculateNEWS2(latestVital);
-    assessment.push(`NEWS2 Score: ${news2.totalScore} — Clinical Risk: ${news2.clinicalRisk}`);
+    const qadds = calculateQADDS(latestVital);
+    assessment.push(`Q-ADDS EWS: ${qadds.totalScore} — Clinical Risk: ${qadds.riskLevel}`);
 
     if (latestVital.supplementalO2) {
       assessment.push('  Patient on supplemental oxygen');
@@ -158,9 +158,9 @@ function generateSBAR(patient: Patient, simTime: Date): SBARData {
   const recommendation: string[] = [];
 
   if (latestVital) {
-    const news2 = calculateNEWS2(latestVital);
-    const escalation = getEscalationRecommendation(news2.clinicalRisk);
-    recommendation.push(`NEWS2 Escalation: ${escalation}`);
+    const qadds = calculateQADDS(latestVital);
+    const escalation = getEscalationRecommendation(qadds.riskLevel);
+    recommendation.push(`Q-ADDS Escalation: ${escalation}`);
   }
 
   const pendingOrders = patient.orders.filter(

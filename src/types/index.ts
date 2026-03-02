@@ -7,8 +7,8 @@
  * single entry point:
  *
  * ```ts
- * import type { Patient, VitalSign, NEWS2Result } from './types';
- * import { MedicationDoseStatus, NEWS2_THRESHOLDS } from './types';
+ * import type { Patient, VitalSign, QADDSResult } from './types';
+ * import { MedicationDoseStatus, QADDS_THRESHOLDS } from './types';
  * ```
  */
 
@@ -63,20 +63,50 @@ export type {
   IViewToolbarConfig,
 } from './iview';
 
-// NEWS2 / Q-ADDS scoring
+// Q-ADDS scoring — new canonical types
 export type {
-  ClinicalRisk,
+  QADDSScore,
+  QADDSSubScore,
+  QADDSResult,
+  QADDSRiskLevel,
+  QADDSScoreThresholdBand,
+  ChartVariant,
   EscalationLevel,
-  NEWS2SubScore,
-  NEWS2Result,
-  ScoreThresholdBand,
   ParameterThresholds,
   ScoreThresholds,
   ClinicalRiskThresholds,
 } from './news';
+
+// Q-ADDS scoring — new canonical constants
 export {
-  ScoringSystem,
-  NEWS2_THRESHOLDS,
+  QADDS_THRESHOLDS,
+  QADDS_RISK_THRESHOLDS,
   AVPU_NUMERIC_MAP,
+} from './news';
+
+// MET-MEO workflow types
+export type {
+  MEOOrderType,
+  METMEOTriggerType,
+  METMEOOrderStatus,
+  AuthorisingRole,
+  METMEOOrder,
+  MOFOption,
+  ModifiedObsFrequencyOrder,
+  PatientStatus,
+  NursingAssessment,
+  METCallReason,
+  METCallCriteria,
+} from './metmeo';
+
+// Backward-compatible aliases (NEWS2 -> Q-ADDS)
+export type {
+  ClinicalRisk,
+  NEWS2SubScore,
+  NEWS2Result,
+  ScoreThresholdBand,
+} from './news';
+export {
+  NEWS2_THRESHOLDS,
   CLINICAL_RISK_THRESHOLDS,
 } from './news';

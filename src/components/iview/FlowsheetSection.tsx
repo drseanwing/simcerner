@@ -7,7 +7,7 @@
  * - Subsequent columns: time slots based on the configured interval
  * - Current time column highlighted in yellow
  * - Cells are clickable to open the AssessmentForm modal
- * - Pre-populated vital sign data and NEWS2 scores when the Vital Signs
+ * - Pre-populated vital sign data and Q-ADDS scores when the Vital Signs
  *   section is active
  *
  * The grid uses sticky positioning for the first column and header row
@@ -20,8 +20,8 @@ import type {
   AssessmentEntry,
   TimeInterval,
 } from '../../types/iview';
-import type { VitalSign, NEWS2Result } from '../../types';
-import { calculateNEWS2 } from '../../services/newsCalculator';
+import type { VitalSign, QADDSResult } from '../../types';
+import { calculateQADDS } from '../../services/newsCalculator';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -201,12 +201,12 @@ export default function FlowsheetSection({
     return map;
   }, [isVitalsSection, vitals]);
 
-  /** NEWS2 results by time slot for the aggregate row. */
+  /** Q-ADDS results by time slot for the aggregate row. */
   const newsResultsBySlot = useMemo(() => {
-    if (!isVitalsSection) return new Map<string, NEWS2Result>();
-    const map = new Map<string, NEWS2Result>();
+    if (!isVitalsSection) return new Map<string, QADDSResult>();
+    const map = new Map<string, QADDSResult>();
     for (const [slot, vital] of vitalsBySlot) {
-      map.set(slot, calculateNEWS2(vital));
+      map.set(slot, calculateQADDS(vital));
     }
     return map;
   }, [isVitalsSection, vitalsBySlot]);
@@ -267,7 +267,7 @@ export default function FlowsheetSection({
     );
   }
 
-  // -- Calculate total rows including NEWS2 row ------------------------------
+  // -- Calculate total rows including EWS row --------------------------------
 
   const showNewsRow = isVitalsSection && newsResultsBySlot.size > 0;
   const totalRows = displayParams.length + (showNewsRow ? 1 : 0) + 1; // +1 for header
@@ -319,7 +319,7 @@ export default function FlowsheetSection({
             />
           ))}
 
-          {/* NEWS2 aggregate score row */}
+          {/* EWS aggregate score row */}
           {showNewsRow && (
             <NewsScoreRow
               timeSlots={timeSlots}
@@ -405,7 +405,7 @@ function FlowsheetRow({
   );
 }
 
-/** NEWS2 total score row displayed below vital sign parameters. */
+/** EWS total score row displayed below vital sign parameters. */
 function NewsScoreRow({
   timeSlots,
   currentSlot,
@@ -413,7 +413,7 @@ function NewsScoreRow({
 }: {
   timeSlots: string[];
   currentSlot: string;
-  newsResultsBySlot: Map<string, NEWS2Result>;
+  newsResultsBySlot: Map<string, QADDSResult>;
 }) {
   return (
     <>
@@ -421,7 +421,7 @@ function NewsScoreRow({
         className="iview-flowsheet-cell iview-flowsheet-cell--label"
         style={{ fontWeight: 700, color: 'var(--cerner-dark-blue)' }}
       >
-        NEWS2 Total
+        EWS Total
       </div>
 
       {timeSlots.map((slot) => {
@@ -441,7 +441,7 @@ function NewsScoreRow({
 
         const { totalScore } = result;
         const scoreLevel =
-          totalScore >= 7 ? 3 : totalScore >= 5 ? 2 : totalScore >= 1 ? 1 : 0;
+          totalScore >= 8 ? 4 : totalScore >= 6 ? 3 : totalScore >= 4 ? 2 : totalScore >= 1 ? 1 : 0;
 
         return (
           <div
@@ -456,7 +456,7 @@ function NewsScoreRow({
                   ? 'var(--news-score-text-light)'
                   : 'var(--news-score-text-dark)',
             }}
-            title={`NEWS2: ${totalScore} (${result.clinicalRisk} risk)`}
+            title={`EWS: ${totalScore} (${result.riskLevel} risk)`}
           >
             {totalScore}
           </div>

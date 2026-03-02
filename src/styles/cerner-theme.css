@@ -2,7 +2,7 @@
  * @file cerner-theme.css
  * @description CSS custom properties (design tokens) for the SimCerner EMR theme.
  *
- * Defines the Cerner-inspired colour palette, NEWS2 score colour tokens,
+ * Defines the Cerner-inspired colour palette, Q-ADDS EWS score colour tokens,
  * and MAR (Medication Administration Record) status colours used
  * throughout the application. All component styles reference these
  * variables for consistent theming and easy customisation.
@@ -86,26 +86,37 @@
   --cerner-muted: #999;
 
   /* -------------------------------------------------------------------
-     NEWS2 Score Colour Tokens
+     Q-ADDS EWS Score Colour Tokens
      ------------------------------------------------------------------- */
 
-  /** NEWS2 sub-score 0 – within normal range (white/no highlight). */
-  --news-score-0: #ffffff;
+  /** Q-ADDS EWS score 0 — Normal (green). */
+  --ews-score-0: #c8e6c9;
 
-  /** NEWS2 sub-score 1 – mild deviation (yellow). */
-  --news-score-1: #ffd54f;
+  /** Q-ADDS EWS score 1 — Low concern (yellow). */
+  --ews-score-1: #fff9c4;
 
-  /** NEWS2 sub-score 2 – moderate deviation (orange). */
-  --news-score-2: #ff9800;
+  /** Q-ADDS EWS score 2 — Moderate (orange). */
+  --ews-score-2: #ffe0b2;
 
-  /** NEWS2 sub-score 3 – severe deviation / "red score" (red). */
-  --news-score-3: #f44336;
+  /** Q-ADDS EWS score 3 — Deep orange. */
+  --ews-score-3: #ffcc80;
 
-  /** NEWS2 score text on dark backgrounds (score 2, 3). */
-  --news-score-text-light: #ffffff;
+  /** Q-ADDS EWS score 4 or E-zone — Purple (high / MET criteria). */
+  --ews-score-4: #e1bee7;
 
-  /** NEWS2 score text on light backgrounds (score 0, 1). */
-  --news-score-text-dark: #333333;
+  /** EWS score text on dark backgrounds. */
+  --ews-score-text-dark: #212121;
+
+  /** EWS score text on light backgrounds. */
+  --ews-score-text-light: #ffffff;
+
+  /* Backward-compatible aliases */
+  --news-score-0: var(--ews-score-0);
+  --news-score-1: var(--ews-score-1);
+  --news-score-2: var(--ews-score-2);
+  --news-score-3: var(--ews-score-3);
+  --news-score-text-dark: var(--ews-score-text-dark);
+  --news-score-text-light: var(--ews-score-text-light);
 
   /* -------------------------------------------------------------------
      MAR (Medication Administration Record) Status Colours

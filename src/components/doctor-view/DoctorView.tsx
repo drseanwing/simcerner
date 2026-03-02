@@ -4,7 +4,7 @@
  *
  * Displays a summary of the patient's clinical status including:
  * - EW Score Table: grid of the 3 most recent vital sign observations
- * - NEWS2 aggregate score (when vital data is available)
+ * - Q-ADDS aggregate score (when vital data is available)
  * - Recent Clinical Notes: expandable note items (first 3 notes)
  *
  * Migrated from the DoctorView component in emr-sim-v2.html with
@@ -13,8 +13,8 @@
 
 import { useState, useMemo } from 'react';
 import { usePatientStore } from '../../stores/patientStore';
-import { calculateNEWS2 } from '../../services/newsCalculator';
-import type { VitalSign, ClinicalNote, NEWS2Result } from '../../types';
+import { calculateQADDS } from '../../services/newsCalculator';
+import type { VitalSign, ClinicalNote, QADDSResult } from '../../types';
 import '../../styles/components/views.css';
 
 // ---------------------------------------------------------------------------
@@ -55,10 +55,10 @@ export default function DoctorView() {
   const patient = usePatientStore((s) => s.currentPatient);
   const [expandedNoteId, setExpandedNoteId] = useState<string | null>(null);
 
-  /** Compute NEWS2 score from the most recent vital sign observation. */
-  const latestNews: NEWS2Result | null = useMemo(() => {
+  /** Compute Q-ADDS score from the most recent vital sign observation. */
+  const latestNews: QADDSResult | null = useMemo(() => {
     if (!patient?.vitals?.length) return null;
-    return calculateNEWS2(patient.vitals[0]);
+    return calculateQADDS(patient.vitals[0]);
   }, [patient?.vitals]);
 
   if (!patient) {
@@ -101,18 +101,18 @@ export default function DoctorView() {
                 />
               ))}
 
-              {/* NEWS2 score row */}
+              {/* EWS score row */}
               {latestNews && (
                 <>
-                  <div className="chart-cell label">NEWS2 Score</div>
+                  <div className="chart-cell label" title="Q-ADDS Early Warning Score">EWS</div>
                   {recentVitals.map((v, i) => {
-                    const result = calculateNEWS2(v);
+                    const result = calculateQADDS(v);
                     return (
                       <div
                         key={i}
-                        className={`chart-cell${result.totalScore >= 7 ? ' abnormal' : ''}`}
+                        className={`chart-cell${result.totalScore >= 8 || result.hasEZone ? ' abnormal' : ''}`}
                       >
-                        {result.totalScore} ({result.clinicalRisk})
+                        {result.totalScore} ({result.riskLevel})
                       </div>
                     );
                   })}

@@ -1,18 +1,18 @@
 /**
  * @file NewsScoreCard.tsx
- * @description Displays the aggregate NEWS2/Q-ADDS score with colour-coded
- * background, clinical risk level badge, scoring system toggle, and
+ * @description Displays the aggregate Q-ADDS score with colour-coded
+ * background, clinical risk level badge, E-zone indicator, and
  * individual sub-score breakdown.
  *
- * Colour mapping:
- * - Green  (0–4): Low risk
- * - Yellow (5–6): Medium risk
- * - Red    (≥7):  High risk
+ * Colour mapping (Q-ADDS 5-tier):
+ * - Green   (0):   Normal
+ * - Yellow  (1–3): Low
+ * - Orange  (4–5): Moderate
+ * - Deep-orange (6–7): High
+ * - Purple  (≥8 or E-zone): MET
  */
 
-import { useState } from 'react';
-import type { NEWS2Result, NEWS2SubScore } from '../../types';
-import { ScoringSystem } from '../../types';
+import type { QADDSResult, QADDSSubScore, QADDSScore } from '../../types';
 import '../../styles/components/views.css';
 
 // ---------------------------------------------------------------------------
@@ -21,8 +21,8 @@ import '../../styles/components/views.css';
 
 /** Props accepted by the NewsScoreCard component. */
 export interface NewsScoreCardProps {
-  /** Computed NEWS2 result for the most recent vital signs. */
-  result: NEWS2Result;
+  /** Computed Q-ADDS result for the most recent vital signs. */
+  result: QADDSResult;
 }
 
 // ---------------------------------------------------------------------------
@@ -30,21 +30,32 @@ export interface NewsScoreCardProps {
 // ---------------------------------------------------------------------------
 
 /**
- * Return the background colour for a given aggregate score.
- * Green 0–4, yellow 5–6, red ≥7.
+ * Return the background colour for a given aggregate score (Q-ADDS 5-tier).
  */
 function getScoreColour(score: number): string {
-  if (score >= 7) return '#f44336';
-  if (score >= 5) return '#ff9800';
-  return '#4caf50';
+  if (score >= 8) return '#9C27B0';   // purple — MET range
+  if (score >= 6) return '#FF6D00';   // deep orange — High
+  if (score >= 4) return '#FF9800';   // orange — Moderate
+  if (score >= 1) return '#FDD835';   // yellow — Low
+  return '#4caf50';                   // green — Normal
 }
 
 /**
  * Return the text colour appropriate for the score background.
  */
 function getScoreTextColour(score: number): string {
-  if (score >= 5) return '#ffffff';
+  if (score >= 4) return '#ffffff';
+  if (score >= 1) return '#333333';
   return '#ffffff';
+}
+
+/**
+ * Map a Q-ADDS sub-score to a CSS variable level for background colouring.
+ * 0→0 (green), 1→1 (yellow), 2→2 (orange), 3→3 (deep-orange), 4→4 (purple), E→4 (purple)
+ */
+function getSubScoreLevel(score: QADDSScore): number {
+  if (score === 'E') return 4;
+  return score;
 }
 
 // ---------------------------------------------------------------------------
@@ -56,8 +67,6 @@ function getScoreTextColour(score: number): string {
  * score with colour-coded severity, risk badge, and sub-score breakdown.
  */
 export default function NewsScoreCard({ result }: NewsScoreCardProps) {
-  const [system, setSystem] = useState<ScoringSystem>(ScoringSystem.NEWS2);
-
   const bgColour = getScoreColour(result.totalScore);
   const textColour = getScoreTextColour(result.totalScore);
 
@@ -70,47 +79,53 @@ export default function NewsScoreCard({ result }: NewsScoreCardProps) {
       >
         <span className="news-score-card__number">{result.totalScore}</span>
         <span className="news-score-card__risk-badge">
-          {result.clinicalRisk}
+          {result.riskLevel}
         </span>
       </div>
 
-      {/* Scoring system selector */}
-      <div className="news-score-card__system-toggle">
-        <button
-          className={`btn btn-sm${system === ScoringSystem.NEWS2 ? ' btn-primary' : ''}`}
-          onClick={() => setSystem(ScoringSystem.NEWS2)}
+      {/* E-zone indicator */}
+      {result.hasEZone && (
+        <div
+          className="news-score-card__ezone-badge"
+          style={{
+            backgroundColor: '#9C27B0',
+            color: '#ffffff',
+            padding: '2px 10px',
+            borderRadius: 4,
+            fontWeight: 700,
+            fontSize: '0.85em',
+            textAlign: 'center',
+            marginTop: 4,
+          }}
         >
-          NEWS2
-        </button>
-        <button
-          className={`btn btn-sm${system === ScoringSystem.QADDS ? ' btn-primary' : ''}`}
-          onClick={() => setSystem(ScoringSystem.QADDS)}
-        >
-          Q-ADDS
-        </button>
-      </div>
+          E-ZONE
+        </div>
+      )}
 
       {/* Sub-score breakdown */}
       <div className="news-score-card__breakdown">
         <div className="news-score-card__breakdown-title">Sub-Score Breakdown</div>
         <ul className="news-score-card__breakdown-list">
-          {result.subScores.map((sub: NEWS2SubScore) => (
-            <li key={sub.parameter} className="news-score-card__breakdown-item">
-              <span className="news-score-card__param-name">{sub.parameter}</span>
-              <span className="news-score-card__param-value">
-                {String(sub.value)}
-              </span>
-              <span
-                className="news-score-card__param-score"
-                style={{
-                  backgroundColor: `var(--news-score-${sub.score})`,
-                  color: sub.score >= 2 ? 'var(--news-score-text-light)' : 'var(--news-score-text-dark)',
-                }}
-              >
-                {sub.score}
-              </span>
-            </li>
-          ))}
+          {result.subScores.map((sub: QADDSSubScore) => {
+            const level = getSubScoreLevel(sub.score);
+            return (
+              <li key={sub.parameter} className="news-score-card__breakdown-item">
+                <span className="news-score-card__param-name">{sub.parameter}</span>
+                <span className="news-score-card__param-value">
+                  {String(sub.value)}
+                </span>
+                <span
+                  className="news-score-card__param-score"
+                  style={{
+                    backgroundColor: `var(--news-score-${level})`,
+                    color: level >= 2 ? 'var(--news-score-text-light)' : 'var(--news-score-text-dark)',
+                  }}
+                >
+                  {sub.score}
+                </span>
+              </li>
+            );
+          })}
         </ul>
       </div>
     </div>

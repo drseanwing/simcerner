@@ -1,22 +1,22 @@
 /**
  * @file useNewsScore.ts
- * @description React hook for NEWS2 score calculations.
+ * @description React hook for Q-ADDS EWS score calculations.
  *
- * Accepts a patient's vital sign history and returns the latest NEWS2
+ * Accepts a patient's vital sign history and returns the latest Q-ADDS EWS
  * score, clinical risk level, and a trend indicator showing whether the
  * patient's condition is improving, stable, or worsening.
  */
 
 import { useMemo } from 'react';
 import type { VitalSign } from '../types/patient';
-import type { NEWS2Result, ClinicalRisk } from '../types/news';
-import { calculateNEWS2 } from '../services/newsCalculator';
+import type { QADDSResult, QADDSRiskLevel } from '../types/news';
+import { calculateQADDS } from '../services/newsCalculator';
 
 // ---------------------------------------------------------------------------
 // Trend Type
 // ---------------------------------------------------------------------------
 
-/** Trend direction derived from consecutive NEWS2 scores. */
+/** Trend direction derived from consecutive Q-ADDS EWS scores. */
 export type NewsTrend = 'improving' | 'stable' | 'worsening';
 
 // ---------------------------------------------------------------------------
@@ -25,17 +25,23 @@ export type NewsTrend = 'improving' | 'stable' | 'worsening';
 
 /** Shape returned by the {@link useNewsScore} hook. */
 export interface UseNewsScoreResult {
-  /** NEWS2 result for the most recent observation, or null if no vitals. */
-  latestScore: NEWS2Result | null;
+  /** Q-ADDS EWS result for the most recent observation, or null if no vitals. */
+  latestScore: QADDSResult | null;
 
   /** Clinical risk level for the most recent observation. */
-  riskLevel: ClinicalRisk | null;
+  riskLevel: QADDSRiskLevel | null;
 
   /** Trend direction over the last two observations. */
   trend: NewsTrend;
 
-  /** NEWS2 results for all vitals (newest first), for charting. */
-  scoreHistory: NEWS2Result[];
+  /** Q-ADDS EWS results for all vitals (newest first), for charting. */
+  scoreHistory: QADDSResult[];
+
+  /** Whether any vital sign parameter triggered the E-zone (MET call criteria). */
+  hasEZone: boolean;
+
+  /** Names of parameters that are in the E-zone, if any. */
+  eZoneParameters: string[];
 }
 
 // ---------------------------------------------------------------------------
@@ -43,17 +49,17 @@ export interface UseNewsScoreResult {
 // ---------------------------------------------------------------------------
 
 /**
- * React hook that computes NEWS2 scores from a patient's vital signs.
+ * React hook that computes Q-ADDS EWS scores from a patient's vital signs.
  *
  * All calculations are memoised — results only recompute when the
  * `vitals` array reference changes.
  *
  * @param vitals - Array of vital sign observations (newest first).
- * @returns Latest score, risk level, trend, and full score history.
+ * @returns Latest score, risk level, trend, full score history, and E-zone flags.
  *
  * @example
  * ```tsx
- * const { latestScore, riskLevel, trend } = useNewsScore(patient.vitals);
+ * const { latestScore, riskLevel, trend, hasEZone } = useNewsScore(patient.vitals);
  * ```
  */
 export function useNewsScore(vitals: VitalSign[]): UseNewsScoreResult {
@@ -64,14 +70,16 @@ export function useNewsScore(vitals: VitalSign[]): UseNewsScoreResult {
         riskLevel: null,
         trend: 'stable' as NewsTrend,
         scoreHistory: [],
+        hasEZone: false,
+        eZoneParameters: [],
       };
     }
 
-    // Calculate NEWS2 for every observation set
-    const scoreHistory = vitals.map((v) => calculateNEWS2(v));
+    // Calculate Q-ADDS EWS for every observation set
+    const scoreHistory = vitals.map((v) => calculateQADDS(v));
 
     const latestScore = scoreHistory[0];
-    const riskLevel = latestScore.clinicalRisk;
+    const riskLevel = latestScore.riskLevel;
 
     // Derive trend from the two most recent scores
     let trend: NewsTrend = 'stable';
@@ -93,6 +101,11 @@ export function useNewsScore(vitals: VitalSign[]): UseNewsScoreResult {
       riskLevel,
       trend,
       scoreHistory,
+      hasEZone: latestScore.hasEZone,
+      eZoneParameters: latestScore.eZoneParameters,
     };
   }, [vitals]);
 }
+
+/** Alias for {@link useNewsScore} using Q-ADDS EWS naming. */
+export const useEWSScore = useNewsScore;

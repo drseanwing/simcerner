@@ -1,225 +1,132 @@
 /**
- * @file news.ts
- * @description NEWS2 (National Early Warning Score 2) and Q-ADDS scoring
+ * @file ews.ts (keeping news.ts filename for now to avoid import breakage — will rename in cleanup)
+ * @description Q-ADDS (Queensland Adult Deterioration Detection System) scoring
  * types and threshold constants for the SimCerner EMR application.
  *
- * Implements the Royal College of Physicians NEWS2 scoring system used
- * to detect acute clinical deterioration in adult patients. Includes
- * configurable threshold tables, sub-score breakdowns, clinical risk
- * classification, and escalation levels.
- *
- * @see https://www.rcplondon.ac.uk/projects/outputs/national-early-warning-score-news-2
+ * Implements the Queensland Health Q-ADDS scoring system (SW150 General Adult variant).
+ * @see docs/q-adds.md
  */
 
 // ---------------------------------------------------------------------------
-// Scoring System Selection
+// Score Types
 // ---------------------------------------------------------------------------
 
-/** Supported early warning scoring systems. */
-export const ScoringSystem = {
-  /** National Early Warning Score 2 (UK standard). */
-  NEWS2: 'NEWS2',
+/** Possible Q-ADDS sub-scores: 0-4 numeric or 'E' for Emergency zone. */
+export type QADDSScore = 0 | 1 | 2 | 3 | 4 | 'E';
 
-  /** Queensland Adult Deterioration Detection System (Australian). */
-  QADDS: 'QADDS',
-} as const;
-
-export type ScoringSystem = typeof ScoringSystem[keyof typeof ScoringSystem];
+/** Chart variant codes for Q-ADDS scoring tables. */
+export type ChartVariant = 'SW150' | 'SW626' | 'SW1171';
 
 // ---------------------------------------------------------------------------
 // Clinical Risk & Escalation
 // ---------------------------------------------------------------------------
 
 /**
- * Clinical risk level derived from the aggregate NEWS2 score.
+ * Q-ADDS graded response risk level derived from the aggregate score.
  *
- * | Risk         | Aggregate Score              |
- * |--------------|------------------------------|
- * | Low          | 0–4 (no individual param ≥ 3)|
- * | Low-Medium   | Any individual param = 3     |
- * | Medium       | 5–6 (or single param = 3)    |
- * | High         | ≥ 7                          |
+ * | Risk     | Score Range | Key Action                    |
+ * |----------|-------------|-------------------------------|
+ * | Normal   | 0           | 8-hourly observations         |
+ * | Low      | 1-3         | Notify TL, up to 4-hourly     |
+ * | Moderate | 4-5         | Notify RMO within 30 min      |
+ * | High     | 6-7         | Notify Registrar within 30 min|
+ * | MET      | >=8 or E    | Initiate MET call             |
  */
-export type ClinicalRisk = 'Low' | 'Low-Medium' | 'Medium' | 'High';
+export type QADDSRiskLevel = 'Normal' | 'Low' | 'Moderate' | 'High' | 'MET';
 
 /**
- * Recommended escalation response mapped from clinical risk.
- *
- * | Level | Action                                         |
- * |-------|------------------------------------------------|
- * | 0     | Continue routine monitoring                     |
- * | 1     | Increase observation frequency                  |
- * | 2     | Urgent clinical review by ward team             |
- * | 3     | Emergency response — critical care outreach     |
+ * Recommended escalation response mapped from risk level.
+ * 0=routine, 1=increased obs, 2=RMO review, 3=Registrar review, 4=MET call
  */
-export type EscalationLevel = 0 | 1 | 2 | 3;
+export type EscalationLevel = 0 | 1 | 2 | 3 | 4;
+
+// Keep backward-compatible aliases for components still importing old names
+export type ClinicalRisk = QADDSRiskLevel;
 
 // ---------------------------------------------------------------------------
 // Sub-Score & Result
 // ---------------------------------------------------------------------------
 
-/**
- * Individual NEWS2 sub-score for a single physiological parameter.
- */
-export interface NEWS2SubScore {
-  /** Name of the physiological parameter (e.g. "Respiratory Rate"). */
+export interface QADDSSubScore {
   parameter: string;
-
-  /** Measured value as a number or descriptive string. */
   value: number | string;
-
-  /** Assigned score for this parameter (0, 1, 2, or 3). */
-  score: 0 | 1 | 2 | 3;
+  score: QADDSScore;
 }
 
-/**
- * Complete NEWS2 scoring result aggregating all sub-scores with
- * clinical risk classification and escalation guidance.
- */
-export interface NEWS2Result {
-  /** Sum of all individual parameter scores. */
+export interface QADDSResult {
   totalScore: number;
-
-  /** Breakdown of score contributions by parameter. */
-  subScores: NEWS2SubScore[];
-
-  /** Derived clinical risk category. */
-  clinicalRisk: ClinicalRisk;
-
-  /** Recommended escalation level. */
+  subScores: QADDSSubScore[];
+  riskLevel: QADDSRiskLevel;
   escalationLevel: EscalationLevel;
+  hasEZone: boolean;
+  eZoneParameters: string[];
 }
+
+// Backward-compatible aliases
+export type NEWS2SubScore = QADDSSubScore;
+export type NEWS2Result = QADDSResult;
 
 // ---------------------------------------------------------------------------
 // Score Threshold Configuration
 // ---------------------------------------------------------------------------
 
-/**
- * A single threshold band mapping a value range to a NEWS2 score.
- *
- * @example
- * ```ts
- * // Heart rate 51-90 bpm scores 0
- * const band: ScoreThresholdBand = { min: 51, max: 90, score: 0 };
- * ```
- */
-export interface ScoreThresholdBand {
-  /** Lower bound of the range (inclusive). Use -Infinity for "≤ X" ranges. */
+export interface QADDSScoreThresholdBand {
   min: number;
-
-  /** Upper bound of the range (inclusive). Use Infinity for "≥ X" ranges. */
   max: number;
-
-  /** NEWS2 score assigned when the value falls within this band. */
-  score: 0 | 1 | 2 | 3;
+  score: QADDSScore;
 }
 
-/**
- * Threshold configuration for a single vital parameter, containing
- * ordered bands that cover the full value range.
- */
+// Keep old name as alias
+export type ScoreThresholdBand = QADDSScoreThresholdBand;
+
 export interface ParameterThresholds {
-  /** Parameter identifier matching the vital sign field key. */
   parameter: string;
-
-  /** Human-readable parameter label. */
   label: string;
-
-  /** Ordered score bands from lowest to highest value range. */
-  bands: ScoreThresholdBand[];
+  bands: QADDSScoreThresholdBand[];
 }
 
-/**
- * Complete threshold table mapping all NEWS2 parameters to their
- * scoring bands. Used by the scoring engine to compute sub-scores.
- */
 export type ScoreThresholds = Record<string, ParameterThresholds>;
 
 // ---------------------------------------------------------------------------
-// NEWS2 Threshold Constants
+// Q-ADDS Threshold Constants — SW150 General Adult
 // ---------------------------------------------------------------------------
+// Derived from docs/q-adds.md scoring tables
 
-/**
- * Official NHS NEWS2 scoring thresholds per physiological parameter.
- *
- * Based on the Royal College of Physicians NEWS2 chart:
- * - Respiratory Rate: ≤8→3, 9-11→1, 12-20→0, 21-24→2, ≥25→3
- * - SpO2 Scale 1: ≤91→3, 92-93→2, 94-95→1, ≥96→0
- * - SpO2 Scale 2: ≤83→3, 84-85→2, 86-87→1, 88-92+O2→0, 93-94 on air→1, 95-96 on air→2, ≥97 on air→3
- * - Supplemental O2: Yes→2, No→0
- * - Temperature: ≤35.0→3, 35.1-36.0→1, 36.1-38.0→0, 38.1-39.0→1, ≥39.1→2
- * - Systolic BP: ≤90→3, 91-100→2, 101-110→1, 111-219→0, ≥220→3
- * - Heart Rate: ≤40→3, 41-50→1, 51-90→0, 91-110→1, 111-130→2, ≥131→3
- * - Consciousness (AVPU): Alert→0, Confusion/Voice/Pain/Unresponsive→3
- */
-export const NEWS2_THRESHOLDS: ScoreThresholds = {
+export const QADDS_THRESHOLDS: ScoreThresholds = {
   respiratoryRate: {
     parameter: 'rr',
     label: 'Respiratory Rate',
     bands: [
-      { min: -Infinity, max: 8, score: 3 },
-      { min: 9, max: 11, score: 1 },
-      { min: 12, max: 20, score: 0 },
-      { min: 21, max: 24, score: 2 },
-      { min: 25, max: Infinity, score: 3 },
+      { min: -Infinity, max: 8, score: 'E' },
+      { min: 9, max: 12, score: 1 },
+      { min: 13, max: 20, score: 0 },
+      { min: 21, max: 24, score: 1 },
+      { min: 25, max: 30, score: 2 },
+      { min: 31, max: 35, score: 4 },
+      { min: 36, max: Infinity, score: 'E' },
     ],
   },
 
-  spo2Scale1: {
+  spo2Standard: {
     parameter: 'spo2',
-    label: 'SpO2 Scale 1',
+    label: 'SpO2',
     bands: [
-      { min: -Infinity, max: 91, score: 3 },
-      { min: 92, max: 93, score: 2 },
-      { min: 94, max: 95, score: 1 },
-      { min: 96, max: Infinity, score: 0 },
+      { min: -Infinity, max: 84, score: 4 },
+      { min: 85, max: 89, score: 2 },
+      { min: 90, max: 91, score: 1 },
+      { min: 92, max: Infinity, score: 0 },
     ],
   },
 
-  spo2Scale2OnO2: {
-    parameter: 'spo2',
-    label: 'SpO2 Scale 2 (on supplemental O2)',
+  o2Delivery: {
+    parameter: 'o2FlowRate',
+    label: 'Oxygen Delivery',
     bands: [
-      { min: -Infinity, max: 83, score: 3 },
-      { min: 84, max: 85, score: 2 },
-      { min: 86, max: 87, score: 1 },
-      { min: 88, max: 92, score: 0 },
-      { min: 93, max: Infinity, score: 0 },
-    ],
-  },
-
-  spo2Scale2OnAir: {
-    parameter: 'spo2',
-    label: 'SpO2 Scale 2 (on room air)',
-    bands: [
-      { min: -Infinity, max: 83, score: 3 },
-      { min: 84, max: 85, score: 2 },
-      { min: 86, max: 87, score: 1 },
-      { min: 88, max: 92, score: 0 },
-      { min: 93, max: 94, score: 1 },
-      { min: 95, max: 96, score: 2 },
-      { min: 97, max: Infinity, score: 3 },
-    ],
-  },
-
-  supplementalO2: {
-    parameter: 'supplementalO2',
-    label: 'Supplemental Oxygen',
-    bands: [
-      { min: 0, max: 0, score: 0 },
-      { min: 1, max: 1, score: 2 },
-    ],
-  },
-
-  temperature: {
-    parameter: 'temp',
-    label: 'Temperature',
-    bands: [
-      { min: -Infinity, max: 35.0, score: 3 },
-      { min: 35.1, max: 36.0, score: 1 },
-      { min: 36.1, max: 38.0, score: 0 },
-      { min: 38.1, max: 39.0, score: 1 },
-      { min: 39.1, max: Infinity, score: 2 },
+      { min: -Infinity, max: 1, score: 0 },
+      { min: 2, max: 5, score: 1 },
+      { min: 6, max: 11, score: 2 },
+      { min: 12, max: 14, score: 4 },
+      { min: 15, max: Infinity, score: 'E' },
     ],
   },
 
@@ -227,11 +134,15 @@ export const NEWS2_THRESHOLDS: ScoreThresholds = {
     parameter: 'bp_sys',
     label: 'Systolic Blood Pressure',
     bands: [
-      { min: -Infinity, max: 90, score: 3 },
-      { min: 91, max: 100, score: 2 },
-      { min: 101, max: 110, score: 1 },
-      { min: 111, max: 219, score: 0 },
-      { min: 220, max: Infinity, score: 3 },
+      { min: -Infinity, max: 59, score: 'E' },
+      { min: 60, max: 79, score: 'E' },
+      { min: 80, max: 89, score: 4 },
+      { min: 90, max: 99, score: 2 },
+      { min: 100, max: 109, score: 1 },
+      { min: 110, max: 159, score: 0 },
+      { min: 160, max: 169, score: 1 },
+      { min: 170, max: 199, score: 2 },
+      { min: 200, max: Infinity, score: 4 },
     ],
   },
 
@@ -239,64 +150,75 @@ export const NEWS2_THRESHOLDS: ScoreThresholds = {
     parameter: 'hr',
     label: 'Heart Rate',
     bands: [
-      { min: -Infinity, max: 40, score: 3 },
-      { min: 41, max: 50, score: 1 },
-      { min: 51, max: 90, score: 0 },
-      { min: 91, max: 110, score: 1 },
-      { min: 111, max: 130, score: 2 },
-      { min: 131, max: Infinity, score: 3 },
+      { min: -Infinity, max: 39, score: 'E' },
+      { min: 40, max: 49, score: 2 },
+      { min: 50, max: 99, score: 0 },
+      { min: 100, max: 109, score: 1 },
+      { min: 110, max: 129, score: 2 },
+      { min: 130, max: 139, score: 3 },
+      { min: 140, max: 159, score: 4 },
+      { min: 160, max: Infinity, score: 'E' },
+    ],
+  },
+
+  temperature: {
+    parameter: 'temp',
+    label: 'Temperature',
+    bands: [
+      { min: -Infinity, max: 34.0, score: 4 },
+      { min: 34.1, max: 35.0, score: 2 },
+      { min: 35.1, max: 36.0, score: 1 },
+      { min: 36.1, max: 37.9, score: 0 },
+      { min: 38.0, max: 38.4, score: 1 },
+      { min: 38.5, max: 39.4, score: 2 },
+      { min: 39.5, max: Infinity, score: 2 },
     ],
   },
 
   consciousness: {
     parameter: 'avpu',
-    label: 'Consciousness (AVPU)',
+    label: 'Behaviour / Consciousness',
     bands: [
-      { min: 0, max: 0, score: 0 },
-      { min: 1, max: 3, score: 3 },
+      { min: 0, max: 0, score: 0 },   // Alert
+      { min: 1, max: 1, score: 1 },   // Voice
+      { min: 4, max: 4, score: 4 },   // Confusion / New behaviour
+      { min: 5, max: 5, score: 'E' }, // Pain
+      { min: 6, max: 6, score: 'E' }, // Unresponsive
     ],
   },
-} as const;
+};
+
+// Backward-compatible alias
+export const NEWS2_THRESHOLDS = QADDS_THRESHOLDS;
 
 /**
- * Mapping of AVPU scale letters to numeric values used by the
- * consciousness threshold bands.
- *
- * - A (Alert) → 0 → score 0
- * - C (new Confusion) → 1 → score 3
- * - V (Voice responsive) → 2 → score 3
- * - P (Pain responsive) → 3 → score 3
- * - U (Unresponsive) → 3 → score 3
+ * AVPU mapping for Q-ADDS consciousness scoring.
+ * A=0 (Alert), V=1 (Voice), C=4 (Confusion/New behaviour), P=5->E (Pain), U=6->E (Unresponsive)
+ * Note: P and U map to high numbers that will match the 'E' band in consciousness thresholds.
  */
 export const AVPU_NUMERIC_MAP: Readonly<Record<string, number>> = {
   A: 0,
-  C: 1,
-  V: 2,
-  P: 3,
-  U: 3,
+  C: 4,
+  V: 1,
+  P: 5,
+  U: 6,
 } as const;
 
-// ---------------------------------------------------------------------------
-// Clinical Risk Thresholds
-// ---------------------------------------------------------------------------
-
 /**
- * Aggregate score thresholds for determining clinical risk level.
- * Used after summing all sub-scores to classify the overall result.
+ * Q-ADDS score thresholds for risk level determination.
  */
+export const QADDS_RISK_THRESHOLDS = {
+  met: 8,
+  high: 6,
+  moderate: 4,
+  low: 1,
+} as const;
+
+// Backward-compatible alias
 export const CLINICAL_RISK_THRESHOLDS = {
-  /** Score at or above which the patient is classified as High risk. */
   high: 7,
-
-  /** Score range for Medium risk (5-6), or any single parameter scoring 3. */
   medium: 5,
-
-  /**
-   * Low-Medium is triggered when the aggregate is 0-4 but any single
-   * parameter scores 3 (the "red score" rule).
-   */
   lowMediumSingleParam: 3,
 } as const;
 
-/** Type for the clinical risk threshold configuration object. */
-export type ClinicalRiskThresholds = typeof CLINICAL_RISK_THRESHOLDS;
+export type ClinicalRiskThresholds = typeof QADDS_RISK_THRESHOLDS;

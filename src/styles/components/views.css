@@ -3,7 +3,7 @@
  * @description Styles for all view components in the SimCerner EMR application.
  *
  * Covers vitals charts, graphs, fluid balance cards, clinical notes,
- * NEWS2 score card, vital signs flowsheet, MAR grid, escalation protocol,
+ * Q-ADDS EWS score card, vital signs flowsheet, MAR grid, escalation protocol,
  * orders, and administration dialog.
  *
  * Uses CSS custom properties from cerner-theme.css.
@@ -216,7 +216,7 @@
 }
 
 /* ========================================================================
-   NEWS2 Score Card
+   Q-ADDS EWS Score Card
    ======================================================================== */
 
 /** Main score card container. */

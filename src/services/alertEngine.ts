@@ -2,13 +2,13 @@
  * @file alertEngine.ts
  * @description Deterioration alert engine for the SimCerner EMR.
  *
- * Monitors patient vital signs and NEWS2 scores to generate clinical
+ * Monitors patient vital signs and Q-ADDS EWS scores to generate clinical
  * alerts when thresholds are breached. Provides an in-memory alert
  * store with acknowledgement support.
  */
 
 import type { Patient, VitalSign } from '../types/patient';
-import type { NEWS2Result, ClinicalRisk } from '../types/news';
+import type { QADDSResult, QADDSRiskLevel } from '../types/news';
 
 // ---------------------------------------------------------------------------
 // Alert Types
@@ -57,7 +57,7 @@ export interface Alert {
 
 /**
  * Thresholds for triggering individual vital sign alerts.
- * These are independent of NEWS2 and represent absolute danger limits.
+ * These are independent of Q-ADDS EWS and represent absolute danger limits.
  */
 const VITAL_ALERT_THRESHOLDS: Record<
   string,
@@ -149,44 +149,58 @@ export function checkVitals(patient: Patient, vital: VitalSign): Alert[] {
 }
 
 /**
- * Check a NEWS2 result against escalation thresholds and return
+ * Check a Q-ADDS EWS result against escalation thresholds and return
  * any alerts that should be raised.
  *
- * @param score      - The calculated NEWS2 result.
+ * @param score      - The calculated Q-ADDS EWS result.
  * @param patientMrn - MRN of the patient being evaluated.
  * @returns Array of newly generated alerts (may be empty).
  */
-export function checkNEWSScore(score: NEWS2Result, patientMrn: string): Alert[] {
+export function checkEWSScore(score: QADDSResult, patientMrn: string): Alert[] {
   const newAlerts: Alert[] = [];
   const now = new Date().toISOString();
-  const riskMap: Record<ClinicalRisk, { severity: AlertSeverity; type: AlertType } | null> = {
-    Low: null,
-    'Low-Medium': { severity: 'info', type: 'news_score_elevated' },
-    Medium: { severity: 'warning', type: 'news_score_elevated' },
+  const riskMap: Record<QADDSRiskLevel, { severity: AlertSeverity; type: AlertType } | null> = {
+    Normal: null,
+    Low: { severity: 'info', type: 'news_score_elevated' },
+    Moderate: { severity: 'warning', type: 'news_score_elevated' },
     High: { severity: 'critical', type: 'news_score_critical' },
+    MET: { severity: 'critical', type: 'news_score_critical' },
   };
 
-  const config = riskMap[score.clinicalRisk];
+  const config = riskMap[score.riskLevel];
   if (config) {
     newAlerts.push({
       id: generateAlertId(),
       type: config.type,
       severity: config.severity,
-      message: `NEWS2 Score ${score.totalScore} — ${score.clinicalRisk} risk. Escalation level ${score.escalationLevel}.`,
+      message: `Q-ADDS EWS ${score.totalScore} — ${score.riskLevel} risk. Escalation level ${score.escalationLevel}.`,
       timestamp: now,
       acknowledged: false,
       patientMrn,
     });
   }
 
-  // Check for any individual "3" (red) sub-scores
-  const redParams = score.subScores.filter((s) => s.score === 3);
-  if (redParams.length > 0 && score.clinicalRisk !== 'High') {
+  // E-zone: any parameter meeting MET call criteria — generate a critical alert
+  if (score.hasEZone) {
+    newAlerts.push({
+      id: generateAlertId(),
+      type: 'news_score_critical',
+      severity: 'critical',
+      message: `MET Call Criteria Met — E-zone vital sign: ${score.eZoneParameters.join(', ')}`,
+      timestamp: now,
+      acknowledged: false,
+      patientMrn,
+    });
+  }
+
+  // Check for any individual score-4 sub-scores (high-warning threshold in Q-ADDS)
+  const highParams = score.subScores.filter((s) => s.score === 4);
+  if (highParams.length > 0 && score.riskLevel !== 'High' && score.riskLevel !== 'MET') {
     newAlerts.push({
       id: generateAlertId(),
       type: 'news_score_elevated',
       severity: 'warning',
-      message: `RED score in: ${redParams.map((p) => p.parameter).join(', ')}. Requires increased monitoring.`,
+      message: `Score 4 in: ${highParams.map((p) => p.parameter).join(', ')}. Requires increased monitoring.`,
       timestamp: now,
       acknowledged: false,
       patientMrn,
@@ -196,6 +210,9 @@ export function checkNEWSScore(score: NEWS2Result, patientMrn: string): Alert[] 
   alerts = [...alerts, ...newAlerts];
   return newAlerts;
 }
+
+/** Backward-compatible alias for {@link checkEWSScore}. */
+export const checkNEWSScore = checkEWSScore;
 
 /**
  * Acknowledge an alert by its ID, marking it as clinician-reviewed.

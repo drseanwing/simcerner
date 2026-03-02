@@ -1,13 +1,14 @@
 /**
  * @file EscalationProtocol.tsx
- * @description Displays clinical response recommendations based on NEWS2 score.
+ * @description Displays clinical response recommendations based on Q-ADDS score.
  *
  * Shows a set of escalation cards coloured by severity, each describing the
- * recommended monitoring frequency and escalation actions:
- * - Low (0):       Routine monitoring every 12 hours
- * - Low-Medium (1-4): Minimum every 4-6 hours, inform RN in charge
- * - Medium (5-6):  Minimum hourly, urgent clinical review, consider critical care
- * - High (≥7):     Continuous monitoring, emergency review, consider ICU transfer
+ * recommended monitoring frequency and escalation actions (Q-ADDS 5-tier):
+ * - Normal (0):     Routine 8-hourly observations
+ * - Low (1–3):      Increased observation, 4-hourly / 1-hourly
+ * - Moderate (4–5): RMO review within 30 minutes
+ * - High (6–7):     Registrar review within 30 minutes
+ * - MET (>=8 or E): MET call — emergency response
  */
 
 import type { ClinicalRisk } from '../../types';
@@ -19,7 +20,7 @@ import '../../styles/components/views.css';
 
 /** Props accepted by the EscalationProtocol component. */
 export interface EscalationProtocolProps {
-  /** The aggregate NEWS2 score. */
+  /** The aggregate Q-ADDS score. */
   score: number;
   /** The derived clinical risk level. */
   clinicalRisk: ClinicalRisk;
@@ -42,59 +43,72 @@ interface EscalationCard {
 
 const ESCALATION_CARDS: EscalationCard[] = [
   {
-    risk: 'Low',
+    risk: 'Normal',
     scoreRange: '0',
     icon: '✓',
     colour: '#2e7d32',
     bgColour: '#e8f5e9',
     title: 'Routine Monitoring',
-    frequency: 'Minimum every 12 hours',
-    actions: [
-      'Continue routine NEWS monitoring',
-      'Document observations as per protocol',
-    ],
+    frequency: '8-hourly observations (minimum)',
+    actions: ['Continue routine Q-ADDS monitoring', 'Document observations as per protocol'],
   },
   {
-    risk: 'Low-Medium',
-    scoreRange: '1–4',
+    risk: 'Low',
+    scoreRange: '1–3',
     icon: '⬆',
-    colour: '#f57f17',
-    bgColour: '#fff8e1',
+    colour: '#f9a825',
+    bgColour: '#fffde7',
     title: 'Increased Observation',
-    frequency: 'Minimum every 4–6 hours',
+    frequency: '4-hourly (stable) / 1-hourly (deteriorating)',
     actions: [
-      'Inform registered nurse in charge',
-      'RN to assess and decide on escalation',
-      'Increase monitoring frequency',
+      'Notify Team Leader',
+      'Nurse escort required for transfers',
+      'If deteriorating: increase to 1-hourly observations',
     ],
   },
   {
-    risk: 'Medium',
-    scoreRange: '5–6 (or 3 in single parameter)',
+    risk: 'Moderate',
+    scoreRange: '4–5',
     icon: '⚠',
     colour: '#e65100',
     bgColour: '#fff3e0',
-    title: 'Urgent Clinical Review',
-    frequency: 'Minimum every 1 hour',
+    title: 'RMO Review Required',
+    frequency: '2-hourly (stable) / 1-hourly (deteriorating)',
     actions: [
-      'Urgent assessment by ward-based doctor or acute team nurse',
-      'Consider escalation to critical care outreach',
-      'Prepare ISBAR handover if escalating',
+      'Notify Team Leader',
+      'Notify RMO to review within 30 minutes',
+      'Nurse escort required',
+      'If no RMO review → escalate to Registrar',
     ],
   },
   {
     risk: 'High',
-    scoreRange: '≥ 7',
-    icon: '🚨',
-    colour: '#b71c1c',
-    bgColour: '#fef2f2',
-    title: 'Emergency Response',
-    frequency: 'Continuous monitoring / every 30 minutes',
+    scoreRange: '6–7',
+    icon: '🔶',
+    colour: '#bf360c',
+    bgColour: '#fbe9e7',
+    title: 'Registrar Review Required',
+    frequency: '1-hourly (stable) / ½-hourly (deteriorating)',
     actions: [
-      'Immediate assessment by clinical team with critical-care competency',
-      'Consider transfer to ICU / HDU',
-      'Activate Medical Emergency Team (MET) call if criteria met',
-      'Clinical review every 30 minutes until stabilised',
+      'Notify Team Leader',
+      'Notify Registrar to review within 30 minutes',
+      'Nurse escort required',
+      'If no Registrar review → initiate MET call or escalate to SMO',
+    ],
+  },
+  {
+    risk: 'MET',
+    scoreRange: '≥ 8 or E-zone',
+    icon: '🚨',
+    colour: '#7b1fa2',
+    bgColour: '#f3e5f5',
+    title: 'MET Call — Emergency Response',
+    frequency: '10-minutely observations (½-hourly if stable with MET-MEO)',
+    actions: [
+      'Initiate MET Call immediately',
+      'Registrar to ensure SMO/Consultant notified',
+      'Registrar and Nurse escort required',
+      'If MET-MEO plan active and stable: ½-hourly observations minimum',
     ],
   },
 ];
@@ -105,7 +119,7 @@ const ESCALATION_CARDS: EscalationCard[] = [
 
 /**
  * EscalationProtocol renders colour-coded escalation cards showing the
- * recommended clinical response for each NEWS2 risk tier. The card
+ * recommended clinical response for each Q-ADDS risk tier. The card
  * matching the current patient risk is visually highlighted.
  */
 export default function EscalationProtocol({

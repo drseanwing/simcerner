@@ -5,7 +5,7 @@
  * Manages a virtual clock that can be started, paused, and run at
  * configurable playback speeds (1×, 2×, 5×, 10×). The clock drives
  * time-dependent features such as medication due-times on the MAR,
- * vital sign observation windows, and NEWS2 escalation timers.
+ * vital sign observation windows, and Q-ADDS EWS escalation timers.
  */
 
 import { create } from 'zustand';

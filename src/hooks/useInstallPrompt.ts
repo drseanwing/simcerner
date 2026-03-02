@@ -7,14 +7,10 @@ interface BeforeInstallPromptEvent extends Event {
 
 export function useInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
-  const [isInstalled, setIsInstalled] = useState(false)
+  const [isInstalled, setIsInstalled] = useState(() => window.matchMedia('(display-mode: standalone)').matches)
 
   useEffect(() => {
-    // Check if already installed
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setIsInstalled(true)
-      return
-    }
+    if (isInstalled) return
 
     function handleBeforeInstall(e: Event) {
       e.preventDefault()
@@ -33,7 +29,7 @@ export function useInstallPrompt() {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstall)
       window.removeEventListener('appinstalled', handleAppInstalled)
     }
-  }, [])
+  }, [isInstalled])
 
   const promptInstall = useCallback(async () => {
     if (!deferredPrompt) return false

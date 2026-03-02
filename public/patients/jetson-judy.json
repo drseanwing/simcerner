@@ -1,0 +1,267 @@
+{
+  "mrn": "RBWH789456",
+  "name": "JETSON, JUDY",
+  "dob": "07-Apr-1963",
+  "age": "62 years",
+  "gender": "F",
+  "allergies": "NKDA",
+  "location": "RBWH Ward 5A: Bed 12",
+  "attending": "DR SPACELY, GEORGE",
+  "admission": "07-Apr-2021 06:15:00 AEST",
+  
+  "vitals": [
+    {
+      "datetime": "07-Apr-2021 14:00",
+      "temp": "37.2",
+      "hr": "92",
+      "rr": "20",
+      "bp_sys": "145",
+      "bp_dia": "88",
+      "spo2": "96",
+      "avpu": "Alert"
+    },
+    {
+      "datetime": "07-Apr-2021 10:00",
+      "temp": "37.4",
+      "hr": "98",
+      "rr": "22",
+      "bp_sys": "152",
+      "bp_dia": "92",
+      "spo2": "95",
+      "avpu": "Alert"
+    },
+    {
+      "datetime": "07-Apr-2021 08:00",
+      "temp": "37.1",
+      "hr": "95",
+      "rr": "21",
+      "bp_sys": "148",
+      "bp_dia": "90",
+      "spo2": "95",
+      "avpu": "Alert"
+    },
+    {
+      "datetime": "07-Apr-2021 06:30",
+      "temp": "37.3",
+      "hr": "102",
+      "rr": "24",
+      "bp_sys": "158",
+      "bp_dia": "95",
+      "spo2": "94",
+      "avpu": "Alert"
+    }
+  ],
+  
+  "fluidBalance": [
+    {
+      "datetime": "07-Apr-2021 12:00",
+      "intake_oral": 100,
+      "intake_iv": 500,
+      "output_urine": 180,
+      "output_other": 0
+    },
+    {
+      "datetime": "07-Apr-2021 08:00",
+      "intake_oral": 80,
+      "intake_iv": 500,
+      "output_urine": 150,
+      "output_other": 0
+    },
+    {
+      "datetime": "07-Apr-2021 04:00",
+      "intake_oral": 50,
+      "intake_iv": 500,
+      "output_urine": 120,
+      "output_other": 0
+    }
+  ],
+  
+  "medications": [
+    {
+      "name": "insulin aspart",
+      "dose": "8 units",
+      "route": "Subcutaneous",
+      "frequency": "THREE TIMES a day (with meals)",
+      "scheduled": true,
+      "times": ["0800", "1200", "1800"],
+      "lastGiven": "07-Apr-2021 08:00"
+    },
+    {
+      "name": "insulin glargine",
+      "dose": "20 units",
+      "route": "Subcutaneous",
+      "frequency": "ONCE a day",
+      "scheduled": true,
+      "times": ["2200"],
+      "lastGiven": "06-Apr-2021 22:00"
+    },
+    {
+      "name": "sodium polystyrene sulfonate (Resonium)",
+      "dose": "15 g",
+      "route": "Oral",
+      "frequency": "THREE TIMES a day",
+      "scheduled": true,
+      "times": ["0800", "1400", "2000"],
+      "lastGiven": "07-Apr-2021 08:00"
+    },
+    {
+      "name": "calcium gluconate",
+      "dose": "10 mL of 10%",
+      "route": "IV",
+      "frequency": "STAT (completed)",
+      "scheduled": false,
+      "times": [],
+      "lastGiven": "07-Apr-2021 06:30"
+    },
+    {
+      "name": "metoprolol",
+      "dose": "50 mg",
+      "route": "Oral",
+      "frequency": "TWICE a day",
+      "scheduled": true,
+      "times": ["0800", "2000"],
+      "lastGiven": "07-Apr-2021 08:00"
+    },
+    {
+      "name": "ondansetron",
+      "dose": "4 mg",
+      "route": "Oral",
+      "frequency": "PRN (up to 3 times daily)",
+      "scheduled": false,
+      "times": [],
+      "lastGiven": ""
+    }
+  ],
+  
+  "orders": [
+    {
+      "id": "ORD001",
+      "type": "Laboratory",
+      "name": "Venous Blood Gas",
+      "status": "Completed",
+      "ordered": "07-Apr-2021 08:00",
+      "signed": true
+    },
+    {
+      "id": "ORD002",
+      "type": "Laboratory",
+      "name": "Urea Electrolytes Creatinine (UEC)",
+      "status": "Completed",
+      "ordered": "07-Apr-2021 08:00",
+      "signed": true
+    },
+    {
+      "id": "ORD003",
+      "type": "Laboratory",
+      "name": "Full Blood Count (FBC)",
+      "status": "Pending",
+      "ordered": "07-Apr-2021 08:30",
+      "signed": true
+    },
+    {
+      "id": "ORD004",
+      "type": "Radiology",
+      "name": "Chest X-Ray",
+      "status": "Pending",
+      "ordered": "07-Apr-2021 08:30",
+      "signed": true
+    }
+  ],
+  
+  "results": {
+    "haematology": [
+      {
+        "test": "Haemoglobin",
+        "value": "139",
+        "unit": "g/L",
+        "range": "120-180",
+        "flag": ""
+      },
+      {
+        "test": "Haematocrit",
+        "value": "0.41",
+        "unit": "",
+        "range": "0.35-0.51",
+        "flag": ""
+      }
+    ],
+    "biochemistry": [
+      {
+        "test": "Sodium",
+        "value": "140",
+        "unit": "mmol/L",
+        "range": "135-145",
+        "flag": ""
+      },
+      {
+        "test": "Potassium",
+        "value": "9.1",
+        "unit": "mmol/L",
+        "range": "3.2-4.5",
+        "flag": "CRITICAL HIGH"
+      },
+      {
+        "test": "Chloride",
+        "value": "106",
+        "unit": "mmol/L",
+        "range": "95-110",
+        "flag": ""
+      },
+      {
+        "test": "Ionised Calcium",
+        "value": "1.17",
+        "unit": "mmol/L",
+        "range": "1.15-1.35",
+        "flag": ""
+      },
+      {
+        "test": "Glucose",
+        "value": "13.1",
+        "unit": "mmol/L",
+        "range": "3.0-7.8",
+        "flag": "High"
+      },
+      {
+        "test": "Urea",
+        "value": "24.2",
+        "unit": "mmol/L",
+        "range": "2.5-7.5",
+        "flag": "High"
+      },
+      {
+        "test": "Creatinine",
+        "value": "683",
+        "unit": "µmol/L",
+        "range": "50-120",
+        "flag": "CRITICAL HIGH"
+      }
+    ]
+  },
+  
+  "notes": [
+    {
+      "id": "NOTE001",
+      "type": "Medical Admission Note",
+      "title": "Admission - Emergency Department",
+      "author": "DR SPACELY, GEORGE SMO",
+      "datetime": "07-Apr-2021 06:30:00 AEST",
+      "content": "Presenting Complaint:\n62F presenting to ED with 3 day history of nausea, vomiting, and decreased oral intake. Reports missed dialysis session yesterday due to feeling unwell.\n\nHistory of Presenting Illness:\nPatient with known ESRF on intermittent HD (MWF schedule). Missed Friday dialysis. Developed N&V on Sunday, unable to tolerate oral intake. Increasing lethargy and confusion noted by family.\n\nPast Medical History:\n- End Stage Renal Failure on haemodialysis\n- Type 2 Diabetes Mellitus\n- Hypertension\n- Previous myocardial infarction (2018)\n\nOn Examination:\nGCS 15, Alert and oriented\nBP 158/95, HR 102, RR 24, SpO2 94% RA, Temp 37.3°C\nCVS: Dual heart sounds, no murmurs\nResp: Clear bilaterally\nAbdo: Soft, non-tender\nNeuro: No focal deficits\nAV fistula: Patent, palpable thrill\n\nInvestigations:\nVBG: Critical hyperkalemia K+ 9.1\nGlucose 13.1\nCreatinine 683 (baseline ~450-500)\nUrea 24.2\n\nImpression:\n1. Life-threatening hyperkalemia\n2. Acute on chronic renal failure\n3. Poorly controlled diabetes\n4. Volume overload\n\nManagement:\n- STAT Calcium gluconate 10mL 10% IV (given)\n- Insulin-dextrose protocol\n- Resonium 15g TDS\n- Urgent dialysis - renal team contacted\n- Insulin sliding scale for hyperglycemia\n- Admit to renal ward\n- Monitor cardiac rhythm\n- Repeat UEC in 2 hours"
+    },
+    {
+      "id": "NOTE002",
+      "type": "Progress Notes Inpatient",
+      "title": "Ward Round - Morning",
+      "author": "DR ORG, JANE RESIDENT",
+      "datetime": "07-Apr-2021 08:45:00 AEST",
+      "content": "Day 1 post admission\nPatient settled on ward overnight\nNo chest pain or palpitations\nStill nauseated, minimal oral intake\n\nObs stable, see chart\nAV fistula patent\n\nAwait urgent dialysis - booked for 10:00 today\nRepeat bloods sent\nContinue medications as charted\nFluid restrict to 1L/24hrs\nMonitor UO strictly\n\nPlan: Dialysis today, reassess electrolytes post-HD"
+    },
+    {
+      "id": "NOTE003",
+      "type": "Progress Notes Inpatient",
+      "title": "Nursing Note",
+      "author": "ORBIT, ROSIE RN",
+      "datetime": "07-Apr-2021 10:00:00 AEST",
+      "content": "Patient transferred to dialysis unit for emergency HD\nAV fistula checked - good thrill and bruit\nPre-dialysis weight: 68.5kg (dry weight 65kg)\nPatient tolerated transfer well\nContinuous cardiac monitoring in situ\nFamily notified and visiting"
+    }
+  ]
+}

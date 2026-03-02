@@ -1,0 +1,166 @@
+/* Top Navigation Bar */
+.top-nav {
+    background: linear-gradient(to bottom, #4a4a4a 0%, #2b2b2b 100%);
+    color: white;
+    padding: 4px 8px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 11px;
+    border-bottom: 1px solid #000;
+}
+
+.top-nav-item {
+    padding: 2px 8px;
+    cursor: pointer;
+    border-radius: 2px;
+}
+
+.top-nav-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Patient Banner */
+.patient-banner {
+    background: var(--cerner-header-blue);
+    color: white;
+    padding: 8px 12px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    font-size: 11px;
+    border-bottom: 2px solid var(--cerner-dark-blue);
+}
+
+.patient-banner-left, .patient-banner-right {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.patient-name {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.patient-detail {
+    display: flex;
+    gap: 15px;
+}
+
+.patient-detail-item {
+    display: flex;
+    gap: 5px;
+}
+
+.patient-detail-label {
+    font-weight: 600;
+}
+
+/* Main Layout */
+.main-container {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* Left Sidebar */
+.sidebar {
+    width: 130px;
+    background: var(--cerner-nav-bg);
+    color: white;
+    overflow-y: auto;
+    border-right: 1px solid #1a252f;
+}
+
+.sidebar-section {
+    border-bottom: 1px solid #1a252f;
+}
+
+.sidebar-header {
+    padding: 8px 10px;
+    background: #1a252f;
+    font-weight: 600;
+    font-size: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.sidebar-item {
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 11px;
+    border-left: 3px solid transparent;
+}
+
+.sidebar-item:hover {
+    background: var(--cerner-nav-hover);
+}
+
+.sidebar-item.active {
+    background: var(--cerner-dark-blue);
+    border-left-color: #fff;
+}
+
+/* Content Area */
+.content-area {
+    flex: 1;
+    background: #fff;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.content-header {
+    background: #f5f5f5;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--cerner-border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+}
+
+.content-tabs {
+    display: flex;
+    gap: 5px;
+    padding: 6px 12px;
+    background: #e8e8e8;
+    border-bottom: 1px solid var(--cerner-border);
+}
+
+.content-tab {
+    padding: 4px 12px;
+    background: #d0d0d0;
+    border: 1px solid #999;
+    border-bottom: none;
+    cursor: pointer;
+    border-radius: 3px 3px 0 0;
+    font-size: 11px;
+}
+
+.content-tab.active {
+    background: white;
+    border-bottom: 1px solid white;
+    margin-bottom: -1px;
+    font-weight: 600;
+}
+
+.content-body {
+    flex: 1;
+    padding: 12px;
+    overflow-y: auto;
+}
+
+/* Status Bar */
+.status-bar {
+    background: #f5f5f5;
+    border-top: 1px solid var(--cerner-border);
+    padding: 4px 12px;
+    font-size: 10px;
+    color: #666;
+    display: flex;
+    justify-content: space-between;
+}

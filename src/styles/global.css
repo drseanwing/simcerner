@@ -1,0 +1,128 @@
+/* Component CSS imports - must be first */
+@import './components/layout.css';
+@import './components/tables.css';
+@import './components/forms.css';
+@import './components/clinical.css';
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 11px;
+    color: #333;
+    overflow: hidden;
+}
+
+#root {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Loading Indicator */
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    color: #666;
+}
+
+.loading-spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid var(--cerner-blue);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin-right: 10px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Utility Classes */
+.text-danger {
+    color: #d9534f;
+}
+
+.text-warning {
+    color: #f0ad4e;
+}
+
+.text-success {
+    color: #5cb85c;
+}
+
+.text-muted {
+    color: #999;
+}
+
+.mt-10 {
+    margin-top: 10px;
+}
+
+.mb-10 {
+    margin-bottom: 10px;
+}
+
+/* Error Message */
+.error-message {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 15px;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    margin: 20px;
+}
+
+/* Button Base Styles */
+.btn {
+    padding: 6px 15px;
+    border: 1px solid var(--cerner-border);
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 11px;
+    background: #f5f5f5;
+}
+
+.btn-primary {
+    background: var(--cerner-blue);
+    color: white;
+    border-color: var(--cerner-dark-blue);
+}
+
+.btn-primary:hover {
+    background: var(--cerner-dark-blue);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+

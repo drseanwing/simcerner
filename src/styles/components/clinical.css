@@ -1,0 +1,139 @@
+/* Graphical Charts */
+.vitals-graph-container {
+    margin-bottom: 20px;
+}
+
+.vital-graph {
+    background: white;
+    border: 1px solid var(--cerner-border);
+    margin-bottom: 15px;
+    padding: 10px;
+}
+
+.graph-title {
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 11px;
+}
+
+.graph-canvas {
+    width: 100%;
+    height: 120px;
+    border: 1px solid #e0e0e0;
+}
+
+/* Clinical Notes */
+.notes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.note-item {
+    border: 1px solid var(--cerner-border);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.note-header {
+    background: var(--cerner-grid-header);
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    border-bottom: 1px solid var(--cerner-border);
+}
+
+.note-header:hover {
+    background: #e8e8e8;
+}
+
+.note-title {
+    font-weight: 600;
+    font-size: 11px;
+}
+
+.note-meta {
+    font-size: 10px;
+    color: #666;
+}
+
+.note-body {
+    padding: 12px;
+    font-size: 11px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+}
+
+.note-body.collapsed {
+    display: none;
+}
+
+/* Fluid Balance */
+.fluid-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.fluid-card {
+    background: white;
+    border: 1px solid var(--cerner-border);
+    border-radius: 4px;
+    padding: 15px;
+    text-align: center;
+}
+
+.fluid-card-label {
+    font-size: 10px;
+    color: #666;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.fluid-card-value {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--cerner-dark-blue);
+}
+
+.fluid-card-unit {
+    font-size: 12px;
+    color: #666;
+}
+
+.fluid-card.positive {
+    border-left: 4px solid #28a745;
+}
+
+.fluid-card.negative {
+    border-left: 4px solid #dc3545;
+}
+
+.fluid-card.neutral {
+    border-left: 4px solid #6c757d;
+}
+
+/* Patient List */
+.patient-list {
+    border: 1px solid var(--cerner-border);
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.patient-list-item {
+    padding: 10px;
+    border-bottom: 1px solid var(--cerner-border);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.patient-list-item:hover {
+    background: var(--cerner-light-blue);
+}
+
+.patient-list-item:last-child {
+    border-bottom: none;
+}

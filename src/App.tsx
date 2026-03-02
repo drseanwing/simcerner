@@ -10,27 +10,36 @@
  *
  * View routing uses conditional rendering driven by sessionStore.currentView
  * to match the original emr-sim-v2.html approach.
+ *
+ * Performance: heavy view components are code-split with React.lazy so
+ * they are only downloaded when first navigated to. A Suspense boundary
+ * shows a spinner during the initial chunk load.
  */
 
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { usePatientStore } from './stores/patientStore';
 import { useSessionStore } from './stores/sessionStore';
 import { loadPatients } from './services/patientLoader';
 import { TopNav, PatientBanner, Sidebar, StatusBar } from './components/layout';
 import PatientSearch from './components/search/PatientSearch';
-import DoctorView from './components/doctor-view/DoctorView';
-import DeteriorationView from './components/deterioration/DeteriorationView';
-import VitalsGraphView from './components/vitals-graph/VitalsGraphView';
-import FluidBalanceView from './components/fluid-balance/FluidBalanceView';
-import MARView from './components/mar/MARView';
-import OrdersView from './components/orders/OrdersView';
-import ResultsView from './components/results/ResultsView';
-import DocumentationView from './components/documentation/DocumentationView';
-import InteractiveView from './components/iview/InteractiveView';
-import SBARSummary from './components/common/SBARSummary';
 import OfflineIndicator from './components/common/OfflineIndicator';
 import InstallPrompt from './components/common/InstallPrompt';
 import './styles/components/layout.css';
+
+// ---------------------------------------------------------------------------
+// Lazy-loaded view components (code-split per chunk)
+// ---------------------------------------------------------------------------
+
+const DoctorView = lazy(() => import('./components/doctor-view/DoctorView'));
+const DeteriorationView = lazy(() => import('./components/deterioration/DeteriorationView'));
+const VitalsGraphView = lazy(() => import('./components/vitals-graph/VitalsGraphView'));
+const FluidBalanceView = lazy(() => import('./components/fluid-balance/FluidBalanceView'));
+const MARView = lazy(() => import('./components/mar/MARView'));
+const OrdersView = lazy(() => import('./components/orders/OrdersView'));
+const ResultsView = lazy(() => import('./components/results/ResultsView'));
+const DocumentationView = lazy(() => import('./components/documentation/DocumentationView'));
+const InteractiveView = lazy(() => import('./components/iview/InteractiveView'));
+const SBARSummary = lazy(() => import('./components/common/SBARSummary'));
 
 // ---------------------------------------------------------------------------
 // Placeholder view components
@@ -195,7 +204,16 @@ export default function App() {
       <div className="main-container">
         <Sidebar />
         <main className="content-area">
-          {renderCurrentView(currentView)}
+          <Suspense
+            fallback={
+              <div className="loading-overlay">
+                <div className="loading-spinner" />
+                <span>Loading view…</span>
+              </div>
+            }
+          >
+            {renderCurrentView(currentView)}
+          </Suspense>
         </main>
       </div>
       <StatusBar />

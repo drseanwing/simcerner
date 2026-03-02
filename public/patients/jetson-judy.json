@@ -8,7 +8,6 @@
   "location": "RBWH Ward 5A: Bed 12",
   "attending": "DR SPACELY, GEORGE",
   "admission": "07-Apr-2021 06:15:00 AEST",
-  
   "vitals": [
     {
       "datetime": "07-Apr-2021 14:00",
@@ -18,7 +17,8 @@
       "bp_sys": "145",
       "bp_dia": "88",
       "spo2": "96",
-      "avpu": "Alert"
+      "avpu": "Alert",
+      "supplementalO2": true
     },
     {
       "datetime": "07-Apr-2021 10:00",
@@ -28,7 +28,8 @@
       "bp_sys": "152",
       "bp_dia": "92",
       "spo2": "95",
-      "avpu": "Alert"
+      "avpu": "Alert",
+      "supplementalO2": true
     },
     {
       "datetime": "07-Apr-2021 08:00",
@@ -38,7 +39,8 @@
       "bp_sys": "148",
       "bp_dia": "90",
       "spo2": "95",
-      "avpu": "Alert"
+      "avpu": "Alert",
+      "supplementalO2": true
     },
     {
       "datetime": "07-Apr-2021 06:30",
@@ -48,10 +50,10 @@
       "bp_sys": "158",
       "bp_dia": "95",
       "spo2": "94",
-      "avpu": "Alert"
+      "avpu": "Alert",
+      "supplementalO2": false
     }
   ],
-  
   "fluidBalance": [
     {
       "datetime": "07-Apr-2021 12:00",
@@ -75,7 +77,6 @@
       "output_other": 0
     }
   ],
-  
   "medications": [
     {
       "name": "insulin aspart",
@@ -83,7 +84,11 @@
       "route": "Subcutaneous",
       "frequency": "THREE TIMES a day (with meals)",
       "scheduled": true,
-      "times": ["0800", "1200", "1800"],
+      "times": [
+        "0800",
+        "1200",
+        "1800"
+      ],
       "lastGiven": "07-Apr-2021 08:00"
     },
     {
@@ -92,7 +97,9 @@
       "route": "Subcutaneous",
       "frequency": "ONCE a day",
       "scheduled": true,
-      "times": ["2200"],
+      "times": [
+        "2200"
+      ],
       "lastGiven": "06-Apr-2021 22:00"
     },
     {
@@ -101,7 +108,11 @@
       "route": "Oral",
       "frequency": "THREE TIMES a day",
       "scheduled": true,
-      "times": ["0800", "1400", "2000"],
+      "times": [
+        "0800",
+        "1400",
+        "2000"
+      ],
       "lastGiven": "07-Apr-2021 08:00"
     },
     {
@@ -119,7 +130,10 @@
       "route": "Oral",
       "frequency": "TWICE a day",
       "scheduled": true,
-      "times": ["0800", "2000"],
+      "times": [
+        "0800",
+        "2000"
+      ],
       "lastGiven": "07-Apr-2021 08:00"
     },
     {
@@ -132,7 +146,6 @@
       "lastGiven": ""
     }
   ],
-  
   "orders": [
     {
       "id": "ORD001",
@@ -167,7 +180,6 @@
       "signed": true
     }
   ],
-  
   "results": {
     "haematology": [
       {
@@ -231,13 +243,12 @@
       {
         "test": "Creatinine",
         "value": "683",
-        "unit": "µmol/L",
+        "unit": "\u00b5mol/L",
         "range": "50-120",
         "flag": "CRITICAL HIGH"
       }
     ]
   },
-  
   "notes": [
     {
       "id": "NOTE001",
@@ -245,7 +256,7 @@
       "title": "Admission - Emergency Department",
       "author": "DR SPACELY, GEORGE SMO",
       "datetime": "07-Apr-2021 06:30:00 AEST",
-      "content": "Presenting Complaint:\n62F presenting to ED with 3 day history of nausea, vomiting, and decreased oral intake. Reports missed dialysis session yesterday due to feeling unwell.\n\nHistory of Presenting Illness:\nPatient with known ESRF on intermittent HD (MWF schedule). Missed Friday dialysis. Developed N&V on Sunday, unable to tolerate oral intake. Increasing lethargy and confusion noted by family.\n\nPast Medical History:\n- End Stage Renal Failure on haemodialysis\n- Type 2 Diabetes Mellitus\n- Hypertension\n- Previous myocardial infarction (2018)\n\nOn Examination:\nGCS 15, Alert and oriented\nBP 158/95, HR 102, RR 24, SpO2 94% RA, Temp 37.3°C\nCVS: Dual heart sounds, no murmurs\nResp: Clear bilaterally\nAbdo: Soft, non-tender\nNeuro: No focal deficits\nAV fistula: Patent, palpable thrill\n\nInvestigations:\nVBG: Critical hyperkalemia K+ 9.1\nGlucose 13.1\nCreatinine 683 (baseline ~450-500)\nUrea 24.2\n\nImpression:\n1. Life-threatening hyperkalemia\n2. Acute on chronic renal failure\n3. Poorly controlled diabetes\n4. Volume overload\n\nManagement:\n- STAT Calcium gluconate 10mL 10% IV (given)\n- Insulin-dextrose protocol\n- Resonium 15g TDS\n- Urgent dialysis - renal team contacted\n- Insulin sliding scale for hyperglycemia\n- Admit to renal ward\n- Monitor cardiac rhythm\n- Repeat UEC in 2 hours"
+      "content": "Presenting Complaint:\n62F presenting to ED with 3 day history of nausea, vomiting, and decreased oral intake. Reports missed dialysis session yesterday due to feeling unwell.\n\nHistory of Presenting Illness:\nPatient with known ESRF on intermittent HD (MWF schedule). Missed Friday dialysis. Developed N&V on Sunday, unable to tolerate oral intake. Increasing lethargy and confusion noted by family.\n\nPast Medical History:\n- End Stage Renal Failure on haemodialysis\n- Type 2 Diabetes Mellitus\n- Hypertension\n- Previous myocardial infarction (2018)\n\nOn Examination:\nGCS 15, Alert and oriented\nBP 158/95, HR 102, RR 24, SpO2 94% RA, Temp 37.3\u00b0C\nCVS: Dual heart sounds, no murmurs\nResp: Clear bilaterally\nAbdo: Soft, non-tender\nNeuro: No focal deficits\nAV fistula: Patent, palpable thrill\n\nInvestigations:\nVBG: Critical hyperkalemia K+ 9.1\nGlucose 13.1\nCreatinine 683 (baseline ~450-500)\nUrea 24.2\n\nImpression:\n1. Life-threatening hyperkalemia\n2. Acute on chronic renal failure\n3. Poorly controlled diabetes\n4. Volume overload\n\nManagement:\n- STAT Calcium gluconate 10mL 10% IV (given)\n- Insulin-dextrose protocol\n- Resonium 15g TDS\n- Urgent dialysis - renal team contacted\n- Insulin sliding scale for hyperglycemia\n- Admit to renal ward\n- Monitor cardiac rhythm\n- Repeat UEC in 2 hours"
     },
     {
       "id": "NOTE002",

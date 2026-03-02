@@ -13,6 +13,8 @@ import type { Medication } from '../../types';
 import { MedicationDoseStatus } from '../../types';
 import MARCell from './MARCell';
 import AdminDialog from './AdminDialog';
+import { usePatientStore } from '../../stores/patientStore';
+import { saveAdministration } from '../../services/persistence';
 import '../../styles/components/views.css';
 
 // ---------------------------------------------------------------------------
@@ -115,9 +117,33 @@ export default function MARGrid({
   intervalHours = 2,
 }: MARGridProps) {
   const [dialog, setDialog] = useState<DialogState | null>(null);
+  const patientMrn = usePatientStore((s) => s.currentPatient?.mrn ?? 'unknown');
 
   const now = currentTime ?? new Date();
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+  /** Handle confirmed administration action — persist to IndexedDB. */
+  function handleAdminConfirm(
+    action: MedicationDoseStatus,
+    reason: string,
+    nurse: string,
+  ) {
+    if (!dialog) return;
+    const id = crypto.randomUUID();
+    saveAdministration({
+      id,
+      patientMrn,
+      medicationName: dialog.medication.name,
+      timestamp: new Date().toISOString(),
+      nurse,
+      status: action,
+      notes: reason || undefined,
+    }).catch((err: unknown) => {
+      // Log persistence errors for debugging without blocking the UI
+      console.warn('[MARGrid] Failed to persist administration record:', err);
+    });
+    setDialog(null);
+  }
 
   /** Generate the set of time-slot labels. */
   const timeSlots = useMemo(() => generateTimeSlots(intervalHours), [intervalHours]);
@@ -179,7 +205,7 @@ export default function MARGrid({
         <AdminDialog
           medication={dialog.medication}
           scheduledTime={dialog.time}
-          onConfirm={() => setDialog(null)}
+          onConfirm={handleAdminConfirm}
           onCancel={() => setDialog(null)}
         />
       )}

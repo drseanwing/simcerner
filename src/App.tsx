@@ -6,7 +6,7 @@ import { PatientBanner } from '@/components/layout/PatientBanner'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { StatusBar } from '@/components/layout/StatusBar'
 import { DoctorView } from '@/components/doctor-view/DoctorView'
-import { VitalsView } from '@/components/deterioration/VitalsView'
+import { DeteriorationView } from '@/components/deterioration/DeteriorationView'
 import { VitalsGraphView } from '@/components/vitals-graph/VitalsGraphView'
 import { FluidBalanceView } from '@/components/fluid-balance/FluidBalanceView'
 import { MARView } from '@/components/mar/MARView'
@@ -32,7 +32,7 @@ function ChartLayout() {
         <div className="content-area">
           <Routes>
             <Route path="doctor-view" element={<DoctorView patient={currentPatient} />} />
-            <Route path="vitals" element={<VitalsView patient={currentPatient} />} />
+            <Route path="vitals" element={<DeteriorationView patient={currentPatient} />} />
             <Route path="vitals-graph" element={<VitalsGraphView patient={currentPatient} />} />
             <Route
               path="fluid-balance"

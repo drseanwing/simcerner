@@ -39,12 +39,14 @@ export interface VitalSign {
   /** AVPU consciousness level */
   avpu: AVPUScale | string;
 
-  // -- Optional fields populated by the "new" format normalizer --
+  // -- Optional fields for Q-ADDS scoring --
 
   /** Whether the patient is on supplemental oxygen */
   supplementalO2?: boolean | string;
-  /** Pre-calculated NEWS2 score object (may be attached during normalization) */
-  newsScore?: number | Record<string, unknown>;
+  /** Oxygen flow rate in L/min (Q-ADDS scored parameter), e.g. "4" */
+  o2FlowRate?: number | string;
+  /** Nurse/staff concern flag — triggers escalation regardless of score */
+  nurseConcern?: boolean;
   /** Pain score (0-10 numeric scale) */
   painScore?: number | string;
 }

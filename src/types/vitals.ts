@@ -1,12 +1,17 @@
 /**
- * NEWS2 / Q-ADDS scoring types for the PowerChart EMR simulation.
+ * Q-ADDS (Queensland Adult Deterioration Detection System) scoring types.
  *
- * The National Early Warning Score 2 (NEWS2) is calculated from 7 physiological
- * parameters. Each parameter receives a sub-score of 0-3, and the aggregate
- * determines the clinical risk level and escalation pathway.
+ * Q-ADDS monitors 7 physiological parameters. Each receives a sub-score of
+ * 0–3, or "E" (Emergency) for extreme derangement. An "E" on any single
+ * parameter triggers an immediate MET (Medical Emergency Team) call,
+ * regardless of the aggregate score.
  *
- * Q-ADDS (Queensland Adult Deterioration Detection System) uses a similar
- * approach with slightly different thresholds.
+ * Escalation tiers (by aggregate score):
+ *   0       → Routine care (white)
+ *   1–3     → Low-level response — increase observation frequency (yellow)
+ *   4–5     → Moderate — medical officer review required (orange)
+ *   6–7     → High-severity — senior clinician review (red)
+ *   ≥8 or E → Emergency — MET call activation (purple)
  */
 
 // ---------------------------------------------------------------------------
@@ -14,79 +19,74 @@
 // ---------------------------------------------------------------------------
 
 /**
- * NEWS2 aggregate clinical risk classification.
+ * Q-ADDS clinical risk classification.
  *
- * - 'Low'        : Total score 0-4 (aggregate)
- * - 'Low-Medium' : Total score of 3 in any single parameter
- * - 'Medium'     : Total score 5-6 (or 3 in a single parameter)
- * - 'High'       : Total score >= 7
+ * - 'Routine'   : Score 0 — continue routine observations
+ * - 'Low'       : Score 1–3 — increase observation frequency, charge nurse review
+ * - 'Moderate'  : Score 4–5 — medical officer review required
+ * - 'High'      : Score 6–7 — senior clinician review
+ * - 'Emergency' : Score ≥8 or any single "E" — MET call
  */
-export type ClinicalRisk = 'Low' | 'Low-Medium' | 'Medium' | 'High';
+export type ClinicalRisk = 'Routine' | 'Low' | 'Moderate' | 'High' | 'Emergency';
 
 // ---------------------------------------------------------------------------
 // Sub-Scores
 // ---------------------------------------------------------------------------
 
 /**
- * The set of physiological parameters assessed in the NEWS2 scoring system.
- * Each parameter maps to a specific vital sign measurement.
+ * Q-ADDS scored parameters. Includes o2FlowRate which is unique to Q-ADDS
+ * (NEWS2 uses a binary supplementalO2 flag instead).
  */
-export type NewsParameter =
+export type QaddsParameter =
   | 'rr'
   | 'spo2'
-  | 'supplementalO2'
+  | 'o2FlowRate'
   | 'temperature'
   | 'systolicBP'
   | 'heartRate'
   | 'consciousness';
 
 /**
- * A sub-score for a single NEWS2 parameter.
- *
- * Each vital sign parameter is scored individually on a 0-3 scale,
- * where 0 is normal and 3 indicates the most severe deviation.
+ * Sub-score values. 0–3 are standard; 'E' is the emergency single-parameter
+ * trigger unique to Q-ADDS.
  */
-export interface NewsSubScore {
-  /** The physiological parameter being scored */
-  parameter: NewsParameter;
-  /** The measured value (as a string or number, matching the vital sign format) */
+export type QaddsSubScoreValue = 0 | 1 | 2 | 3 | 'E';
+
+/**
+ * A sub-score for a single Q-ADDS parameter.
+ */
+export interface QaddsSubScore {
+  parameter: QaddsParameter;
   value: string | number;
-  /** The calculated sub-score for this parameter (0, 1, 2, or 3) */
-  score: 0 | 1 | 2 | 3;
+  score: QaddsSubScoreValue;
 }
 
 // ---------------------------------------------------------------------------
-// Aggregate NEWS Score
+// Aggregate Q-ADDS Score
 // ---------------------------------------------------------------------------
 
-/**
- * Sub-scores keyed by parameter name.
- * Each entry holds the individual scoring result for one of the 7 NEWS2 parameters.
- */
-export type NewsSubScores = Record<NewsParameter, NewsSubScore>;
+export type QaddsSubScores = Record<QaddsParameter, QaddsSubScore>;
 
 /**
- * The complete NEWS2 score for a single set of vital sign observations.
- *
- * Contains the aggregate total, the derived clinical risk level,
- * and the individual sub-scores for each of the 7 parameters.
+ * Complete Q-ADDS score for a single set of vital sign observations.
  */
-export interface NewsScore {
-  /** Sum of all 7 parameter sub-scores (range 0-21) */
+export interface QaddsScore {
+  /** Sum of numeric sub-scores (E counts as 3 for the total) */
   totalScore: number;
-  /** Clinical risk classification derived from the total score and individual triggers */
+  /** Whether any parameter scored "E" (triggers MET regardless of total) */
+  hasEmergency: boolean;
+  /** Which parameters scored "E", if any */
+  emergencyParameters: QaddsParameter[];
+  /** Derived clinical risk level */
   clinicalRisk: ClinicalRisk;
-  /** Individual sub-scores for each of the 7 NEWS2 parameters */
-  subScores: NewsSubScores;
+  /** Individual sub-scores for each parameter */
+  subScores: QaddsSubScores;
 }
 
 /**
- * A NEWS2 score paired with the timestamp of the vital signs it was calculated from.
- * Useful for plotting score trends over time.
+ * Q-ADDS score paired with its observation timestamp for trend plotting.
  */
-export interface NewsScoreTrend {
-  /** Timestamp of the vital sign observation, e.g. "07-Apr-2021 14:00" */
+export interface QaddsScoreTrend {
   datetime: string;
-  /** The calculated NEWS2 score for this observation */
-  score: NewsScore;
+  score: QaddsScore;
 }

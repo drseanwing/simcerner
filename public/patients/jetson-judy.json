@@ -18,7 +18,8 @@
       "bp_sys": "145",
       "bp_dia": "88",
       "spo2": "96",
-      "avpu": "Alert"
+      "avpu": "Alert",
+      "o2FlowRate": 2
     },
     {
       "datetime": "07-Apr-2021 10:00",
@@ -28,7 +29,8 @@
       "bp_sys": "152",
       "bp_dia": "92",
       "spo2": "95",
-      "avpu": "Alert"
+      "avpu": "Alert",
+      "o2FlowRate": 2
     },
     {
       "datetime": "07-Apr-2021 08:00",
@@ -38,7 +40,8 @@
       "bp_sys": "148",
       "bp_dia": "90",
       "spo2": "95",
-      "avpu": "Alert"
+      "avpu": "Alert",
+      "o2FlowRate": 2
     },
     {
       "datetime": "07-Apr-2021 06:30",
@@ -48,7 +51,8 @@
       "bp_sys": "158",
       "bp_dia": "95",
       "spo2": "94",
-      "avpu": "Alert"
+      "avpu": "Alert",
+      "o2FlowRate": 4
     }
   ],
   

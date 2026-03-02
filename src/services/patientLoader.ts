@@ -217,7 +217,6 @@ export function normalizePatientData(rawPatient: unknown): Patient {
         spo2: vs.oxygenSaturation,
         avpu: vs.avpu,
         supplementalO2: vs.supplementalOxygen,
-        newsScore: vs.newsScore,
         painScore: vs.painScore,
       }),
     );
@@ -382,11 +381,11 @@ export function loadDefaultPatients(): Record<string, Patient> {
       admission: '28-Dec-2025 23:27:48 AEST',
 
       vitals: [
-        { datetime: '31-Dec-2025 16:00', temp: '36.7', hr: '78', rr: '15', bp_sys: '122', bp_dia: '76', spo2: '99', avpu: 'Alert' },
-        { datetime: '31-Dec-2025 14:00', temp: '36.8', hr: '82', rr: '16', bp_sys: '125', bp_dia: '78', spo2: '98', avpu: 'Alert' },
-        { datetime: '31-Dec-2025 10:00', temp: '37.1', hr: '88', rr: '18', bp_sys: '132', bp_dia: '82', spo2: '97', avpu: 'Alert' },
-        { datetime: '31-Dec-2025 06:00', temp: '36.9', hr: '76', rr: '16', bp_sys: '128', bp_dia: '80', spo2: '98', avpu: 'Alert' },
-        { datetime: '31-Dec-2025 02:00', temp: '37.0', hr: '80', rr: '17', bp_sys: '130', bp_dia: '81', spo2: '97', avpu: 'Alert' },
+        { datetime: '31-Dec-2025 16:00', temp: '36.7', hr: '78', rr: '15', bp_sys: '122', bp_dia: '76', spo2: '99', avpu: 'Alert', o2FlowRate: 0 },
+        { datetime: '31-Dec-2025 14:00', temp: '36.8', hr: '82', rr: '16', bp_sys: '125', bp_dia: '78', spo2: '98', avpu: 'Alert', o2FlowRate: 0 },
+        { datetime: '31-Dec-2025 10:00', temp: '37.1', hr: '88', rr: '18', bp_sys: '132', bp_dia: '82', spo2: '97', avpu: 'Alert', o2FlowRate: 0 },
+        { datetime: '31-Dec-2025 06:00', temp: '36.9', hr: '76', rr: '16', bp_sys: '128', bp_dia: '80', spo2: '98', avpu: 'Alert', o2FlowRate: 0 },
+        { datetime: '31-Dec-2025 02:00', temp: '37.0', hr: '80', rr: '17', bp_sys: '130', bp_dia: '81', spo2: '97', avpu: 'Alert', o2FlowRate: 0 },
       ],
 
       fluidBalance: [

@@ -4,7 +4,7 @@
  * Re-exports every public type from the domain-specific type modules so that
  * consumers can import from a single entry point:
  *
- *   import type { Patient, NewsScore, MAREntry } from '@/types';
+ *   import type { Patient, QaddsScore, MAREntry } from '@/types';
  */
 
 // Patient data models — demographics, vitals, medications, orders, results, notes
@@ -23,14 +23,15 @@ export type {
   PatientMap,
 } from './patient';
 
-// NEWS2 / Q-ADDS scoring — aggregate scores, sub-scores, risk levels
+// Q-ADDS scoring — aggregate scores, sub-scores, risk levels
 export type {
   ClinicalRisk,
-  NewsParameter,
-  NewsSubScore,
-  NewsSubScores,
-  NewsScore,
-  NewsScoreTrend,
+  QaddsParameter,
+  QaddsSubScoreValue,
+  QaddsSubScore,
+  QaddsSubScores,
+  QaddsScore,
+  QaddsScoreTrend,
 } from './vitals';
 
 // Medication Administration Record (MAR) — grid cells, entries, therapeutic classes
@@ -43,12 +44,12 @@ export type {
   MARTimeWindow,
 } from './medications';
 
-// NEWS2 scoring configuration — thresholds, colour codes, system config
+// Q-ADDS scoring configuration — thresholds, colour codes, system config
 export type {
-  NewsColorCode,
-  NewsScoreThreshold,
-  NewsParameterConfig,
+  QaddsColorCode,
+  QaddsScoreThreshold,
+  QaddsParameterConfig,
   ScoringSystem,
   ScoringSystemConfig,
-  NewsRiskThreshold,
+  QaddsRiskThreshold,
 } from './news';

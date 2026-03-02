@@ -13,6 +13,8 @@ import { MARView } from '@/components/mar/MARView'
 import { OrdersView } from '@/components/orders/OrdersView'
 import { ResultsView } from '@/components/results/ResultsView'
 import { DocumentationView } from '@/components/documentation/DocumentationView'
+import { OfflineIndicator } from '@/components/common/OfflineIndicator'
+import { InstallPrompt } from '@/components/common/InstallPrompt'
 
 function ChartLayout() {
   const currentPatient = usePatientStore((s) => s.currentPatient)
@@ -54,10 +56,14 @@ function ChartLayout() {
 
 export function App() {
   return (
-    <Routes>
-      <Route path="/" element={<PatientSearch />} />
-      <Route path="/chart/*" element={<ChartLayout />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <>
+      <Routes>
+        <Route path="/" element={<PatientSearch />} />
+        <Route path="/chart/*" element={<ChartLayout />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      <OfflineIndicator />
+      <InstallPrompt />
+    </>
   )
 }

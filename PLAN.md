@@ -246,19 +246,19 @@ simcerner/
 │   │   ├── patient.ts           # Patient data interfaces
 │   │   ├── vitals.ts            # Vital signs types
 │   │   ├── medications.ts       # Medication types
-│   │   └── news.ts              # NEWS2 scoring types
+│   │   └── news.ts              # Q-ADDS scoring types
 │   ├── stores/
 │   │   ├── patientStore.ts      # Patient data state (Zustand)
 │   │   ├── sessionStore.ts      # Session/auth state
 │   │   └── clockStore.ts        # Simulation clock state
 │   ├── services/
 │   │   ├── patientLoader.ts     # Patient data loading/caching
-│   │   ├── newsCalculator.ts    # NEWS2/Q-ADDS score calculator
+│   │   ├── qaddsCalculator.ts   # Q-ADDS score calculator
 │   │   ├── alertEngine.ts       # Deterioration alert logic
 │   │   └── persistence.ts       # IndexedDB persistence layer
 │   ├── hooks/
 │   │   ├── usePatient.ts        # Patient data hook
-│   │   ├── useNewsScore.ts      # NEWS2 calculation hook
+│   │   ├── useQaddsScore.ts     # Q-ADDS calculation hook
 │   │   └── useClock.ts          # Simulation clock hook
 │   ├── components/
 │   │   ├── layout/
@@ -425,21 +425,25 @@ The migration follows a "strangler fig" pattern - progressively extracting from 
 | 3.6 | Add install prompt / "Add to Home Screen" UI | P2 | 3.1 | Low |
 | 3.7 | Test offline functionality end-to-end | P0 | 3.2-3.5 | Medium |
 
-### Phase 4: Deterioration View Enhancements `[HIGH VALUE]`
+### Phase 4: Deterioration View — Q-ADDS Scoring `[HIGH VALUE]`
+
+> **NOTE:** This phase uses the **Queensland Adult Deterioration Detection System
+> (Q-ADDS)** as the primary early warning scoring system, not NEWS2. Q-ADDS is
+> the standard used across Queensland Health facilities and aligns with the
+> clinical context of this simulation.
 
 | # | Task | Priority | Dependencies | Est. Complexity |
 |---|---|---|---|---|
-| 4.1 | Implement NEWS2 score calculation service (`newsCalculator.ts`) | P0 | 0.2 | Medium |
-| 4.2 | Implement Q-ADDS score calculation (alternate algorithm) | P1 | 4.1 | Medium |
-| 4.3 | Build `NewsScoreCard` component (aggregate score + risk level badge) | P0 | 4.1 | Medium |
-| 4.4 | Build colour-coded `VitalSignsFlowsheet` with per-cell NEWS2 sub-scores | P0 | 1.8, 4.1 | High |
-| 4.5 | Build `EscalationProtocol` component (recommended actions per score) | P1 | 4.1 | Medium |
-| 4.6 | Build `ScoreTrendGraph` for NEWS2 score over time | P2 | 4.1, 2.3 | Medium |
-| 4.7 | Implement deterioration alert engine (`alertEngine.ts`) | P1 | 4.1, 0.5 | High |
-| 4.8 | Build `AlertDialog` component for simulated Discern alerts | P1 | 4.7 | Medium |
-| 4.9 | Update `DeteriorationView` to compose all sub-components | P0 | 4.3, 4.4, 4.5 | Medium |
-| 4.10 | Extend patient JSON schema with `supplementalO2` and `consciousnessLevel` fields for full NEWS2 | P1 | 0.2 | Low |
-| 4.11 | Build EWS Dashboard (population-level view) | P3 | 4.1, 4.7 | High |
+| 4.1 | Implement Q-ADDS score calculation service (`qaddsCalculator.ts`) — 7 parameters (RR, SpO2, temp, systolic BP, HR, consciousness/AVPU, nurse concern) with Queensland Health thresholds | P0 | 0.2 | Medium |
+| 4.2 | Build `QaddsScoreCard` component (aggregate score + colour-coded risk level badge: blue/yellow/orange/red) | P0 | 4.1 | Medium |
+| 4.3 | Build colour-coded `VitalSignsFlowsheet` with per-cell Q-ADDS sub-scores and colour banding | P0 | 1.8, 4.1 | High |
+| 4.4 | Build `EscalationProtocol` component (Q-ADDS clinical response: routine care / clinical review / rapid response / MET call) | P1 | 4.1 | Medium |
+| 4.5 | Build `ScoreTrendGraph` for Q-ADDS score over time | P2 | 4.1, 2.3 | Medium |
+| 4.6 | Implement deterioration alert engine (`alertEngine.ts`) — auto-triggers based on Q-ADDS thresholds | P1 | 4.1, 0.5 | High |
+| 4.7 | Build `AlertDialog` component for simulated clinical alerts | P1 | 4.6 | Medium |
+| 4.8 | Update `DeteriorationView` to compose Q-ADDS sub-components (replaces EW Score Table) | P0 | 4.2, 4.3, 4.4 | Medium |
+| 4.9 | Extend patient JSON schema with `supplementalO2` and `nurseConcern` fields for full Q-ADDS | P1 | 0.2 | Low |
+| 4.10 | Build Q-ADDS Dashboard (population-level ward overview) | P3 | 4.1, 4.6 | High |
 
 ### Phase 5: Interactive View (iView) Implementation `[HIGH VALUE]`
 
@@ -451,7 +455,7 @@ The migration follows a "strangler fig" pattern - progressively extracting from 
 | 5.4 | Build `IViewToolbar` (Sign, Refresh, Time Range, Show/Hide Empty) | P1 | 5.3 | Medium |
 | 5.5 | Build `AssessmentForm` - structured input for cell-click documentation | P1 | 5.3 | High |
 | 5.6 | Implement default band configurations (Med Surg, Respiratory, Neuro, CVS, Pain, Skin, I&O) | P1 | 5.2 | Medium |
-| 5.7 | Wire vital signs entry through iView (E16) with NEWS2 auto-calculation | P0 | 4.1, 5.5 | High |
+| 5.7 | Wire vital signs entry through iView (E16) with Q-ADDS auto-calculation | P0 | 4.1, 5.5 | High |
 | 5.8 | Implement shift-based aggregation and totals | P2 | 5.3 | Medium |
 | 5.9 | Assemble `InteractiveView` composing all sub-components | P0 | 5.2-5.7 | Medium |
 | 5.10 | Implement band customisation (add/remove bands for a patient) | P3 | 5.2, 5.6 | Medium |
@@ -479,7 +483,7 @@ The migration follows a "strangler fig" pattern - progressively extracting from 
 | 7.2 | Enhanced allergy alert banner with drug interaction warnings | P2 | 1.2 | Medium |
 | 7.3 | SBAR handover summary auto-generation | P2 | 2.1, 4.1, 6.9 | High |
 | 7.4 | Print/PDF export for all views | P3 | 2.9 | Medium |
-| 7.5 | Write unit tests for NEWS2 calculator | P1 | 4.1, 0.7 | Medium |
+| 7.5 | Write unit tests for Q-ADDS calculator | P1 | 4.1, 0.7 | Medium |
 | 7.6 | Write unit tests for MAR time grid logic | P1 | 6.1, 0.7 | Medium |
 | 7.7 | Write integration tests for key workflows | P2 | 2.9, 0.7 | High |
 | 7.8 | Implement session action logging to IndexedDB | P2 | 3.3 | Medium |
@@ -695,21 +699,20 @@ The existing `emr-sim-v2.html` contains the **baseline components** that the pla
 | 3.6 | Add install prompt / "Add to Home Screen" UI | NOT STARTED | No PWA |
 | 3.7 | Test offline functionality end-to-end | NOT STARTED | No offline capability |
 
-### Phase 4: Deterioration View Enhancements — Status: NOT STARTED (0/11)
+### Phase 4: Deterioration View — Q-ADDS Scoring — Status: NOT STARTED (0/10)
 
 | # | Task | Status | Evidence |
 |---|---|---|---|
-| 4.1 | Implement NEWS2 score calculation service | NOT STARTED | No score calculation. `DoctorView` shows raw vitals only |
-| 4.2 | Implement Q-ADDS score calculation | NOT STARTED | `VitalsGraphView` header says "Adult Q-ADDS" but no actual scoring |
-| 4.3 | Build `NewsScoreCard` component | NOT STARTED | No aggregate score display |
-| 4.4 | Build colour-coded `VitalSignsFlowsheet` | NOT STARTED | `VitalsView` is a plain white table — no cell colouring by severity |
-| 4.5 | Build `EscalationProtocol` component | NOT STARTED | No escalation protocol display |
-| 4.6 | Build `ScoreTrendGraph` | NOT STARTED | Existing graphs show raw vitals, not composite scores |
-| 4.7 | Implement deterioration alert engine | NOT STARTED | No alert system |
-| 4.8 | Build `AlertDialog` component | NOT STARTED | No alert dialogs |
-| 4.9 | Assemble `DeteriorationView` | NOT STARTED | Current "Managing Deterioration" view is just `VitalsView` (plain table) |
-| 4.10 | Extend patient JSON with `supplementalO2` and `consciousnessLevel` | NOT STARTED | JSON schema has `avpu` but not `supplementalO2`. `normalizePatientData` maps `supplementalOxygen` field but no patient data includes it |
-| 4.11 | Build EWS Dashboard (population-level) | NOT STARTED | No multi-patient view beyond search list |
+| 4.1 | Implement Q-ADDS score calculation service (`qaddsCalculator.ts`) | NOT STARTED | No score calculation. `DoctorView` shows raw vitals only |
+| 4.2 | Build `QaddsScoreCard` component | NOT STARTED | No aggregate score display |
+| 4.3 | Build colour-coded `VitalSignsFlowsheet` with Q-ADDS sub-scores | NOT STARTED | `VitalsView` is a plain white table — no cell colouring by severity |
+| 4.4 | Build `EscalationProtocol` component (Q-ADDS clinical response) | NOT STARTED | No escalation protocol display |
+| 4.5 | Build `ScoreTrendGraph` for Q-ADDS | NOT STARTED | Existing graphs show raw vitals, not composite scores |
+| 4.6 | Implement deterioration alert engine | NOT STARTED | No alert system |
+| 4.7 | Build `AlertDialog` component | NOT STARTED | No alert dialogs |
+| 4.8 | Assemble `DeteriorationView` with Q-ADDS components | NOT STARTED | Current "Managing Deterioration" view is just `VitalsView` (plain table) |
+| 4.9 | Extend patient JSON with `supplementalO2` and `nurseConcern` | NOT STARTED | JSON schema has `avpu` but not `supplementalO2` or `nurseConcern` |
+| 4.10 | Build Q-ADDS Dashboard (population-level ward overview) | NOT STARTED | No multi-patient view beyond search list |
 
 ### Phase 5: Interactive View (iView) Implementation — Status: NOT STARTED (0/10)
 
@@ -721,7 +724,7 @@ The existing `emr-sim-v2.html` contains the **baseline components** that the pla
 | 5.4 | Build `IViewToolbar` | NOT STARTED | No iView toolbar |
 | 5.5 | Build `AssessmentForm` | NOT STARTED | No cell-click documentation input |
 | 5.6 | Implement default band configurations | NOT STARTED | No band system |
-| 5.7 | Wire vital signs entry through iView with NEWS2 | NOT STARTED | Vitals are read-only throughout the application |
+| 5.7 | Wire vital signs entry through iView with Q-ADDS | NOT STARTED | Vitals are read-only throughout the application |
 | 5.8 | Implement shift-based aggregation | NOT STARTED | No shift awareness |
 | 5.9 | Assemble `InteractiveView` | NOT STARTED | No iView component |
 | 5.10 | Implement band customisation | NOT STARTED | No band system |
@@ -749,7 +752,7 @@ The existing `emr-sim-v2.html` contains the **baseline components** that the pla
 | 7.2 | Enhanced allergy alert banner | NOT STARTED | Allergies shown as plain text in `PatientBanner` — no colour coding or interaction warnings |
 | 7.3 | SBAR handover summary auto-generation | NOT STARTED | No SBAR feature |
 | 7.4 | Print/PDF export | NOT STARTED | No print styles or export |
-| 7.5 | Unit tests for NEWS2 calculator | NOT STARTED | No tests, no test framework |
+| 7.5 | Unit tests for Q-ADDS calculator | NOT STARTED | No tests, no test framework |
 | 7.6 | Unit tests for MAR time grid logic | NOT STARTED | No tests, no test framework |
 | 7.7 | Integration tests for key workflows | NOT STARTED | No tests, no test framework |
 | 7.8 | Session action logging to IndexedDB | NOT STARTED | Logger writes to console only |
@@ -775,7 +778,7 @@ The existing `emr-sim-v2.html` contains the **baseline components** that the pla
 2. **Phase 0.2**: Define TypeScript interfaces from the existing JSON shapes in `jetson-judy.json` and `patient-template.json`
 3. **Phase 0.3 + 0.4 + 0.5** (parallel): Extract CSS, set up React Router, create Zustand stores
 4. **Phase 1.8**: Build `FlowsheetGrid` early — it's reused by Phases 4, 5, and 6
-5. **Phase 4.1**: Implement NEWS2 calculator — high clinical value, unblocks deterioration + iView features
+5. **Phase 4.1**: Implement Q-ADDS calculator — high clinical value, unblocks deterioration + iView features
 
 ### Metrics
 

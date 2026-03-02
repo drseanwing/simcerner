@@ -17,6 +17,7 @@ import type {
   LabResults,
   ClinicalNote,
 } from '@/types/patient';
+import { getAllPatients, saveAllPatients } from '@/services/db';
 
 // ---------------------------------------------------------------------------
 // Raw-data shapes coming from the "new" hierarchical JSON format
@@ -464,8 +465,8 @@ export async function loadPatients(): Promise<Record<string, Patient>> {
     const manifestResponse = await fetch('patients/patient-list.json');
 
     if (!manifestResponse.ok) {
-      console.warn('[PatientLoader] Patient manifest not found, trying default patients');
-      return loadDefaultPatients();
+      console.warn('[PatientLoader] Patient manifest not found, trying cached/default patients');
+      return loadFromCacheOrDefault();
     }
 
     const manifest = (await manifestResponse.json()) as PatientManifest;
@@ -501,7 +502,15 @@ export async function loadPatients(): Promise<Record<string, Patient>> {
 
     if (Object.keys(patients).length === 0) {
       console.warn('[PatientLoader] No patients loaded from files, using defaults');
-      return loadDefaultPatients();
+      return loadFromCacheOrDefault();
+    }
+
+    // Persist to IndexedDB for offline use
+    try {
+      await saveAllPatients(Object.values(patients));
+      console.info('[PatientLoader] Patient data cached in IndexedDB');
+    } catch (cacheError) {
+      console.warn('[PatientLoader] Failed to cache patients in IndexedDB', cacheError);
     }
 
     console.info('[PatientLoader] Patient loading complete', {
@@ -514,7 +523,29 @@ export async function loadPatients(): Promise<Record<string, Patient>> {
       error: message,
     });
 
-    // Fall back to default patients
-    return loadDefaultPatients();
+    return loadFromCacheOrDefault();
   }
+}
+
+/**
+ * Attempt to load patients from IndexedDB cache, falling back to embedded defaults.
+ */
+async function loadFromCacheOrDefault(): Promise<Record<string, Patient>> {
+  try {
+    const cached = await getAllPatients();
+    if (cached.length > 0) {
+      console.info('[PatientLoader] Loaded patients from IndexedDB cache', {
+        count: cached.length,
+      });
+      const patients: Record<string, Patient> = {};
+      for (const p of cached) {
+        patients[p.mrn] = p;
+      }
+      return patients;
+    }
+  } catch (e) {
+    console.warn('[PatientLoader] IndexedDB cache unavailable', e);
+  }
+
+  return loadDefaultPatients();
 }

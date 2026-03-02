@@ -13,7 +13,7 @@
 /**
  * AVPU consciousness scale used in the Australian clinical context.
  */
-export type AVPUScale = 'Alert' | 'Voice' | 'Pain' | 'Unresponsive';
+export type AVPUScale = 'Alert' | 'Voice' | 'Changing Behaviour' | 'Pain' | 'Unresponsive';
 
 /**
  * A single set of vital sign observations recorded at a point in time.

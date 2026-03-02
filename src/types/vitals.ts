@@ -2,7 +2,7 @@
  * Q-ADDS (Queensland Adult Deterioration Detection System) scoring types.
  *
  * Q-ADDS monitors 7 physiological parameters. Each receives a sub-score of
- * 0–3, or "E" (Emergency) for extreme derangement. An "E" on any single
+ * 0–4, or "E" (Emergency) for extreme derangement. An "E" on any single
  * parameter triggers an immediate MET (Medical Emergency Team) call,
  * regardless of the aggregate score.
  *
@@ -47,10 +47,11 @@ export type QaddsParameter =
   | 'consciousness';
 
 /**
- * Sub-score values. 0–3 are standard; 'E' is the emergency single-parameter
- * trigger unique to Q-ADDS.
+ * Sub-score values. 0–4 are standard; 'E' is the emergency single-parameter
+ * trigger unique to Q-ADDS. Score 4 indicates severe derangement just below
+ * the emergency threshold.
  */
-export type QaddsSubScoreValue = 0 | 1 | 2 | 3 | 'E';
+export type QaddsSubScoreValue = 0 | 1 | 2 | 3 | 4 | 'E';
 
 /**
  * A sub-score for a single Q-ADDS parameter.
@@ -71,7 +72,7 @@ export type QaddsSubScores = Record<QaddsParameter, QaddsSubScore>;
  * Complete Q-ADDS score for a single set of vital sign observations.
  */
 export interface QaddsScore {
-  /** Sum of numeric sub-scores (E counts as 3 for the total) */
+  /** Sum of numeric sub-scores (E counts as 4 for the total) */
   totalScore: number;
   /** Whether any parameter scored "E" (triggers MET regardless of total) */
   hasEmergency: boolean;
@@ -90,3 +91,24 @@ export interface QaddsScoreTrend {
   datetime: string;
   score: QaddsScore;
 }
+
+// ---------------------------------------------------------------------------
+// Chart Variants & Patient Status
+// ---------------------------------------------------------------------------
+
+/**
+ * Q-ADDS observation chart variant.
+ *
+ * - 'standard'             : General adult chart (default)
+ * - 'chronic_respiratory'  : Chronic hypoxia/hypercapnia chart with adjusted
+ *                            SpO₂ thresholds
+ */
+export type ChartVariant = 'standard' | 'chronic_respiratory';
+
+/**
+ * Patient clinical status used for escalation pathway differentiation.
+ *
+ * - 'deteriorating' : Patient condition is worsening (score trending up)
+ * - 'stable'        : Patient condition is stable or improving
+ */
+export type PatientStatus = 'deteriorating' | 'stable';

@@ -1,9 +1,11 @@
 import { useMemo } from 'react'
 import type { VitalSign } from '@/types/patient'
+import type { ChartVariant } from '@/types/vitals'
 import { calculateQadds, getRiskColor, getEscalationText } from '@/services/qaddsCalculator'
 
 interface QaddsScoreCardProps {
   vitals: VitalSign
+  variant?: ChartVariant
 }
 
 const RISK_BADGE_COLORS: Record<string, string> = {
@@ -22,8 +24,8 @@ const RISK_TEXT_COLORS: Record<string, string> = {
   Emergency: '#4a1a6b',
 }
 
-export function QaddsScoreCard({ vitals }: QaddsScoreCardProps) {
-  const qaddsScore = useMemo(() => calculateQadds(vitals), [vitals])
+export function QaddsScoreCard({ vitals, variant }: QaddsScoreCardProps) {
+  const qaddsScore = useMemo(() => calculateQadds(vitals, variant), [vitals, variant])
   const riskColor = getRiskColor(qaddsScore.clinicalRisk)
   const escalationText = getEscalationText(qaddsScore.clinicalRisk)
   const badgeBg = RISK_BADGE_COLORS[qaddsScore.clinicalRisk] ?? '#ffffff'

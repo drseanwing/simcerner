@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import type { VitalSign } from '@/types/patient'
-import type { QaddsParameter, QaddsSubScoreValue } from '@/types/vitals'
+import type { ChartVariant, QaddsParameter, QaddsSubScoreValue } from '@/types/vitals'
 import {
   calculateQadds,
   getScoreColor,
@@ -10,6 +10,7 @@ import {
 
 interface VitalSignsFlowsheetProps {
   vitals: VitalSign[]
+  variant?: ChartVariant
 }
 
 /** Row configuration mapping display labels to the Q-ADDS parameter keys. */
@@ -18,6 +19,25 @@ interface RowConfig {
   unit: string
   parameter: QaddsParameter
   getValue: (v: VitalSign) => string
+}
+
+/** Map short AVPU codes and full names to display values. */
+function formatConsciousnessValue(avpu: string | undefined): string {
+  const value = (avpu ?? 'Alert').trim()
+  switch (value) {
+    case 'A':
+      return 'Alert'
+    case 'C':
+      return 'Changing Behaviour'
+    case 'V':
+      return 'Voice'
+    case 'P':
+      return 'Pain'
+    case 'U':
+      return 'Unresponsive'
+    default:
+      return value
+  }
 }
 
 const ROWS: RowConfig[] = [
@@ -58,10 +78,10 @@ const ROWS: RowConfig[] = [
     getValue: (v) => v.temp,
   },
   {
-    label: 'Consciousness',
-    unit: 'AVPU',
+    label: 'Behaviour / Consciousness',
+    unit: 'CAVPU',
     parameter: 'consciousness',
-    getValue: (v) => v.avpu ?? 'Alert',
+    getValue: (v) => formatConsciousnessValue(v.avpu),
   },
 ]
 
@@ -75,7 +95,7 @@ function getTextColor(score: QaddsSubScoreValue): string {
   return '#333333'
 }
 
-export function VitalSignsFlowsheet({ vitals }: VitalSignsFlowsheetProps) {
+export function VitalSignsFlowsheet({ vitals, variant }: VitalSignsFlowsheetProps) {
   // Most recent first
   const sortedVitals = useMemo(
     () => [...vitals].sort((a, b) => {
@@ -87,8 +107,8 @@ export function VitalSignsFlowsheet({ vitals }: VitalSignsFlowsheetProps) {
   )
 
   const scores = useMemo(
-    () => sortedVitals.map((v) => calculateQadds(v)),
-    [sortedVitals],
+    () => sortedVitals.map((v) => calculateQadds(v, variant)),
+    [sortedVitals, variant],
   )
 
   if (vitals.length === 0) {

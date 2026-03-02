@@ -2,7 +2,7 @@
  * Q-ADDS scoring configuration types.
  *
  * Defines threshold bands and colour mappings used by the Q-ADDS calculator.
- * Each parameter has value ranges mapping to sub-scores (0–3 or E) and
+ * Each parameter has value ranges mapping to sub-scores (0–4 or E) and
  * visual colour codes following the Queensland Health Q-ADDS chart.
  */
 
@@ -18,7 +18,7 @@ import type { QaddsParameter, QaddsSubScoreValue, ClinicalRisk } from './vitals'
  * - 'white'  : Score 0 — within normal range
  * - 'yellow' : Score 1 — mild deviation
  * - 'orange' : Score 2 — moderate deviation
- * - 'red'    : Score 3 — severe deviation
+ * - 'red'    : Score 3 or 4 — severe deviation
  * - 'purple' : Score E — emergency / MET trigger
  */
 export type QaddsColorCode = 'white' | 'yellow' | 'orange' | 'red' | 'purple';

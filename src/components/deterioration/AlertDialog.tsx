@@ -1,19 +1,30 @@
-import type { ClinicalRisk } from '@/types/vitals'
-import { getRiskColor, getEscalationText } from '@/services/qaddsCalculator'
+/**
+ * Discern Alert Dialog.
+ *
+ * Displays a modal popup matching the official Queensland Health Discern Alert
+ * format. The dialog contains:
+ *
+ *   - Title coloured by risk level
+ *   - Bold instruction to navigate to Managing Deterioration graph page
+ *   - Two-column table: Clinical status | Required actions
+ *     - Deteriorating row with 3 deterioration criteria
+ *     - Stable row
+ *   - Optional SEPSIS screening prompt in bold red
+ *   - Acknowledge button
+ */
 
-interface ClinicalAlert {
-  title: string
-  message: string
-  risk: ClinicalRisk
-  parameters: string[]
-}
+import type { AlertData } from '@/services/alertEngine'
+import { getRiskColor } from '@/services/qaddsCalculator'
 
 interface AlertDialogProps {
-  alert: ClinicalAlert
+  alert: AlertData
   onDismiss: () => void
 }
 
-const HEADER_TEXT_COLORS: Record<ClinicalRisk, string> = {
+const FONT_FAMILY = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+
+/** Title text colour per risk level for contrast against the risk background. */
+const HEADER_TEXT_COLORS: Record<string, string> = {
   Routine: '#333333',
   Low: '#856404',
   Moderate: '#7a4100',
@@ -23,8 +34,10 @@ const HEADER_TEXT_COLORS: Record<ClinicalRisk, string> = {
 
 export function AlertDialog({ alert, onDismiss }: AlertDialogProps) {
   const headerBg = getRiskColor(alert.risk)
-  const headerTextColor = HEADER_TEXT_COLORS[alert.risk]
-  const escalationText = getEscalationText(alert.risk)
+  const headerTextColor = HEADER_TEXT_COLORS[alert.risk] ?? '#333333'
+
+  // Split multi-line messages (e.g. EW Score 4-5 has an additional instruction)
+  const messageLines = alert.message.split('\n').filter((line) => line.trim() !== '')
 
   return (
     <div
@@ -39,27 +52,22 @@ export function AlertDialog({ alert, onDismiss }: AlertDialogProps) {
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 9999,
-        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+        fontFamily: FONT_FAMILY,
         fontSize: '11px',
-      }}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          onDismiss()
-        }
       }}
       role="dialog"
       aria-modal="true"
       aria-labelledby="alert-dialog-title"
     >
-      {/* Modal */}
+      {/* Modal container */}
       <div
         style={{
           backgroundColor: '#ffffff',
           borderRadius: '4px',
           boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
-          width: '420px',
+          width: '500px',
           maxWidth: '90vw',
-          maxHeight: '80vh',
+          maxHeight: '90vh',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
@@ -70,115 +78,200 @@ export function AlertDialog({ alert, onDismiss }: AlertDialogProps) {
           style={{
             backgroundColor: headerBg,
             padding: '10px 16px',
-            borderBottom: '1px solid var(--cerner-border, #ccc)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
+            borderBottom: '1px solid #ccc',
           }}
         >
           <h2
             id="alert-dialog-title"
             style={{
               margin: 0,
-              fontSize: '13px',
+              fontSize: '14px',
               fontWeight: 700,
               color: headerTextColor,
+              fontFamily: FONT_FAMILY,
             }}
           >
             {alert.title}
           </h2>
-          <span
-            style={{
-              display: 'inline-block',
-              padding: '1px 8px',
-              borderRadius: '3px',
-              border: '1px solid ' + headerTextColor,
-              color: headerTextColor,
-              fontWeight: 600,
-              fontSize: '10px',
-              lineHeight: '16px',
-            }}
-          >
-            {alert.risk}
-          </span>
         </div>
 
         {/* Body */}
-        <div style={{ padding: '14px 16px', overflowY: 'auto', flex: 1 }}>
-          {/* Alert Message */}
-          <div
-            style={{
-              marginBottom: '12px',
-              color: '#333333',
-              lineHeight: '16px',
-              fontSize: '11px',
-            }}
-          >
-            {alert.message}
-          </div>
+        <div
+          style={{
+            padding: '14px 16px',
+            overflowY: 'auto',
+            flex: 1,
+          }}
+        >
+          {/* Bold instruction line(s) */}
+          {messageLines.map((line, i) => (
+            <div
+              key={i}
+              style={{
+                fontWeight: 700,
+                color: '#333333',
+                lineHeight: '16px',
+                fontSize: '11px',
+                marginBottom: i < messageLines.length - 1 ? '4px' : '14px',
+                fontFamily: FONT_FAMILY,
+              }}
+            >
+              {line}
+            </div>
+          ))}
 
-          {/* Affected Parameters */}
+          {/* E-zone affected parameters */}
           {alert.parameters.length > 0 && (
-            <div style={{ marginBottom: '12px' }}>
-              <div
-                style={{
-                  fontWeight: 600,
-                  fontSize: '11px',
-                  color: 'var(--cerner-dark-blue, #004578)',
-                  marginBottom: '4px',
-                }}
-              >
-                Affected Parameters
-              </div>
-              <ul
-                style={{
-                  margin: '0',
-                  paddingLeft: '18px',
-                  color: '#333333',
-                  lineHeight: '18px',
-                }}
-              >
-                {alert.parameters.map((param) => (
-                  <li key={param} style={{ fontSize: '11px' }}>
-                    {param}
-                  </li>
-                ))}
-              </ul>
+            <div
+              style={{
+                marginBottom: '10px',
+                fontSize: '11px',
+                color: '#333333',
+                fontFamily: FONT_FAMILY,
+              }}
+            >
+              <span style={{ fontWeight: 600 }}>Emergency parameter(s): </span>
+              {alert.parameters.join(', ')}
             </div>
           )}
 
-          {/* Escalation Instructions */}
-          <div
+          {/* Two-column clinical status / required actions table */}
+          <table
             style={{
-              padding: '8px 10px',
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #e0e0e0',
-              borderRadius: '3px',
+              width: '100%',
+              borderCollapse: 'collapse',
+              fontSize: '11px',
+              fontFamily: FONT_FAMILY,
+              marginBottom: '14px',
             }}
           >
+            <thead>
+              <tr>
+                <th
+                  style={{
+                    border: '1px solid #999',
+                    padding: '6px 8px',
+                    backgroundColor: '#f0f0f0',
+                    textAlign: 'left',
+                    fontWeight: 700,
+                    width: '40%',
+                  }}
+                >
+                  Clinical status
+                </th>
+                <th
+                  style={{
+                    border: '1px solid #999',
+                    padding: '6px 8px',
+                    backgroundColor: '#f0f0f0',
+                    textAlign: 'left',
+                    fontWeight: 700,
+                    width: '60%',
+                  }}
+                >
+                  Required actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* Deteriorating row */}
+              <tr>
+                <td
+                  style={{
+                    border: '1px solid #999',
+                    padding: '6px 8px',
+                    verticalAlign: 'top',
+                    color: '#333333',
+                    lineHeight: '16px',
+                  }}
+                >
+                  <div style={{ fontWeight: 700, marginBottom: '6px' }}>
+                    Deteriorating
+                  </div>
+                  <ol
+                    style={{
+                      margin: 0,
+                      paddingLeft: '16px',
+                      lineHeight: '16px',
+                    }}
+                  >
+                    {alert.deterioratingCriteria.map((criterion, i) => (
+                      <li key={i} style={{ marginBottom: '2px' }}>
+                        {criterion}
+                      </li>
+                    ))}
+                  </ol>
+                </td>
+                <td
+                  style={{
+                    border: '1px solid #999',
+                    padding: '6px 8px',
+                    verticalAlign: 'top',
+                    color: '#333333',
+                    lineHeight: '16px',
+                  }}
+                >
+                  {alert.deterioratingActions}
+                </td>
+              </tr>
+
+              {/* Stable row */}
+              <tr>
+                <td
+                  style={{
+                    border: '1px solid #999',
+                    padding: '6px 8px',
+                    verticalAlign: 'top',
+                    color: '#333333',
+                    lineHeight: '16px',
+                  }}
+                >
+                  <div style={{ fontWeight: 700, marginBottom: '4px' }}>
+                    Stable
+                  </div>
+                  <div style={{ fontStyle: 'italic', color: '#555555' }}>
+                    None of the 3 deteriorating factors above
+                  </div>
+                </td>
+                <td
+                  style={{
+                    border: '1px solid #999',
+                    padding: '6px 8px',
+                    verticalAlign: 'top',
+                    color: '#333333',
+                    lineHeight: '16px',
+                  }}
+                >
+                  {alert.stableActions}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          {/* Sepsis screening prompt */}
+          {alert.showSepsisPrompt && (
             <div
               style={{
-                fontWeight: 600,
+                fontWeight: 700,
+                color: '#dc3545',
                 fontSize: '11px',
-                color: 'var(--cerner-dark-blue, #004578)',
+                lineHeight: '16px',
+                fontFamily: FONT_FAMILY,
                 marginBottom: '4px',
               }}
             >
-              Escalation Instructions
+              Could it be SEPSIS? If yes: follow Queensland Sepsis Care Pathway
             </div>
-            <div style={{ color: '#333333', lineHeight: '16px', fontSize: '11px' }}>
-              {escalationText}
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Footer */}
         <div
           style={{
             padding: '10px 16px',
-            borderTop: '1px solid var(--cerner-border, #ccc)',
+            borderTop: '1px solid #ccc',
             textAlign: 'right',
-            backgroundColor: 'var(--cerner-grid-header, #f5f5f5)',
+            backgroundColor: '#f5f5f5',
           }}
         >
           <button
@@ -187,11 +280,11 @@ export function AlertDialog({ alert, onDismiss }: AlertDialogProps) {
             style={{
               padding: '5px 20px',
               fontSize: '11px',
-              fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+              fontFamily: FONT_FAMILY,
               fontWeight: 600,
               color: '#ffffff',
-              backgroundColor: 'var(--cerner-blue, #0066b2)',
-              border: '1px solid var(--cerner-dark-blue, #004578)',
+              backgroundColor: '#0066b2',
+              border: '1px solid #004578',
               borderRadius: '3px',
               cursor: 'pointer',
               lineHeight: '18px',

@@ -77,11 +77,11 @@ export default function ScoreTrendGraph({ vitals }: ScoreTrendGraphProps) {
           <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
 
           {/* Q-ADDS risk zone backgrounds */}
-          <ReferenceArea y1={0} y2={1} fill="#e8f5e9" fillOpacity={0.5} />
-          <ReferenceArea y1={1} y2={4} fill="#fff8e1" fillOpacity={0.5} />
-          <ReferenceArea y1={4} y2={6} fill="#fff3e0" fillOpacity={0.5} />
-          <ReferenceArea y1={6} y2={8} fill="#ffe0b2" fillOpacity={0.5} />
-          <ReferenceArea y1={8} y2={20} fill="#f3e5f5" fillOpacity={0.5} />
+          <ReferenceArea y1={0} y2={0.5} fill="#e8f5e9" fillOpacity={0.5} />
+          <ReferenceArea y1={0.5} y2={3.5} fill="#fff8e1" fillOpacity={0.5} />
+          <ReferenceArea y1={3.5} y2={5.5} fill="#fff3e0" fillOpacity={0.5} />
+          <ReferenceArea y1={5.5} y2={7.5} fill="#ffe0b2" fillOpacity={0.5} />
+          <ReferenceArea y1={7.5} y2={20} fill="#f3e5f5" fillOpacity={0.5} />
 
           <XAxis
             dataKey="time"

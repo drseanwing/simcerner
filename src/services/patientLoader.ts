@@ -274,7 +274,8 @@ export function normalizePatientData(raw: unknown): Patient {
       spo2: toNum(vs.oxygenSaturation),
       avpu: toStr(vs.avpu) as AVPUScale | undefined,
       supplementalO2: vs.supplementalOxygen === true,
-      newsScore: toNum(vs.newsScore),
+      o2FlowRate: toNum(vs.o2FlowRate ?? vs.oxygenFlowRate),
+      ewsScore: toNum(vs.newsScore ?? vs.ewsScore),
       painScore: toNum(vs.painScore),
     }));
   }

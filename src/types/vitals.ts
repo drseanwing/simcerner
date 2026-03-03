@@ -1,42 +1,140 @@
 /**
- * Q-ADDS (Queensland Adult Deterioration Detection System) scoring types.
+ * @file vitals.ts
+ * @description Vital signs display configuration and parameter definitions
+ * for the SimCerner EMR application.
  *
- * Q-ADDS monitors 7 physiological parameters. Each receives a sub-score of
- * 0–4, or "E" (Emergency) for extreme derangement. An "E" on any single
- * parameter triggers an immediate MET (Medical Emergency Team) call,
- * regardless of the aggregate score.
- *
- * Escalation tiers (by aggregate score):
- *   0       → Routine care (white)
- *   1–3     → Low-level response — increase observation frequency (yellow)
- *   4–5     → Moderate — medical officer review required (orange)
- *   6–7     → High-severity — senior clinician review (red)
- *   ≥8 or E → Emergency — MET call activation (purple)
+ * Provides the canonical list of monitored vital parameters with their
+ * units, normal ranges, and display metadata used by the vitals chart,
+ * observation table, and Q-ADDS EWS scoring engine.
  */
 
 // ---------------------------------------------------------------------------
-// Clinical Risk Levels
+// Vital Parameter Configuration
 // ---------------------------------------------------------------------------
 
 /**
- * Q-ADDS clinical risk classification.
- *
- * - 'Routine'   : Score 0 — continue routine observations
- * - 'Low'       : Score 1–3 — increase observation frequency, charge nurse review
- * - 'Moderate'  : Score 4–5 — medical officer review required
- * - 'High'      : Score 6–7 — senior clinician review
- * - 'Emergency' : Score ≥8 or any single "E" — MET call
+ * Normal range boundaries for a vital sign parameter.
+ * Values outside this range are flagged as abnormal in the UI.
  */
+export interface NormalRange {
+  /** Lower bound of the normal range (inclusive). */
+  min: number;
+
+  /** Upper bound of the normal range (inclusive). */
+  max: number;
+}
+
+/**
+ * Configuration for a single vital sign parameter, defining how it
+ * is labelled, keyed into data objects, and what constitutes a normal value.
+ *
+ * @example
+ * ```ts
+ * const hrParam: VitalParameter = {
+ *   label: 'Heart Rate',
+ *   key: 'hr',
+ *   unit: 'bpm',
+ *   normalRange: { min: 51, max: 90 },
+ * };
+ * ```
+ */
+export interface VitalParameter {
+  /** Human-readable display label. */
+  label: string;
+
+  /** Property key matching the field name on the `VitalSign` interface. */
+  key: string;
+
+  /** Unit of measurement shown alongside the value. */
+  unit: string;
+
+  /** Normal reference range; values outside trigger abnormal highlighting. */
+  normalRange: NormalRange;
+}
+
+/**
+ * Display configuration for the vitals panel, controlling which
+ * parameters are visible and how they are rendered.
+ */
+export interface VitalSignDisplayConfig {
+  /** Ordered list of parameters to display. */
+  parameters: VitalParameter[];
+
+  /** Whether to show the trend sparkline chart. */
+  showTrend: boolean;
+
+  /** Whether to highlight out-of-range values with colour coding. */
+  highlightAbnormal: boolean;
+
+  /** Maximum number of historical observations to show in the table. */
+  maxHistoryRows: number;
+
+  /** Whether to display the calculated EWS score row. */
+  showNewsScore: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Standard Vital Parameters
+// ---------------------------------------------------------------------------
+
+/**
+ * Canonical list of standard vital sign parameters monitored in the
+ * SimCerner application. Normal ranges are based on standard adult
+ * clinical reference values and align with Q-ADDS scoring boundaries.
+ */
+export const VITAL_PARAMETERS: readonly VitalParameter[] = [
+  {
+    label: 'Temperature',
+    key: 'temp',
+    unit: '°C',
+    normalRange: { min: 36.1, max: 38.0 },
+  },
+  {
+    label: 'Heart Rate',
+    key: 'hr',
+    unit: 'bpm',
+    normalRange: { min: 51, max: 90 },
+  },
+  {
+    label: 'Respiratory Rate',
+    key: 'rr',
+    unit: 'breaths/min',
+    normalRange: { min: 12, max: 20 },
+  },
+  {
+    label: 'Systolic BP',
+    key: 'bp_sys',
+    unit: 'mmHg',
+    normalRange: { min: 111, max: 219 },
+  },
+  {
+    label: 'Diastolic BP',
+    key: 'bp_dia',
+    unit: 'mmHg',
+    normalRange: { min: 60, max: 90 },
+  },
+  {
+    label: 'SpO2',
+    key: 'spo2',
+    unit: '%',
+    normalRange: { min: 96, max: 100 },
+  },
+  {
+    label: 'Pain Score',
+    key: 'painScore',
+    unit: '/10',
+    normalRange: { min: 0, max: 3 },
+  },
+] as const;
+
+// ---------------------------------------------------------------------------
+// Q-ADDS Scoring Types (legacy aliases maintained for compatibility)
+// ---------------------------------------------------------------------------
+
+/** Q-ADDS clinical risk classification. */
 export type ClinicalRisk = 'Routine' | 'Low' | 'Moderate' | 'High' | 'Emergency';
 
-// ---------------------------------------------------------------------------
-// Sub-Scores
-// ---------------------------------------------------------------------------
-
-/**
- * Q-ADDS scored parameters. Includes o2FlowRate which is unique to Q-ADDS
- * (NEWS2 uses a binary supplementalO2 flag instead).
- */
+/** Q-ADDS scored parameters (legacy naming). */
 export type QaddsParameter =
   | 'rr'
   | 'spo2'
@@ -46,69 +144,41 @@ export type QaddsParameter =
   | 'heartRate'
   | 'consciousness';
 
-/**
- * Sub-score values. 0–4 are standard; 'E' is the emergency single-parameter
- * trigger unique to Q-ADDS. Score 4 indicates severe derangement just below
- * the emergency threshold.
- */
+/** Q-ADDS sub-score values. */
 export type QaddsSubScoreValue = 0 | 1 | 2 | 3 | 4 | 'E';
 
-/**
- * A sub-score for a single Q-ADDS parameter.
- */
+/** A sub-score for a single Q-ADDS parameter. */
 export interface QaddsSubScore {
   parameter: QaddsParameter;
   value: string | number;
   score: QaddsSubScoreValue;
 }
 
-// ---------------------------------------------------------------------------
-// Aggregate Q-ADDS Score
-// ---------------------------------------------------------------------------
-
+/** Map of parameter → sub-score. */
 export type QaddsSubScores = Record<QaddsParameter, QaddsSubScore>;
 
-/**
- * Complete Q-ADDS score for a single set of vital sign observations.
- */
+/** Complete Q-ADDS score for a set of vitals. */
 export interface QaddsScore {
-  /** Sum of numeric sub-scores (E counts as 4 for the total) */
   totalScore: number;
-  /** Whether any parameter scored "E" (triggers MET regardless of total) */
   hasEmergency: boolean;
-  /** Which parameters scored "E", if any */
   emergencyParameters: QaddsParameter[];
-  /** Derived clinical risk level */
   clinicalRisk: ClinicalRisk;
-  /** Individual sub-scores for each parameter */
   subScores: QaddsSubScores;
 }
 
-/**
- * Q-ADDS score paired with its observation timestamp for trend plotting.
- */
+/** Q-ADDS score paired with timestamp (for trend graph). */
 export interface QaddsScoreTrend {
   datetime: string;
   score: QaddsScore;
 }
 
-// ---------------------------------------------------------------------------
-// Chart Variants & Patient Status
-// ---------------------------------------------------------------------------
+/** Observation chart variant. */
+export type ChartVariant =
+  | 'standard'
+  | 'chronic_respiratory'
+  | 'SW150'
+  | 'SW626'
+  | 'SW1171';
 
-/**
- * Q-ADDS observation chart variant.
- *
- * - 'standard'             : General adult chart (default)
- * - 'chronic_respiratory'  : Chronic hypoxia/hypercapnia chart with adjusted
- *                            SpO₂ thresholds
- */
-export type ChartVariant = 'standard' | 'chronic_respiratory';
-
-/**
- * Patient clinical status used for escalation pathway differentiation.
- *
- * - 'deteriorating' : Patient condition is worsening (score trending up)
- * - 'stable'        : Patient condition is stable or improving
- */
+/** Patient clinical status for escalation pathway. */
 export type PatientStatus = 'deteriorating' | 'stable';

@@ -1,66 +1,112 @@
 /**
- * Barrel export for all TypeScript type definitions.
+ * @file index.ts
+ * @description Barrel export for all SimCerner EMR type definitions.
  *
- * Re-exports every public type from the domain-specific type modules so that
- * consumers can import from a single entry point:
+ * Re-exports every interface, type, enum, and constant from the
+ * domain-specific type modules so consumers can import from a
+ * single entry point:
  *
- *   import type { Patient, QaddsScore, MAREntry } from '@/types';
+ * ```ts
+ * import type { Patient, VitalSign, QADDSResult } from './types';
+ * import { MedicationDoseStatus, QADDS_THRESHOLDS } from './types';
+ * ```
  */
 
-// Patient data models — demographics, vitals, medications, orders, results, notes
+// Patient data model — demographics, vitals, medications, orders, labs, notes
 export type {
+  Gender,
   AVPUScale,
+  PatientDemographics,
   VitalSign,
   FluidBalanceEntryFlat,
-  FluidBalanceEntryNormalized,
+  FluidBalanceEntryHierarchical,
   FluidBalanceEntry,
+  MedicationStatus,
   Medication,
+  OrderType,
+  OrderStatus,
+  OrderPriority,
   Order,
+  LabFlag,
   LabResult,
   LabResults,
+  NoteType,
+  ClinicalRole,
   ClinicalNote,
   Patient,
-  PatientMap,
 } from './patient';
 
-// Q-ADDS scoring — aggregate scores, sub-scores, risk levels
+// Vital signs display configuration
 export type {
-  ClinicalRisk,
-  QaddsParameter,
-  QaddsSubScoreValue,
-  QaddsSubScore,
-  QaddsSubScores,
-  QaddsScore,
-  QaddsScoreTrend,
+  NormalRange,
+  VitalParameter,
+  VitalSignDisplayConfig,
 } from './vitals';
+export { VITAL_PARAMETERS } from './vitals';
 
-// Medication Administration Record (MAR) — grid cells, entries, therapeutic classes
+// Medication administration types
 export type {
-  AdministrationStatus,
-  MARCellData,
-  MAREntry,
+  MedicationAdministration,
+  MARTimeSlot,
   TherapeuticClass,
-  MARStatusColor,
-  MARTimeWindow,
 } from './medications';
+export { MedicationDoseStatus } from './medications';
 
-// Q-ADDS scoring configuration — thresholds, colour codes, system config
+// iView (Interactive View) clinical documentation
 export type {
-  QaddsColorCode,
-  QaddsScoreThreshold,
-  QaddsParameterConfig,
-  ScoringSystem,
-  ScoringSystemConfig,
-  QaddsRiskThreshold,
+  AssessmentInputType,
+  AssessmentParameter,
+  IViewSection,
+  IViewBand,
+  AssessmentEntry,
+  TimeInterval,
+  IViewToolbarConfig,
+} from './iview';
+
+// Q-ADDS scoring — new canonical types
+export type {
+  QADDSScore,
+  QADDSSubScore,
+  QADDSResult,
+  QADDSRiskLevel,
+  QADDSScoreThresholdBand,
+  ChartVariant,
+  EscalationLevel,
+  ParameterThresholds,
+  ScoreThresholds,
+  ClinicalRiskThresholds,
 } from './news';
 
-// MET-MEO (Modified Escalation and Observation) — orders, assessments, sedation
+// Q-ADDS scoring — new canonical constants
+export {
+  QADDS_THRESHOLDS,
+  QADDS_RISK_THRESHOLDS,
+  AVPU_NUMERIC_MAP,
+} from './news';
+
+// MET-MEO workflow types
 export type {
-  MetMeoOrder,
+  MEOOrderType,
+  METMEOTriggerType,
+  METMEOOrderStatus,
+  AuthorisingRole,
+  METMEOOrder,
+  MOFOption,
   ModifiedObsFrequencyOrder,
-  MeoOrder,
+  PatientStatus,
   NursingAssessment,
-  SedationLevel,
-  SedationAssessment,
-  EZoneVitalSignOption,
-} from './meo';
+  METCallReason,
+  METCallCriteria,
+} from './metmeo';
+
+// Backward-compatible aliases (NEWS2 -> Q-ADDS)
+export type {
+  ClinicalRisk,
+  NEWS2SubScore,
+  NEWS2Result,
+  ScoreThresholdBand,
+} from './news';
+export {
+  NEWS2_THRESHOLDS,
+  CLINICAL_RISK_THRESHOLDS,
+} from './news';

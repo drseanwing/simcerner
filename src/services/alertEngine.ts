@@ -50,6 +50,9 @@ export interface AlertData {
   showSepsisPrompt: boolean
 }
 
+// Backward-compatible alias for persistence layer
+export type Alert = AlertData
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -86,11 +89,11 @@ function parameterLabel(param: QaddsParameter): string {
  * - SpO2 requires new O2 to stay > 91%
  */
 function checkSepsisCriteria(vitals: VitalSign): boolean {
-  const rr = parseFloat(vitals.rr)
-  const hr = parseFloat(vitals.hr)
-  const sbp = parseFloat(vitals.bp_sys)
-  const temp = parseFloat(vitals.temp)
-  const spo2 = parseFloat(vitals.spo2)
+  const rr = Number(vitals.rr)
+  const hr = Number(vitals.hr)
+  const sbp = Number(vitals.bp_sys)
+  const temp = Number(vitals.temp)
+  const spo2 = Number(vitals.spo2)
 
   if (!isNaN(rr) && rr >= 25) return true
   if (!isNaN(hr) && hr >= 130) return true

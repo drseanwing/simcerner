@@ -1,3 +1,5 @@
 {
-  "patients": ["jetson-judy.json"]
+  "patients": [
+    "jetson-judy.json"
+  ]
 }

@@ -424,25 +424,31 @@ export function validateVitalsComplete(
 ): { complete: boolean; missing: QaddsParameter[] } {
   const missing: QaddsParameter[] = []
 
-  if (!vitals.rr || vitals.rr.trim() === '') {
+  const rrValue = vitals.rr
+  if (rrValue === undefined || String(rrValue).trim() === '') {
     missing.push('rr')
   }
-  if (!vitals.spo2 || vitals.spo2.trim() === '') {
+  const spo2Value = vitals.spo2
+  if (spo2Value === undefined || String(spo2Value).trim() === '') {
     missing.push('spo2')
   }
   if (vitals.o2FlowRate === undefined || vitals.o2FlowRate === '') {
     missing.push('o2FlowRate')
   }
-  if (!vitals.temp || vitals.temp.trim() === '') {
+  const tempValue = vitals.temp
+  if (tempValue === undefined || String(tempValue).trim() === '') {
     missing.push('temperature')
   }
-  if (!vitals.bp_sys || vitals.bp_sys.trim() === '') {
+  const systolicValue = vitals.bp_sys
+  if (systolicValue === undefined || String(systolicValue).trim() === '') {
     missing.push('systolicBP')
   }
-  if (!vitals.hr || vitals.hr.trim() === '') {
+  const hrValue = vitals.hr
+  if (hrValue === undefined || String(hrValue).trim() === '') {
     missing.push('heartRate')
   }
-  if (!vitals.avpu || (typeof vitals.avpu === 'string' && vitals.avpu.trim() === '')) {
+  const avpuValue = vitals.avpu
+  if (avpuValue === undefined || (typeof avpuValue === 'string' && avpuValue.trim() === '')) {
     missing.push('consciousness')
   }
 

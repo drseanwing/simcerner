@@ -1,183 +1,216 @@
-import { useEffect, useRef } from 'react'
-import type { Patient, VitalSign } from '@/types/patient'
+/**
+ * @file VitalsGraphView.tsx
+ * @description Graphical vital signs view using Recharts line charts.
+ *
+ * Migrated from the canvas-based VitalsGraphView in emr-sim-v2.html.
+ * Renders four graphs:
+ * - Respiratory Rate
+ * - SpO2
+ * - Blood Pressure (Systolic)
+ * - Heart Rate
+ *
+ * Each graph includes:
+ * - Normal range shading (light green) and abnormal zones (light red)
+ * - Line chart with data point dots
+ * - Responsive container for auto-sizing
+ */
 
-interface NormalRange {
-  min: number
-  max: number
+import { useMemo } from 'react';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ReferenceArea,
+  ResponsiveContainer,
+} from 'recharts';
+import { usePatientStore } from '../../stores/patientStore';
+import type { VitalSign } from '../../types';
+import '../../styles/components/views.css';
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+/** Configuration for a single vital sign graph. */
+interface GraphConfig {
+  title: string;
+  parameter: keyof VitalSign;
+  unit: string;
+  normalRange: { min: number; max: number };
 }
 
-interface VitalSignGraphProps {
-  title: string
-  data: VitalSign[]
-  parameter: keyof VitalSign
-  normalRange: NormalRange
-  unit: string
+/** Internal chart data point. */
+interface GraphDataPoint {
+  time: string;
+  value: number | null;
 }
 
-function VitalSignGraph({
-  title,
-  data,
-  parameter,
-  normalRange,
-  unit,
-}: VitalSignGraphProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+// ---------------------------------------------------------------------------
+// Configuration
+// ---------------------------------------------------------------------------
 
-  useEffect(() => {
-    if (!canvasRef.current || !data || data.length === 0) return
+/** Graph configurations for each vital parameter. */
+const GRAPHS: GraphConfig[] = [
+  {
+    title: 'RR (Respiratory Rate)',
+    parameter: 'rr',
+    unit: '/min',
+    normalRange: { min: 12, max: 20 },
+  },
+  {
+    title: 'SpO2',
+    parameter: 'spo2',
+    unit: '%',
+    normalRange: { min: 95, max: 100 },
+  },
+  {
+    title: 'Blood Pressure (Systolic)',
+    parameter: 'bp_sys',
+    unit: 'mmHg',
+    normalRange: { min: 100, max: 140 },
+  },
+  {
+    title: 'Heart Rate',
+    parameter: 'hr',
+    unit: 'bpm',
+    normalRange: { min: 60, max: 100 },
+  },
+];
 
-    const canvas = canvasRef.current
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 
-    const width = canvas.width
-    const height = canvas.height
+/**
+ * VitalsGraphView renders Recharts-based line graphs for key vital
+ * sign parameters with normal range shading.
+ */
+export default function VitalsGraphView() {
+  const patient = usePatientStore((s) => s.currentPatient);
 
-    ctx.clearRect(0, 0, width, height)
-
-    const values = data
-      .map((d) => parseFloat(String(d[parameter])))
-      .reverse()
-    const maxVal = Math.max(...values, normalRange.max)
-    const minVal = Math.min(...values, normalRange.min)
-    const range = maxVal - minVal
-    const padding = range * 0.1
-
-    const drawZone = (yStart: number, yEnd: number, color: string) => {
-      const y1 =
-        height -
-        ((yStart - (minVal - padding)) / (range + 2 * padding)) * height
-      const y2 =
-        height -
-        ((yEnd - (minVal - padding)) / (range + 2 * padding)) * height
-      ctx.fillStyle = color
-      ctx.fillRect(0, y2, width, y1 - y2)
-    }
-
-    drawZone(maxVal + padding, normalRange.max, 'rgba(255, 182, 193, 0.3)')
-    drawZone(normalRange.max, normalRange.min, 'rgba(255, 255, 224, 0.3)')
-    drawZone(normalRange.min, minVal - padding, 'rgba(255, 182, 193, 0.3)')
-
-    ctx.strokeStyle = '#e0e0e0'
-    ctx.lineWidth = 1
-    for (let i = 0; i <= 4; i++) {
-      const y = (height / 4) * i
-      ctx.beginPath()
-      ctx.moveTo(0, y)
-      ctx.lineTo(width, y)
-      ctx.stroke()
-    }
-
-    ctx.strokeStyle = '#0066b2'
-    ctx.lineWidth = 2
-    ctx.beginPath()
-
-    values.forEach((val, i) => {
-      const x =
-        values.length > 1 ? (width / (values.length - 1)) * i : width / 2
-      const y =
-        height -
-        ((val - (minVal - padding)) / (range + 2 * padding)) * height
-
-      if (i === 0) {
-        ctx.moveTo(x, y)
-      } else {
-        ctx.lineTo(x, y)
-      }
-    })
-
-    ctx.stroke()
-
-    values.forEach((val, i) => {
-      const x =
-        values.length > 1 ? (width / (values.length - 1)) * i : width / 2
-      const y =
-        height -
-        ((val - (minVal - padding)) / (range + 2 * padding)) * height
-
-      ctx.fillStyle =
-        val < normalRange.min || val > normalRange.max ? '#dc3545' : '#0066b2'
-      ctx.beginPath()
-      ctx.arc(x, y, 4, 0, 2 * Math.PI)
-      ctx.fill()
-    })
-  }, [data, parameter, normalRange])
-
-  return (
-    <div className="vital-graph">
-      <div className="graph-title">
-        {title} ({unit})
-      </div>
-      <canvas
-        ref={canvasRef}
-        className="graph-canvas"
-        width={800}
-        height={120}
-      />
-    </div>
-  )
-}
-
-interface VitalsGraphViewProps {
-  patient: Patient
-}
-
-export function VitalsGraphView({ patient }: VitalsGraphViewProps) {
-  if (!patient.vitals || patient.vitals.length === 0) {
+  if (!patient?.vitals?.length) {
     return (
       <>
-        <div className="content-header">
-          {'\uD83D\uDCC8'} Adult Q-ADDS - Graphical View
-        </div>
+        <div className="content-header">Adult Q-ADDS - Graphical View</div>
         <div className="content-body">
-          <div
-            className="text-muted"
-            style={{ padding: '20px', textAlign: 'center' }}
-          >
+          <div className="text-muted" style={{ padding: 20, textAlign: 'center' }}>
             No vital signs data available for graphical display
           </div>
         </div>
       </>
-    )
+    );
   }
 
   return (
     <>
-      <div className="content-header">
-        {'\uD83D\uDCC8'} Adult Q-ADDS - Graphical View
-      </div>
+      <div className="content-header">Adult Q-ADDS - Graphical View</div>
       <div className="content-body">
         <div className="vitals-graph-container">
-          <VitalSignGraph
-            title="RR (bpm)"
-            data={patient.vitals}
-            parameter="rr"
-            normalRange={{ min: 12, max: 20 }}
-            unit="/min"
-          />
-          <VitalSignGraph
-            title="SpO2 (%)"
-            data={patient.vitals}
-            parameter="spo2"
-            normalRange={{ min: 95, max: 100 }}
-            unit="%"
-          />
-          <VitalSignGraph
-            title="Blood Pressure (SBP)"
-            data={patient.vitals}
-            parameter="bp_sys"
-            normalRange={{ min: 100, max: 140 }}
-            unit="mmHg"
-          />
-          <VitalSignGraph
-            title="Heart Rate"
-            data={patient.vitals}
-            parameter="hr"
-            normalRange={{ min: 60, max: 100 }}
-            unit="bpm"
-          />
+          {GRAPHS.map((config) => (
+            <VitalSignGraph
+              key={config.parameter}
+              config={config}
+              vitals={patient.vitals}
+            />
+          ))}
         </div>
       </div>
     </>
-  )
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Sub-components
+// ---------------------------------------------------------------------------
+
+/**
+ * VitalSignGraph renders a single Recharts LineChart for one vital parameter.
+ */
+function VitalSignGraph({
+  config,
+  vitals,
+}: {
+  config: GraphConfig;
+  vitals: VitalSign[];
+}) {
+  /** Transform vitals to chronological chart data. */
+  const data = useMemo<GraphDataPoint[]>(() => {
+    return [...vitals].reverse().map((v) => ({
+      time: v.datetime,
+      value: v[config.parameter] != null ? Number(v[config.parameter]) : null,
+    }));
+  }, [vitals, config.parameter]);
+
+  /** Compute Y-axis domain with padding. */
+  const yDomain = useMemo<[number, number]>(() => {
+    const values = data.map((d) => d.value).filter((v): v is number => v != null);
+    if (values.length === 0) return [0, 100];
+    const min = Math.min(...values, config.normalRange.min);
+    const max = Math.max(...values, config.normalRange.max);
+    const padding = (max - min) * 0.15 || 5;
+    return [Math.floor(min - padding), Math.ceil(max + padding)];
+  }, [data, config.normalRange]);
+
+  return (
+    <div className="vital-graph">
+      <div className="graph-title">
+        {config.title} ({config.unit})
+      </div>
+      <ResponsiveContainer width="100%" height={140}>
+        <LineChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+
+          {/* Abnormal zone above normal range */}
+          <ReferenceArea
+            y1={config.normalRange.max}
+            y2={yDomain[1]}
+            fill="rgba(255, 182, 193, 0.3)"
+          />
+
+          {/* Normal range zone */}
+          <ReferenceArea
+            y1={config.normalRange.min}
+            y2={config.normalRange.max}
+            fill="rgba(200, 230, 200, 0.3)"
+          />
+
+          {/* Abnormal zone below normal range */}
+          <ReferenceArea
+            y1={yDomain[0]}
+            y2={config.normalRange.min}
+            fill="rgba(255, 182, 193, 0.3)"
+          />
+
+          <XAxis
+            dataKey="time"
+            tick={{ fontSize: 9 }}
+            angle={-25}
+            textAnchor="end"
+            height={45}
+          />
+          <YAxis
+            domain={yDomain}
+            tick={{ fontSize: 9 }}
+          />
+          <Tooltip
+            formatter={(value: number | undefined) => [`${value ?? 0} ${config.unit}`, config.title]}
+            labelStyle={{ fontSize: 10 }}
+            contentStyle={{ fontSize: 11 }}
+          />
+          <Line
+            type="monotone"
+            dataKey="value"
+            stroke="#0066b2"
+            strokeWidth={2}
+            dot={{ r: 4, fill: '#0066b2' }}
+            activeDot={{ r: 6 }}
+            connectNulls
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
 }

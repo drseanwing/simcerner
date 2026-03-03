@@ -1,331 +1,105 @@
 /**
- * DeteriorationView — the main "Managing Deterioration" view that composes
- * all Q-ADDS sub-components into a unified deterioration monitoring page.
+ * @file DeteriorationView.tsx
+ * @description Deterioration / vital signs view composing Q-ADDS scoring,
+ * colour-coded vital signs flowsheet, escalation protocol, and score trend.
  *
- * Layout:
- *   1. Top controls: Chart variant selector + Patient status toggle
- *   2. Warning banner (when vitals incomplete)
- *   3. Score Card + Escalation Protocol (side by side)
- *   4. Vital Signs Flowsheet (colour-coded table)
- *   5. Score Trend Graph (EW Score Graph)
- *   6. MEO Plan Section (MET-MEO status and dialog link)
- *   7. Sedation Score Section (reference table and assessment timeline)
- *   8. AlertDialog overlay when alertStore.activeAlert is set
- *   9. MeoPlanDialog (conditional, when showMeoDialog is true)
- *  10. MetMeoPlanOrderForm (conditional, when showMetMeoForm is true)
- *  11. ModifiedObsFrequencyForm (conditional, when showMofForm is true)
- *
- * On mount, the most recent vitals are evaluated by the alert engine and
- * any resulting alerts are pushed into the alert store.
+ * Replaces and enhances the original VitalsView from emr-sim-v2.html by
+ * integrating the Q-ADDS scoring engine and providing richer clinical
+ * decision support visualisations.
  */
 
-import { useState, useEffect, useMemo } from 'react'
-import type { Patient } from '@/types/patient'
-import type { ChartVariant, PatientStatus, QaddsParameter } from '@/types/vitals'
-import {
-  calculateQadds,
-  validateVitalsComplete,
-} from '@/services/qaddsCalculator'
-import { evaluateAlerts } from '@/services/alertEngine'
-import { useAlertStore } from '@/stores/alertStore'
-import { QaddsScoreCard } from '@/components/deterioration/QaddsScoreCard'
-import { EscalationProtocol } from '@/components/deterioration/EscalationProtocol'
-import { VitalSignsFlowsheet } from '@/components/deterioration/VitalSignsFlowsheet'
-import { ScoreTrendGraph } from '@/components/deterioration/ScoreTrendGraph'
-import { AlertDialog } from '@/components/deterioration/AlertDialog'
-import { MeoPlanSection } from '@/components/deterioration/MeoPlanSection'
-import { SedationScore } from '@/components/deterioration/SedationScore'
-import { MeoPlanDialog } from '@/components/deterioration/MeoPlanDialog'
-import { MetMeoPlanOrderForm } from '@/components/deterioration/MetMeoPlanOrderForm'
-import { ModifiedObsFrequencyForm } from '@/components/deterioration/ModifiedObsFrequencyForm'
-import { useMeoStore } from '@/stores/meoStore'
+import { useMemo } from 'react';
+import { usePatientStore } from '../../stores/patientStore';
+import { calculateQADDS } from '../../services/newsCalculator';
+import type { QADDSResult } from '../../types';
+import NewsScoreCard from './NewsScoreCard';
+import VitalSignsFlowsheet from './VitalSignsFlowsheet';
+import EscalationProtocol from './EscalationProtocol';
+import ScoreTrendGraph from './ScoreTrendGraph';
+import METCallBanner from '../met-meo/METCallBanner';
+import METMEOPanel from '../met-meo/METMEOPanel';
+import '../../styles/components/views.css';
 
-interface DeteriorationViewProps {
-  patient: Patient
-}
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 
-const FONT_FAMILY = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+/**
+ * DeteriorationView is the primary clinical deterioration management screen.
+ *
+ * It composes four sub-components:
+ * 1. {@link NewsScoreCard} — aggregate score with risk badge
+ * 2. {@link VitalSignsFlowsheet} — colour-coded flowsheet grid
+ * 3. {@link EscalationProtocol} — recommended clinical response
+ * 4. {@link ScoreTrendGraph} — score trend over time
+ */
+export default function DeteriorationView() {
+  const patient = usePatientStore((s) => s.currentPatient);
 
-const PARAMETER_DISPLAY_NAMES: Record<QaddsParameter, string> = {
-  rr: 'Respiratory Rate',
-  spo2: 'SpO\u2082',
-  o2FlowRate: 'O\u2082 Flow Rate',
-  systolicBP: 'Systolic BP',
-  heartRate: 'Heart Rate',
-  temperature: 'Temperature',
-  consciousness: 'Consciousness',
-}
+  /** Q-ADDS result from the most recent vital sign set. */
+  const latestResult: QADDSResult | null = useMemo(() => {
+    if (!patient?.vitals?.length) return null;
+    return calculateQADDS(patient.vitals[0]);
+  }, [patient?.vitals]);
 
-export function DeteriorationView({ patient }: DeteriorationViewProps) {
-  const activeAlert = useAlertStore((s) => s.activeAlert)
-  const addAlerts = useAlertStore((s) => s.addAlerts)
-  const setActiveAlert = useAlertStore((s) => s.setActiveAlert)
-  const acknowledgeAlert = useAlertStore((s) => s.acknowledgeAlert)
-  const clearAlerts = useAlertStore((s) => s.clearAlerts)
-
-  const {
-    showMeoDialog, showMetMeoForm, showMofForm,
-    openMeoDialog, closeMeoDialog,
-    openMetMeoForm, closeMetMeoForm,
-    openMofForm, closeMofForm,
-    addMetMeoOrder, cancelMetMeoOrder,
-    addMofOrder, cancelMofOrder,
-    getActiveMetMeo, getActiveMof,
-    sedationAssessments,
-  } = useMeoStore()
-
-  const activeMetMeo = getActiveMetMeo()
-  const activeMof = getActiveMof()
-
-  const [variant, setVariant] = useState<ChartVariant>('standard')
-  const [patientStatus, setPatientStatus] = useState<PatientStatus>('stable')
-
-  const mostRecentVitals = patient.vitals.length > 0 ? patient.vitals[0] : null
-
-  const validation = useMemo(
-    () => (mostRecentVitals ? validateVitalsComplete(mostRecentVitals) : null),
-    [mostRecentVitals],
-  )
-
-  const qaddsScore = useMemo(
-    () => (mostRecentVitals ? calculateQadds(mostRecentVitals, variant) : null),
-    [mostRecentVitals, variant],
-  )
-
-  // Evaluate alerts on mount (and when the most-recent vitals change)
-  useEffect(() => {
-    clearAlerts()
-
-    if (!mostRecentVitals) return
-
-    const alerts = evaluateAlerts(mostRecentVitals, variant)
-    if (alerts.length > 0) {
-      addAlerts(alerts)
-      // Show the highest-priority alert (first one is the most critical)
-      setActiveAlert(alerts[0])
-    }
-  }, [mostRecentVitals, variant, addAlerts, setActiveAlert, clearAlerts])
-
-  function handleDismissAlert() {
-    if (activeAlert) {
-      acknowledgeAlert(activeAlert.id)
-    }
-    setActiveAlert(null)
-  }
-
-  const isIncomplete = validation !== null && !validation.complete
-  const missingNames = validation?.missing.map((p) => PARAMETER_DISPLAY_NAMES[p]) ?? []
-
-  if (!mostRecentVitals) {
+  if (!patient) {
     return (
-      <>
-        <div className="content-header">Managing Deterioration - Q-ADDS</div>
-        <div className="content-body">
-          <div
-            style={{
-              fontFamily: FONT_FAMILY,
-              fontSize: '12px',
-              color: '#888',
-              padding: '40px',
-              textAlign: 'center',
-            }}
-          >
-            No vital signs recorded for this patient.
-          </div>
-        </div>
-      </>
-    )
+      <div className="text-muted" style={{ padding: 20 }}>
+        No patient selected
+      </div>
+    );
   }
 
   return (
     <>
-      <div className="content-header">Managing Deterioration - Q-ADDS</div>
+      <div className="content-header">Managing Deterioration</div>
       <div className="content-body">
-        {/* Top controls: Chart Variant + Patient Status */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '24px',
-            marginBottom: '12px',
-            fontFamily: FONT_FAMILY,
-            fontSize: '11px',
-          }}
-        >
-          {/* Chart Variant Selector */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <label
-              htmlFor="chart-variant-select"
-              style={{ fontWeight: 600, color: 'var(--cerner-dark-blue, #004578)' }}
-            >
-              Chart Variant:
-            </label>
-            <select
-              id="chart-variant-select"
-              value={variant}
-              onChange={(e) => setVariant(e.target.value as ChartVariant)}
-              style={{
-                fontFamily: FONT_FAMILY,
-                fontSize: '11px',
-                padding: '3px 6px',
-                border: '1px solid var(--cerner-border, #ccc)',
-                borderRadius: '3px',
-                backgroundColor: '#ffffff',
-                color: '#333333',
-              }}
-            >
-              <option value="standard">Standard (General Adult)</option>
-              <option value="chronic_respiratory">Chronic Hypoxia / Hypercapnia Respiratory</option>
-            </select>
-          </div>
+        {latestResult ? (
+          <>
+            {/* MET Call Banner — shown when EWS >= 8 or E-zone */}
+            <METCallBanner
+              ewsScore={latestResult.totalScore}
+              hasEZone={latestResult.hasEZone}
+              eZoneParameters={latestResult.eZoneParameters}
+            />
 
-          {/* Patient Status Toggle */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontWeight: 600, color: 'var(--cerner-dark-blue, #004578)' }}>
-              Patient Status:
-            </span>
-            <label
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '3px',
-                cursor: 'pointer',
-              }}
-            >
-              <input
-                type="radio"
-                name="patient-status"
-                value="stable"
-                checked={patientStatus === 'stable'}
-                onChange={() => setPatientStatus('stable')}
+            {/* Score card + escalation side-by-side on wide screens */}
+            <div className="deterioration-top-row">
+              <NewsScoreCard result={latestResult} />
+              <EscalationProtocol
+                score={latestResult.totalScore}
+                clinicalRisk={latestResult.riskLevel}
               />
-              <span style={{ color: '#333333' }}>Stable / Improving</span>
-            </label>
-            <label
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '3px',
-                cursor: 'pointer',
-              }}
-            >
-              <input
-                type="radio"
-                name="patient-status"
-                value="deteriorating"
-                checked={patientStatus === 'deteriorating'}
-                onChange={() => setPatientStatus('deteriorating')}
-              />
-              <span style={{ color: '#333333' }}>Deteriorating</span>
-            </label>
-          </div>
-        </div>
+            </div>
 
-        {/* Incomplete Vitals Warning Banner */}
-        {isIncomplete && (
-          <div
-            style={{
-              backgroundColor: '#fff3cd',
-              border: '1px solid #ffc107',
-              borderRadius: '3px',
-              padding: '8px 12px',
-              marginBottom: '12px',
-              fontFamily: FONT_FAMILY,
-              fontSize: '11px',
-              color: '#856404',
-              fontWeight: 600,
-              lineHeight: '16px',
-            }}
-          >
-            Incomplete vital signs — EWS cannot be calculated. Missing:{' '}
-            {missingNames.join(', ')}
+            {/* MET-MEO Plan panel — below escalation protocol */}
+            {(latestResult.hasEZone || latestResult.totalScore >= 8) && (
+              <METMEOPanel
+                patientId={patient.mrn}
+                ewsScore={latestResult.totalScore}
+                hasEZone={latestResult.hasEZone}
+                eZoneParameters={latestResult.eZoneParameters}
+              />
+            )}
+
+            {/* Colour-coded vital signs flowsheet */}
+            <div className="vitals-chart mb-10">
+              <div className="chart-header">Vital Signs Flowsheet</div>
+              <VitalSignsFlowsheet vitals={patient.vitals} />
+            </div>
+
+            {/* Score trend graph */}
+            <div className="vitals-chart mb-10">
+              <div className="chart-header">Score Trend</div>
+              <ScoreTrendGraph vitals={patient.vitals} />
+            </div>
+          </>
+        ) : (
+          <div className="text-muted" style={{ padding: 20, textAlign: 'center' }}>
+            No vital signs data available for deterioration assessment
           </div>
         )}
-
-        {/* Top section: Score Card + Escalation Protocol side by side */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '12px',
-            marginBottom: '12px',
-            opacity: isIncomplete ? 0.45 : 1,
-            pointerEvents: isIncomplete ? 'none' : 'auto',
-          }}
-        >
-          {isIncomplete && (
-            <div
-              style={{
-                gridColumn: '1 / -1',
-                textAlign: 'center',
-                fontFamily: FONT_FAMILY,
-                fontSize: '11px',
-                color: '#856404',
-                fontStyle: 'italic',
-                marginBottom: '-8px',
-              }}
-            >
-              Score card and escalation protocol unavailable until all vitals are recorded.
-            </div>
-          )}
-          <QaddsScoreCard vitals={mostRecentVitals} variant={variant} />
-          <EscalationProtocol
-            risk={qaddsScore?.clinicalRisk ?? 'Routine'}
-            status={patientStatus}
-          />
-        </div>
-
-        {/* Middle section: Vital Signs Flowsheet */}
-        <div style={{ marginBottom: '12px' }}>
-          <VitalSignsFlowsheet vitals={patient.vitals} variant={variant} />
-        </div>
-
-        {/* Bottom section: Score Trend Graph */}
-        <div style={{ marginBottom: '12px' }}>
-          <ScoreTrendGraph vitals={patient.vitals} variant={variant} />
-        </div>
-
-        {/* MEO Plan Section */}
-        <MeoPlanSection activeMetMeo={activeMetMeo} onOpenDialog={openMeoDialog} />
-
-        {/* Sedation Score Section */}
-        <SedationScore assessments={sedationAssessments} />
       </div>
-
-      {/* Alert Dialog overlay (renders only when activeAlert is set) */}
-      {activeAlert && (
-        <AlertDialog alert={activeAlert} onDismiss={handleDismissAlert} />
-      )}
-
-      {/* MEO Plan Dialog */}
-      {showMeoDialog && (
-        <MeoPlanDialog
-          onClose={closeMeoDialog}
-          onOpenMetMeoForm={() => { closeMeoDialog(); openMetMeoForm(); }}
-          onOpenMofForm={() => { closeMeoDialog(); openMofForm(); }}
-          onCancelMetMeo={() => { if (activeMetMeo) cancelMetMeoOrder(activeMetMeo.orderId); }}
-          onCancelMof={() => { if (activeMof) cancelMofOrder(activeMof.orderId); }}
-          hasActiveMetMeo={activeMetMeo !== null}
-          hasActiveMof={activeMof !== null}
-        />
-      )}
-
-      {/* MET-MEO Plan Order Form */}
-      {showMetMeoForm && (
-        <MetMeoPlanOrderForm
-          onClose={closeMetMeoForm}
-          onSubmit={(order) => { addMetMeoOrder(order); closeMetMeoForm(); }}
-          chartVariant={variant}
-        />
-      )}
-
-      {/* Modified Observation Frequency Form */}
-      {showMofForm && (
-        <ModifiedObsFrequencyForm
-          onClose={closeMofForm}
-          onSubmit={(order) => { addMofOrder(order); closeMofForm(); }}
-        />
-      )}
     </>
-  )
+  );
 }

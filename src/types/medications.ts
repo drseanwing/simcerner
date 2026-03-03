@@ -1,113 +1,121 @@
 /**
- * Medication Administration Record (MAR) types for the PowerChart EMR simulation.
+ * @file medications.ts
+ * @description Medication administration types for the SimCerner EMR application.
  *
- * These types model the time-based MAR grid, where medications are displayed
- * as rows and scheduled times as columns. Each cell represents a single
- * administration event with its status, colour coding, and audit trail.
+ * Covers medication statuses, administration records, MAR (Medication
+ * Administration Record) time-slot rendering, and therapeutic classification
+ * used by the medication views and administration workflows.
  */
 
-import type { Medication } from './patient';
-
 // ---------------------------------------------------------------------------
-// Administration Status
+// Medication Status
 // ---------------------------------------------------------------------------
 
 /**
- * Possible statuses for a single medication administration cell.
+ * Lifecycle status of a scheduled medication dose on the MAR.
  *
- * - 'pending'   : Scheduled but not yet due (blue)
- * - 'due'       : Currently within the administration window (yellow)
- * - 'overdue'   : Past the administration window without action (red)
- * - 'given'     : Successfully administered (grey/green checkmark)
- * - 'held'      : Intentionally withheld by clinician (hand icon)
- * - 'refused'   : Patient refused administration (X icon)
- * - 'not-given' : Not administered for another documented reason
- * - 'future'    : Scheduled for a future time, not yet actionable (dithered/greyed)
+ * | Status     | Meaning                                          |
+ * |------------|--------------------------------------------------|
+ * | PENDING    | Dose is scheduled but not yet actionable          |
+ * | DUE        | Dose is within the administration window          |
+ * | OVERDUE    | Administration window has passed without action   |
+ * | GIVEN      | Dose was administered to the patient              |
+ * | HELD       | Dose intentionally withheld (clinical decision)   |
+ * | REFUSED    | Patient refused the dose                          |
+ * | NOT_GIVEN  | Dose was not given for another documented reason  |
+ * | FUTURE     | Dose is scheduled for a future time window        |
  */
-export type AdministrationStatus =
-  | 'pending'
-  | 'due'
-  | 'overdue'
-  | 'given'
-  | 'held'
-  | 'refused'
-  | 'not-given'
-  | 'future';
+export const MedicationDoseStatus = {
+  PENDING: 'PENDING',
+  DUE: 'DUE',
+  OVERDUE: 'OVERDUE',
+  GIVEN: 'GIVEN',
+  HELD: 'HELD',
+  REFUSED: 'REFUSED',
+  NOT_GIVEN: 'NOT_GIVEN',
+  FUTURE: 'FUTURE',
+} as const;
+
+export type MedicationDoseStatus = typeof MedicationDoseStatus[keyof typeof MedicationDoseStatus];
 
 // ---------------------------------------------------------------------------
-// MAR Cell
+// Administration Records
 // ---------------------------------------------------------------------------
 
 /**
- * Data for a single cell in the MAR grid, representing one scheduled
- * administration time for a medication.
+ * Record of a single medication administration event, capturing who
+ * gave the dose, when, and any associated notes.
  */
-export interface MARCellData {
-  /** The scheduled administration time in 24-hour "HHMM" format, e.g. "0800" */
-  scheduledTime: string;
-  /** Current status of this administration event */
-  status: AdministrationStatus;
-  /** Name/ID of the clinician who administered the medication (when status is 'given') */
-  administeredBy?: string;
-  /** Actual timestamp when the medication was administered, e.g. "07-Apr-2021 08:05" */
-  administeredAt?: string;
-  /** Reason for holding, refusing, or not giving the medication */
-  reason?: string;
+export interface MedicationAdministration {
+  /** ISO-8601 date-time when the dose was administered. */
+  timestamp: string;
+
+  /** Resulting status of the administration attempt. */
+  status: MedicationDoseStatus;
+
+  /** Name of the nurse who performed the administration. */
+  nurse: string;
+
+  /** Free-text notes (e.g. reason held, injection site, patient response). */
+  notes?: string;
 }
 
 // ---------------------------------------------------------------------------
-// MAR Entry (Row)
+// MAR Time Slot
 // ---------------------------------------------------------------------------
 
 /**
- * A single row in the MAR grid, combining a medication with its
- * time-based administration cells for the current display period.
+ * Represents a single time slot on the Medication Administration Record.
+ * Combines the scheduled time with administration outcome details.
+ *
+ * @example
+ * ```ts
+ * const slot: MARTimeSlot = {
+ *   time: '08:00',
+ *   status: MedicationDoseStatus.GIVEN,
+ *   administration: {
+ *     timestamp: '2026-02-17T08:05:00',
+ *     status: MedicationDoseStatus.GIVEN,
+ *     nurse: 'RN J. Carter',
+ *   },
+ * };
+ * ```
  */
-export interface MAREntry {
-  /** The medication this row represents */
-  medication: Medication;
-  /** Administration cells for each scheduled time in the display period */
-  cells: MARCellData[];
+export interface MARTimeSlot {
+  /** Scheduled administration time in HH:mm format. */
+  time: string;
+
+  /** Current status of this time slot. */
+  status: MedicationDoseStatus;
+
+  /** Administration details, populated once the slot has been actioned. */
+  administration?: MedicationAdministration;
 }
 
 // ---------------------------------------------------------------------------
-// Therapeutic Class
+// Therapeutic Classification
 // ---------------------------------------------------------------------------
 
 /**
- * A therapeutic medication class used to group medications in the MAR
- * navigator band (similar to Multum therapeutic classification).
+ * A therapeutic drug class grouping related medications together
+ * for display and clinical decision support.
  *
- * Examples: "Antihypertensives", "Insulins", "Anticoagulants", "Analgesics"
+ * @example
+ * ```ts
+ * const analgesics: TherapeuticClass = {
+ *   id: 'analgesic',
+ *   name: 'Analgesics',
+ *   medications: ['Paracetamol', 'Ibuprofen', 'Morphine Sulfate'],
+ * };
+ * ```
  */
 export interface TherapeuticClass {
-  /** Unique identifier for the therapeutic class */
+  /** Unique identifier for the therapeutic class. */
   id: string;
-  /** Display name of the therapeutic class, e.g. "Antihypertensives" */
+
+  /** Human-readable class name. */
   name: string;
-  /** Medication names belonging to this class (references Medication.name) */
+
+  /** List of medication names belonging to this class. */
   medications: string[];
-}
-
-// ---------------------------------------------------------------------------
-// MAR Display Configuration
-// ---------------------------------------------------------------------------
-
-/**
- * Colour mapping for MAR cell administration statuses.
- * Used to render the correct background colour in the MAR grid.
- */
-export type MARStatusColor = Record<AdministrationStatus, string>;
-
-/**
- * Time window configuration for determining MAR cell status transitions.
- * Values are in minutes relative to the scheduled time.
- */
-export interface MARTimeWindow {
-  /** Minutes before scheduled time when status transitions from 'future' to 'pending' */
-  pendingBefore: number;
-  /** Minutes before scheduled time when status transitions from 'pending' to 'due' */
-  dueBefore: number;
-  /** Minutes after scheduled time when status transitions from 'due' to 'overdue' */
-  overdueAfter: number;
 }

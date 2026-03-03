@@ -1,149 +1,137 @@
-import type { Patient } from '@/types/patient'
-import { usePatientStore } from '@/stores/patientStore'
-import { useSessionStore } from '@/stores/sessionStore'
-import { Autocomplete } from '@/components/common/Autocomplete'
-import type { AutocompleteItem } from '@/components/common/Autocomplete'
+/**
+ * @file OrdersView.tsx
+ * @description Orders view migrated from emr-sim-v2.html.
+ *
+ * Displays:
+ * - Add New Order section with Autocomplete for test search
+ * - Priority selector (Routine, Urgent, STAT)
+ * - Add Order button
+ * - Current Orders table with Sign action for unsigned orders
+ *
+ * Uses patientStore for adding/signing orders and the LAB_TESTS constant
+ * for autocomplete suggestions.
+ */
 
-const LAB_TESTS: AutocompleteItem[] = [
-  // Haematology
-  { name: 'Full Blood Count (FBC)', type: 'Haematology', category: 'Laboratory' },
-  { name: 'Coagulation Profile', type: 'Haematology', category: 'Laboratory' },
-  { name: 'INR', type: 'Haematology', category: 'Laboratory' },
+import { useState, useCallback } from 'react';
+import { usePatientStore } from '../../stores/patientStore';
+import Autocomplete from '../common/Autocomplete';
+import { LAB_TESTS } from '../../services/labTests';
+import type { Order, OrderPriority, OrderType } from '../../types';
+import '../../styles/components/views.css';
 
-  // Biochemistry
-  { name: 'Liver Function Test (LFT)', type: 'Biochemistry', category: 'Laboratory' },
-  { name: 'Urea Electrolytes Creatinine (UEC)', type: 'Biochemistry', category: 'Laboratory' },
-  { name: 'Calcium', type: 'Biochemistry', category: 'Laboratory' },
-  { name: 'Magnesium', type: 'Biochemistry', category: 'Laboratory' },
-  { name: 'Phosphate', type: 'Biochemistry', category: 'Laboratory' },
-  { name: 'Troponin', type: 'Biochemistry', category: 'Laboratory' },
-  { name: 'CK', type: 'Biochemistry', category: 'Laboratory' },
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 
-  // Toxicology
-  { name: 'Paracetamol Level', type: 'Toxicology', category: 'Laboratory' },
-  { name: 'Serum Ethanol', type: 'Toxicology', category: 'Laboratory' },
-  { name: 'Serum Digoxin', type: 'Toxicology', category: 'Laboratory' },
+/**
+ * OrdersView provides order entry and management for the current patient.
+ * Allows searching for tests, adding orders, and signing unsigned orders.
+ */
+export default function OrdersView() {
+  const patient = usePatientStore((s) => s.currentPatient);
+  const addOrder = usePatientStore((s) => s.addOrder);
+  const signOrder = usePatientStore((s) => s.signOrder);
 
-  // Blood Gas
-  { name: 'Venous Blood Gas', type: 'Blood Gas', category: 'Laboratory' },
-  { name: 'Arterial Blood Gas', type: 'Blood Gas', category: 'Laboratory' },
+  const [searchQuery, setSearchQuery] = useState('');
+  const [orderName, setOrderName] = useState('');
+  const [orderType, setOrderType] = useState<OrderType>('Laboratory');
+  const [priority, setPriority] = useState<OrderPriority>('Routine');
 
-  // Vitamins
-  { name: 'Vitamin D', type: 'Vitamins', category: 'Laboratory' },
-  { name: 'B12 and Folate', type: 'Vitamins', category: 'Laboratory' },
-  { name: 'Iron Studies', type: 'Vitamins', category: 'Laboratory' },
+  /** Handle test selection from the autocomplete dropdown. */
+  const handleSelectTest = useCallback(
+    (item: Record<string, unknown>) => {
+      setOrderName(String(item.name));
+      setOrderType((item.category as OrderType) ?? 'Laboratory');
+      setSearchQuery(String(item.name));
+    },
+    [],
+  );
 
-  // Microbiology
-  { name: 'Rapid PCR (COVID, Influenza, RSV)', type: 'Microbiology', category: 'Laboratory' },
-  { name: 'Respiratory Virus PCR', type: 'Microbiology', category: 'Laboratory' },
-  { name: 'Urine MCS', type: 'Microbiology', category: 'Laboratory' },
-  { name: 'Blood Culture', type: 'Microbiology', category: 'Laboratory' },
-  { name: 'Wound Swab MCS', type: 'Microbiology', category: 'Laboratory' },
-]
+  /** Add a new order to the patient record. */
+  const handleAddOrder = useCallback(() => {
+    if (!patient || !orderName.trim()) return;
 
-interface OrdersViewProps {
-  patient: Patient
-}
+    const order: Order = {
+      id: `ORD${String((patient.orders.length + 1)).padStart(3, '0')}`,
+      type: orderType,
+      name: orderName,
+      status: 'Ordered',
+      ordered: new Date().toISOString(),
+      priority,
+    };
 
-export function OrdersView({ patient }: OrdersViewProps) {
-  const addOrder = usePatientStore((s) => s.addOrder)
-  const signOrder = usePatientStore((s) => s.signOrder)
-  const orderSearchQuery = useSessionStore((s) => s.orderSearchQuery)
-  const setOrderSearchQuery = useSessionStore((s) => s.setOrderSearchQuery)
-  const newOrder = useSessionStore((s) => s.newOrder)
-  const setNewOrder = useSessionStore((s) => s.setNewOrder)
-  const resetNewOrder = useSessionStore((s) => s.resetNewOrder)
+    addOrder(patient.mrn, order);
+    setOrderName('');
+    setSearchQuery('');
+    setPriority('Routine');
+  }, [patient, orderName, orderType, priority, addOrder]);
 
-  const handleSelectTest = (test: AutocompleteItem) => {
-    setNewOrder({
-      ...newOrder,
-      type: test.category ?? 'Laboratory',
-      name: test.name,
-    })
-    setOrderSearchQuery(test.name)
-  }
+  /** Sign an unsigned order. */
+  const handleSignOrder = useCallback(
+    (orderId: string) => {
+      if (!patient) return;
+      signOrder(patient.mrn, orderId);
+    },
+    [patient, signOrder],
+  );
 
-  const handleAddOrder = () => {
-    if (!newOrder.name) {
-      alert('Please specify order details')
-      return
-    }
-
-    const order = {
-      id: `ORD${String(patient.orders.length + 1).padStart(3, '0')}`,
-      type: newOrder.type,
-      name: newOrder.name,
-      status: 'Pending Signature',
-      ordered: new Date().toLocaleString('en-AU', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-      signed: false,
-      priority: newOrder.priority,
-    }
-
-    addOrder(order)
-    resetNewOrder()
-    alert('Order added successfully')
-  }
-
-  const handleSignOrder = (orderId: string) => {
-    signOrder(orderId)
-    alert('Order signed successfully')
+  if (!patient) {
+    return (
+      <div className="text-muted" style={{ padding: 20 }}>
+        No patient selected
+      </div>
+    );
   }
 
   return (
     <>
-      <div className="content-header">{'\uD83D\uDCCB'} Orders</div>
+      <div className="content-header">Orders</div>
       <div className="content-tabs">
         <div className="content-tab active">Document in Plan</div>
         <div className="content-tab">Manage Infusions</div>
       </div>
       <div className="content-body">
+        {/* Add New Order */}
         <div className="order-entry">
-          <h3 style={{ marginBottom: '15px', fontSize: '13px' }}>
-            Add New Order
-          </h3>
+          <h3 style={{ marginBottom: 15, fontSize: 13 }}>Add New Order</h3>
+
           <div className="form-group">
             <label className="form-label">Search for test or procedure:</label>
             <Autocomplete
-              value={orderSearchQuery}
-              onChange={setOrderSearchQuery}
+              value={searchQuery}
+              onChange={setSearchQuery}
               onSelect={handleSelectTest}
               placeholder="Type to search... (e.g., 'FBC', 'UEC', 'Troponin')"
               items={LAB_TESTS}
               filterKey="name"
             />
           </div>
+
           <div className="form-group">
             <label className="form-label">Priority:</label>
             <select
               className="form-control"
-              value={newOrder.priority}
-              onChange={(e) =>
-                setNewOrder({ ...newOrder, priority: e.target.value })
-              }
+              value={priority}
+              onChange={(e) => setPriority(e.target.value as OrderPriority)}
             >
-              <option>Routine</option>
-              <option>Urgent</option>
-              <option>STAT</option>
+              <option value="Routine">Routine</option>
+              <option value="Urgent">Urgent</option>
+              <option value="STAT">STAT</option>
             </select>
           </div>
+
           <button
             className="btn btn-primary"
             onClick={handleAddOrder}
-            disabled={!newOrder.name}
+            disabled={!orderName.trim()}
           >
             Add Order
           </button>
         </div>
+
+        {/* Current Orders */}
         <div className="mt-10">
-          <h3 style={{ marginBottom: '10px', fontSize: '13px' }}>
-            Current Orders
-          </h3>
+          <h3 style={{ marginBottom: 10, fontSize: 13 }}>Current Orders</h3>
           {patient.orders.length > 0 ? (
             <table className="data-table">
               <thead>
@@ -161,23 +149,19 @@ export function OrdersView({ patient }: OrdersViewProps) {
                   <tr key={order.id}>
                     <td>{order.id}</td>
                     <td>{order.type}</td>
-                    <td style={{ fontWeight: '600' }}>{order.name}</td>
+                    <td style={{ fontWeight: 600 }}>{order.name}</td>
                     <td>
                       {order.signed ? (
-                        <span className="text-success">
-                          {'\u2713'} {order.status}
-                        </span>
+                        <span className="text-success">✓ {order.status}</span>
                       ) : (
-                        <span className="text-warning">
-                          {'\u26A0'} {order.status}
-                        </span>
+                        <span className="text-warning">⚠ {order.status}</span>
                       )}
                     </td>
                     <td>{order.ordered}</td>
                     <td>
                       {!order.signed && (
                         <button
-                          className="btn btn-primary"
+                          className="btn btn-primary btn-sm"
                           onClick={() => handleSignOrder(order.id)}
                         >
                           Sign
@@ -189,15 +173,12 @@ export function OrdersView({ patient }: OrdersViewProps) {
               </tbody>
             </table>
           ) : (
-            <div
-              className="text-muted"
-              style={{ padding: '20px', textAlign: 'center' }}
-            >
+            <div className="text-muted" style={{ padding: 20, textAlign: 'center' }}>
               No orders placed
             </div>
           )}
         </div>
       </div>
     </>
-  )
+  );
 }

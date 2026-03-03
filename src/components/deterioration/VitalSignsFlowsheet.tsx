@@ -1,303 +1,209 @@
-import { useMemo } from 'react'
-import type { VitalSign } from '@/types/patient'
-import type { ChartVariant, QaddsParameter, QaddsSubScoreValue } from '@/types/vitals'
-import {
-  calculateQadds,
-  getScoreColor,
-  getColorHex,
-  getRiskColor,
-} from '@/services/qaddsCalculator'
+/**
+ * @file VitalSignsFlowsheet.tsx
+ * @description Colour-coded vital signs flowsheet replacing the plain table.
+ *
+ * Renders a grid where:
+ * - Rows represent vital sign parameters (Temp, HR, RR, BP, SpO2, AVPU, O2)
+ * - Columns represent time-based observation sets (most recent first)
+ * - Each cell is background-coloured by its Q-ADDS sub-score:
+ *   green (0), yellow (1), orange (2), deep-orange (3), purple (4/E)
+ */
 
-interface VitalSignsFlowsheetProps {
-  vitals: VitalSign[]
-  variant?: ChartVariant
+import { useMemo } from 'react';
+import type { VitalSign, QADDSSubScore, QADDSScore } from '../../types';
+import { calculateQADDS } from '../../services/newsCalculator';
+import type { QADDSResult } from '../../types';
+import '../../styles/components/views.css';
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+/** Props accepted by VitalSignsFlowsheet. */
+export interface VitalSignsFlowsheetProps {
+  /** Array of vital sign observations, most recent first. */
+  vitals: VitalSign[];
+  /** Maximum number of time columns to display. */
+  maxColumns?: number;
 }
 
-/** Row configuration mapping display labels to the Q-ADDS parameter keys. */
-interface RowConfig {
-  label: string
-  unit: string
-  parameter: QaddsParameter
-  getValue: (v: VitalSign) => string
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Map a Q-ADDS sub-score to a CSS variable level.
+ * 0→0, 1→1, 2→2, 3→3, 4→4, E→4
+ */
+function subScoreToLevel(score: QADDSScore): number {
+  if (score === 'E') return 4;
+  return score;
 }
 
-/** Map short AVPU codes and full names to display values. */
-function formatConsciousnessValue(avpu: string | undefined): string {
-  const value = (avpu ?? 'Alert').trim()
-  switch (value) {
-    case 'A':
-      return 'Alert'
-    case 'C':
-      return 'Changing Behaviour'
-    case 'V':
-      return 'Voice'
-    case 'P':
-      return 'Pain'
-    case 'U':
-      return 'Unresponsive'
-    default:
-      return value
-  }
+/**
+ * Map an aggregate total score to a CSS variable level (Q-ADDS zones).
+ */
+function totalScoreToLevel(score: number): number {
+  if (score >= 8) return 4;  // purple
+  if (score >= 6) return 3;  // deep orange
+  if (score >= 4) return 2;  // orange
+  if (score >= 1) return 1;  // yellow
+  return 0;                  // green
 }
 
-const ROWS: RowConfig[] = [
-  {
-    label: 'Respiratory Rate',
-    unit: '/min',
-    parameter: 'rr',
-    getValue: (v) => v.rr,
-  },
-  {
-    label: 'SpO\u2082',
-    unit: '%',
-    parameter: 'spo2',
-    getValue: (v) => v.spo2,
-  },
-  {
-    label: 'O\u2082 Flow Rate',
-    unit: 'L/min',
-    parameter: 'o2FlowRate',
-    getValue: (v) => (v.o2FlowRate != null ? String(v.o2FlowRate) : '0'),
-  },
-  {
-    label: 'Systolic BP',
-    unit: 'mmHg',
-    parameter: 'systolicBP',
-    getValue: (v) => v.bp_sys,
-  },
-  {
-    label: 'Heart Rate',
-    unit: 'bpm',
-    parameter: 'heartRate',
-    getValue: (v) => v.hr,
-  },
-  {
-    label: 'Temperature',
-    unit: '\u00B0C',
-    parameter: 'temperature',
-    getValue: (v) => v.temp,
-  },
-  {
-    label: 'Behaviour / Consciousness',
-    unit: 'CAVPU',
-    parameter: 'consciousness',
-    getValue: (v) => formatConsciousnessValue(v.avpu),
-  },
-]
+// ---------------------------------------------------------------------------
+// Configuration
+// ---------------------------------------------------------------------------
 
-function getCellBackground(score: QaddsSubScoreValue): string {
-  return getColorHex(getScoreColor(score))
-}
+/** Parameter row definitions mapping vital fields to display labels. */
+const FLOWSHEET_PARAMS: Array<{
+  label: string;
+  newsParam: string;
+  render: (v: VitalSign) => string;
+}> = [
+  { label: 'Temperature (°C)', newsParam: 'Temperature', render: (v) => (v.temp != null ? String(v.temp) : '—') },
+  { label: 'Heart Rate (bpm)', newsParam: 'Heart Rate', render: (v) => (v.hr != null ? String(v.hr) : '—') },
+  { label: 'Resp Rate (/min)', newsParam: 'Respiratory Rate', render: (v) => (v.rr != null ? String(v.rr) : '—') },
+  { label: 'Systolic BP (mmHg)', newsParam: 'Systolic BP', render: (v) => (v.bp_sys != null ? String(v.bp_sys) : '—') },
+  { label: 'SpO2 (%)', newsParam: 'SpO2', render: (v) => (v.spo2 != null ? String(v.spo2) : '—') },
+  { label: 'AVPU', newsParam: 'Consciousness', render: (v) => (v.avpu ?? '—') },
+  { label: 'Supplemental O2', newsParam: 'Supplemental O2', render: (v) => (v.supplementalO2 ? 'Yes' : 'No') },
+];
 
-function getTextColor(score: QaddsSubScoreValue): string {
-  if (score === 0) return '#333333'
-  if (score === 'E') return '#4a1a6b'
-  return '#333333'
-}
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 
-export function VitalSignsFlowsheet({ vitals, variant }: VitalSignsFlowsheetProps) {
-  // Most recent first
-  const sortedVitals = useMemo(
-    () => [...vitals].sort((a, b) => {
-      const da = new Date(a.datetime).getTime()
-      const db = new Date(b.datetime).getTime()
-      return db - da
-    }),
-    [vitals],
-  )
+/**
+ * VitalSignsFlowsheet renders a colour-coded grid of vital sign observations
+ * with Q-ADDS sub-score colouring per cell.
+ */
+export default function VitalSignsFlowsheet({
+  vitals,
+  maxColumns = 8,
+}: VitalSignsFlowsheetProps) {
+  const displayVitals = vitals.slice(0, maxColumns);
 
-  const scores = useMemo(
-    () => sortedVitals.map((v) => calculateQadds(v, variant)),
-    [sortedVitals, variant],
-  )
+  /** Pre-compute Q-ADDS results for each vital observation. */
+  const newsResults = useMemo<QADDSResult[]>(
+    () => displayVitals.map((v) => calculateQADDS(v)),
+    [displayVitals],
+  );
 
-  if (vitals.length === 0) {
+  if (displayVitals.length === 0) {
     return (
-      <div
-        style={{
-          fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-          fontSize: '11px',
-          color: '#888',
-          padding: '20px',
-          textAlign: 'center',
-          border: '1px solid var(--cerner-border, #ccc)',
-          borderRadius: '3px',
-        }}
-      >
+      <div className="text-muted" style={{ padding: 20, textAlign: 'center' }}>
         No vital signs recorded
       </div>
-    )
+    );
   }
 
-  const headerStyle: React.CSSProperties = {
-    padding: '4px 6px',
-    borderBottom: '1px solid var(--cerner-border, #ccc)',
-    borderRight: '1px solid var(--cerner-border, #ccc)',
-    backgroundColor: 'var(--cerner-grid-header, #f5f5f5)',
-    fontWeight: 600,
-    fontSize: '10px',
-    textAlign: 'center',
-    whiteSpace: 'nowrap',
-    color: 'var(--cerner-dark-blue, #004578)',
-  }
-
-  const labelCellStyle: React.CSSProperties = {
-    padding: '3px 8px',
-    borderBottom: '1px solid var(--cerner-border, #ccc)',
-    borderRight: '1px solid var(--cerner-border, #ccc)',
-    backgroundColor: 'var(--cerner-grid-header, #f5f5f5)',
-    fontWeight: 600,
-    fontSize: '11px',
-    whiteSpace: 'nowrap',
-    color: '#333333',
-    position: 'sticky',
-    left: 0,
-    zIndex: 1,
-  }
-
-  const dataCellBase: React.CSSProperties = {
-    padding: '3px 6px',
-    borderBottom: '1px solid var(--cerner-border, #ccc)',
-    borderRight: '1px solid var(--cerner-border, #ccc)',
-    fontSize: '11px',
-    textAlign: 'center',
-    whiteSpace: 'nowrap',
+  /**
+   * Look up the sub-score for a given parameter name from a Q-ADDS result.
+   */
+  function getSubScore(result: QADDSResult, paramName: string): QADDSScore {
+    const sub = result.subScores.find(
+      (s: QADDSSubScore) => s.parameter === paramName,
+    );
+    return sub?.score ?? 0;
   }
 
   return (
-    <div
-      style={{
-        border: '1px solid var(--cerner-border, #ccc)',
-        borderRadius: '3px',
-        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-        overflow: 'hidden',
-      }}
-    >
-      {/* Title */}
+    <div className="flowsheet-wrapper">
       <div
+        className="flowsheet-grid"
         style={{
-          backgroundColor: 'var(--cerner-grid-header, #f5f5f5)',
-          borderBottom: '1px solid var(--cerner-border, #ccc)',
-          padding: '6px 10px',
-          fontWeight: 600,
-          fontSize: '12px',
-          color: 'var(--cerner-dark-blue, #004578)',
+          gridTemplateColumns: `140px repeat(${displayVitals.length}, minmax(80px, 1fr))`,
         }}
       >
-        Q-ADDS Vital Signs Flowsheet
-      </div>
+        {/* Header row */}
+        <div className="flowsheet-cell flowsheet-cell--header">Parameter</div>
+        {displayVitals.map((v, i) => (
+          <div key={i} className="flowsheet-cell flowsheet-cell--header">
+            {v.datetime}
+          </div>
+        ))}
 
-      {/* Table container */}
-      <div style={{ overflowX: 'auto' }}>
-        <table
-          style={{
-            borderCollapse: 'collapse',
-            width: '100%',
-            minWidth: sortedVitals.length * 80 + 160,
-          }}
-        >
-          <thead>
-            <tr>
-              <th
-                style={{
-                  ...headerStyle,
-                  textAlign: 'left',
-                  position: 'sticky',
-                  left: 0,
-                  zIndex: 2,
-                  minWidth: '140px',
-                }}
-              >
-                Parameter
-              </th>
-              {sortedVitals.map((v, i) => (
-                <th key={i} style={{ ...headerStyle, minWidth: '70px' }}>
-                  {v.datetime}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {/* Vital sign parameter rows */}
-            {ROWS.map((row) => (
-              <tr key={row.parameter}>
-                <td style={labelCellStyle}>
-                  {row.label}
-                  <span style={{ fontWeight: 400, color: '#888', marginLeft: '4px' }}>
-                    ({row.unit})
-                  </span>
-                </td>
-                {sortedVitals.map((v, colIdx) => {
-                  const subScore = scores[colIdx].subScores[row.parameter]
-                  const bg = getCellBackground(subScore.score)
-                  const color = getTextColor(subScore.score)
-                  return (
-                    <td
-                      key={colIdx}
-                      style={{
-                        ...dataCellBase,
-                        backgroundColor: bg,
-                        color,
-                        fontWeight: subScore.score === 'E' ? 700 : 400,
-                      }}
-                    >
-                      {row.getValue(v)}
-                      {subScore.score === 'E' && (
-                        <span style={{ fontSize: '9px', marginLeft: '2px', fontWeight: 700 }}>
-                          E
-                        </span>
-                      )}
-                    </td>
-                  )
-                })}
-              </tr>
-            ))}
+        {/* Parameter rows */}
+        {FLOWSHEET_PARAMS.map((param) => (
+          <FlowsheetRow
+            key={param.label}
+            label={param.label}
+            newsParam={param.newsParam}
+            vitals={displayVitals}
+            newsResults={newsResults}
+            render={param.render}
+            getSubScore={getSubScore}
+          />
+        ))}
 
-            {/* Q-ADDS Total row */}
-            <tr>
-              <td
-                style={{
-                  ...labelCellStyle,
-                  fontWeight: 700,
-                  fontSize: '11px',
-                  borderBottom: 'none',
-                }}
-              >
-                Q-ADDS Total
-              </td>
-              {scores.map((score, colIdx) => {
-                const bg = getRiskColor(score.clinicalRisk)
-                return (
-                  <td
-                    key={colIdx}
-                    style={{
-                      ...dataCellBase,
-                      backgroundColor: bg,
-                      fontWeight: 700,
-                      fontSize: '12px',
-                      borderBottom: 'none',
-                    }}
-                  >
-                    {score.totalScore}
-                    {score.hasEmergency && (
-                      <span
-                        style={{
-                          fontSize: '9px',
-                          marginLeft: '2px',
-                          color: '#4a1a6b',
-                          fontWeight: 700,
-                        }}
-                      >
-                        E
-                      </span>
-                    )}
-                  </td>
-                )
-              })}
-            </tr>
-          </tbody>
-        </table>
+        {/* Aggregate EWS row */}
+        <div className="flowsheet-cell flowsheet-cell--label" style={{ fontWeight: 700 }}>
+          EWS Total
+        </div>
+        {newsResults.map((result, i) => {
+          const score = result.totalScore;
+          const scoreLevel = totalScoreToLevel(score);
+          return (
+            <div
+              key={i}
+              className="flowsheet-cell"
+              style={{
+                backgroundColor: `var(--news-score-${scoreLevel})`,
+                color: scoreLevel >= 2 ? 'var(--news-score-text-light)' : 'var(--news-score-text-dark)',
+                fontWeight: 700,
+                textAlign: 'center',
+              }}
+            >
+              {score}
+            </div>
+          );
+        })}
       </div>
     </div>
-  )
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Sub-components
+// ---------------------------------------------------------------------------
+
+/** A single parameter row in the flowsheet grid. */
+function FlowsheetRow({
+  label,
+  newsParam,
+  vitals,
+  newsResults,
+  render,
+  getSubScore,
+}: {
+  label: string;
+  newsParam: string;
+  vitals: VitalSign[];
+  newsResults: QADDSResult[];
+  render: (v: VitalSign) => string;
+  getSubScore: (result: QADDSResult, param: string) => QADDSScore;
+}) {
+  return (
+    <>
+      <div className="flowsheet-cell flowsheet-cell--label">{label}</div>
+      {vitals.map((v, i) => {
+        const score = getSubScore(newsResults[i], newsParam);
+        const level = subScoreToLevel(score);
+        return (
+          <div
+            key={i}
+            className="flowsheet-cell"
+            style={{
+              backgroundColor: `var(--news-score-${level})`,
+              color: level >= 2 ? 'var(--news-score-text-light)' : 'var(--news-score-text-dark)',
+              textAlign: 'center',
+            }}
+          >
+            {render(v)}
+          </div>
+        );
+      })}
+    </>
+  );
 }

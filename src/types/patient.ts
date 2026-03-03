@@ -1,54 +1,134 @@
 /**
- * Patient data model types for the PowerChart EMR simulation.
+ * @file patient.ts
+ * @description Core patient data model interfaces for the SimCerner EMR application.
  *
- * These interfaces represent the "normalized" (flat) format that the application
- * works with internally. Raw JSON patient files and the legacy embedded data both
- * conform to these shapes after passing through normalizePatientData().
+ * Defines the complete patient record structure including demographics,
+ * vital signs, fluid balance, medications, orders, lab results, and
+ * clinical notes. Supports both flat and hierarchical data formats
+ * used across different views of the application.
  */
+
+// ---------------------------------------------------------------------------
+// Demographics & Identity
+// ---------------------------------------------------------------------------
+
+/** Gender values supported by the patient record. */
+export type Gender = 'Male' | 'Female' | 'Other' | 'Unknown';
+
+/** AVPU consciousness scale used in vital sign observations. */
+export type AVPUScale =
+  | 'A'
+  | 'C'
+  | 'V'
+  | 'P'
+  | 'U'
+  | 'Alert'
+  | 'Voice'
+  | 'Pain'
+  | 'Unresponsive'
+  | 'Changing Behaviour'
+  | '';
+
+/**
+ * Core patient demographic and identity information.
+ *
+ * @example
+ * ```ts
+ * const demographics: PatientDemographics = {
+ *   mrn: 'MRN-001234',
+ *   name: 'Smith, John',
+ *   dob: '1955-03-12',
+ *   age: 71,
+ *   gender: 'Male',
+ *   allergies: ['Penicillin', 'Latex'],
+ *   location: 'Ward 4B, Bed 12',
+ *   attending: 'Dr. A. Williams',
+ *   admission: '2026-02-10T08:30:00',
+ *   medicalHistory: ['Type 2 Diabetes', 'Hypertension'],
+ * };
+ * ```
+ */
+export interface PatientDemographics {
+  /** Medical Record Number – unique patient identifier. */
+  mrn: string;
+
+  /** Full patient name, typically "Last, First" format. */
+  name: string;
+
+  /** Date of birth in ISO-8601 date string (YYYY-MM-DD). */
+  dob: string;
+
+  /** Calculated age in years at time of encounter. */
+  age: number;
+
+  /** Patient gender. */
+  gender: Gender;
+
+  /** Known allergies. Empty array if NKDA (No Known Drug Allergies). */
+  allergies: string[];
+
+  /** Ward / bed location string, e.g. "Ward 4B, Bed 12". */
+  location: string;
+
+  /** Name of the attending clinician. */
+  attending: string;
+
+  /** Admission date-time in ISO-8601 format. */
+  admission: string;
+
+  /** List of relevant past medical history entries. */
+  medicalHistory: string[];
+}
 
 // ---------------------------------------------------------------------------
 // Vital Signs
 // ---------------------------------------------------------------------------
 
 /**
- * AVPU consciousness scale used in the Australian clinical context.
- */
-export type AVPUScale = 'Alert' | 'Voice' | 'Changing Behaviour' | 'Pain' | 'Unresponsive';
-
-/**
  * A single set of vital sign observations recorded at a point in time.
  *
- * Core fields (temp, hr, rr, bp_sys, bp_dia, spo2, avpu) are stored as strings
- * to match the JSON data format. Consumers should parse numeric values as needed.
+ * All numeric fields are optional to allow partial charting (e.g. a
+ * nurse may record only heart rate and SpO2 during a spot check).
  */
 export interface VitalSign {
-  /** Observation timestamp, e.g. "07-Apr-2021 14:00" */
+  /** ISO-8601 date-time when the observation was taken. */
   datetime: string;
-  /** Temperature in degrees Celsius, e.g. "37.2" */
-  temp: string;
-  /** Heart rate in beats per minute, e.g. "92" */
-  hr: string;
-  /** Respiratory rate in breaths per minute, e.g. "20" */
-  rr: string;
-  /** Systolic blood pressure in mmHg, e.g. "145" */
-  bp_sys: string;
-  /** Diastolic blood pressure in mmHg, e.g. "88" */
-  bp_dia: string;
-  /** Peripheral oxygen saturation as a percentage, e.g. "96" */
-  spo2: string;
-  /** AVPU consciousness level */
-  avpu: AVPUScale | string;
 
-  // -- Optional fields for Q-ADDS scoring --
+  /** Core body temperature in °C. */
+  temp?: number | string;
 
-  /** Whether the patient is on supplemental oxygen */
+  /** Heart rate in beats per minute (bpm). */
+  hr?: number | string;
+
+  /** Respiratory rate in breaths per minute. */
+  rr?: number | string;
+
+  /** Systolic blood pressure in mmHg. */
+  bp_sys?: number | string;
+
+  /** Diastolic blood pressure in mmHg. */
+  bp_dia?: number | string;
+
+  /** Peripheral oxygen saturation as a percentage (0-100). */
+  spo2?: number | string;
+
+  /** AVPU consciousness level. */
+  avpu?: AVPUScale;
+
+  /** Whether the patient is receiving supplemental oxygen. */
   supplementalO2?: boolean | string;
-  /** Oxygen flow rate in L/min (Q-ADDS scored parameter), e.g. "4" */
+
+  /** Oxygen flow rate in L/min (0 = room air). */
   o2FlowRate?: number | string;
-  /** Nurse/staff concern flag — triggers escalation regardless of score */
-  nurseConcern?: boolean;
-  /** Pain score (0-10 numeric scale) */
+
+  /** Calculated EWS aggregate score for this observation set. */
+  ewsScore?: number;
+
+  /** Patient-reported pain score (0-10 numeric rating scale). */
   painScore?: number | string;
+
+  /** Staff concern flag that can trigger escalation regardless of score. */
+  nurseConcern?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -56,243 +136,327 @@ export interface VitalSign {
 // ---------------------------------------------------------------------------
 
 /**
- * Fluid balance entry in the "flat" format used by the original JSON files
- * and the embedded default patient data. All volume values are in millilitres.
+ * Flat fluid balance entry — records individual intake/output values
+ * broken down by route. Used in detailed charting views.
  */
 export interface FluidBalanceEntryFlat {
-  /** Timestamp of the recording period, e.g. "07-Apr-2021 12:00" */
+  /** ISO-8601 date-time of the measurement period. */
   datetime: string;
-  /** Oral fluid intake in mL */
+
+  /** Oral fluid intake in mL. */
   intake_oral: number;
-  /** Intravenous fluid intake in mL */
+
+  /** Intravenous fluid intake in mL. */
   intake_iv: number;
-  /** Urine output in mL */
+
+  /** Urine output in mL. */
   output_urine: number;
-  /** Other output (drains, emesis, etc.) in mL */
+
+  /** Other output (drains, vomit, etc.) in mL. */
   output_other: number;
 }
 
 /**
- * Fluid balance entry in the "normalized" format produced when converting
- * from the alternative (new-format) JSON structure via normalizePatientData().
+ * Hierarchical fluid balance entry — records pre-aggregated totals.
+ * Used in summary and dashboard views.
  */
-export interface FluidBalanceEntryNormalized {
-  /** Timestamp of the recording period */
+export interface FluidBalanceEntryHierarchical {
+  /** ISO-8601 date-time of the measurement period. */
   datetime: string;
-  /** Total intake value (pre-summed) */
+
+  /** Total fluid intake in mL. */
   intake: number;
-  /** Total output value (pre-summed) */
+
+  /** Total fluid output in mL. */
   output: number;
-  /** Net balance (intake minus output) */
+
+  /** Net balance (intake − output) in mL. May be negative. */
   balance: number;
-  /** Type of IV fluid administered, if applicable */
+
+  /** Type of IV fluid currently running, if applicable. */
   ivFluidType?: string;
 }
 
 /**
- * Union type representing either format of fluid balance entry.
- * The application should handle both shapes gracefully.
+ * Union type supporting both flat and hierarchical fluid balance
+ * data formats. Components should use type guards to differentiate.
+ *
+ * @example
+ * ```ts
+ * function isFlat(entry: FluidBalanceEntry): entry is FluidBalanceEntryFlat {
+ *   return 'intake_oral' in entry;
+ * }
+ * ```
  */
-export type FluidBalanceEntry = FluidBalanceEntryFlat | FluidBalanceEntryNormalized;
+export type FluidBalanceEntry = FluidBalanceEntryFlat | FluidBalanceEntryHierarchical;
 
 // ---------------------------------------------------------------------------
 // Medications
 // ---------------------------------------------------------------------------
 
+/** Current status of a medication order. */
+export type MedicationStatus =
+  | 'active'
+  | 'held'
+  | 'discontinued'
+  | 'completed'
+  | 'pending';
+
 /**
- * A single medication entry as stored in the patient record.
- *
- * The core fields (name, dose, route, frequency, scheduled, times, lastGiven)
- * are present in all JSON sources. Optional fields are populated when data is
- * normalized from the alternative input format.
+ * A single medication entry on the patient's Medication Administration
+ * Record (MAR).
  */
 export interface Medication {
-  /** Generic or brand medication name, e.g. "insulin aspart" */
+  /** Drug name (generic or brand). */
   name: string;
-  /** Dose with units, e.g. "8 units", "50 mg", "10 mL of 10%" */
+
+  /** Dose as a display string, e.g. "500 mg", "10 units". */
   dose: string;
-  /** Route of administration, e.g. "Oral", "IV", "Subcutaneous", "SC", "IM" */
+
+  /** Route of administration, e.g. "PO", "IV", "SC", "IM". */
   route: string;
-  /** Frequency description, e.g. "TWICE a day", "PRN (up to 3 times daily)" */
+
+  /** Dosing frequency, e.g. "QDS", "BD", "STAT", "PRN". */
   frequency: string;
-  /** Whether the medication is on a fixed schedule (false for PRN medications) */
+
+  /** Whether the medication follows a fixed schedule. */
   scheduled: boolean;
-  /** Scheduled administration times in 24-hour "HHMM" format, e.g. ["0800", "2000"] */
+
+  /** Scheduled administration times as HH:mm strings. */
   times: string[];
-  /** Timestamp of the last administration, or empty string if never given */
-  lastGiven: string;
 
-  // -- Optional fields from the normalized (new-format) data --
+  /** ISO-8601 date-time when the medication was last administered. */
+  lastGiven?: string;
 
-  /** Name of the prescribing clinician */
+  /** Name of the prescribing clinician. */
   prescriber?: string;
-  /** Name/ID of the person who administered the medication */
+
+  /** Name of the nurse who last administered the dose. */
   administeredBy?: string;
-  /** Current status of the medication order */
-  status?: string;
+
+  /** Current order status. */
+  status: MedicationStatus;
 }
 
 // ---------------------------------------------------------------------------
 // Orders
 // ---------------------------------------------------------------------------
 
+/** Category of clinical order. */
+export type OrderType =
+  | 'Laboratory'
+  | 'Imaging'
+  | 'Medication'
+  | 'Procedure'
+  | 'Consultation'
+  | 'Nursing'
+  | 'Diet'
+  | 'Other';
+
+/** Lifecycle status of an order. */
+export type OrderStatus =
+  | 'Ordered'
+  | 'Signed'
+  | 'In Progress'
+  | 'Completed'
+  | 'Cancelled'
+  | 'Pending';
+
+/** Clinical urgency of the order. */
+export type OrderPriority = 'Routine' | 'Urgent' | 'STAT' | 'ASAP';
+
 /**
- * A clinical order (laboratory, radiology, medication, consultation, etc.).
+ * A clinical order (lab, imaging, medication, etc.) placed for the patient.
  */
 export interface Order {
-  /** Unique order identifier, e.g. "ORD001" */
+  /** Unique order identifier. */
   id: string;
-  /** Order category: "Laboratory", "Radiology", "Medication", "Consultation", etc. */
-  type: string;
-  /** Descriptive name of the order, e.g. "Full Blood Count (FBC)" */
+
+  /** Category of order. */
+  type: OrderType;
+
+  /** Display name / description of the order. */
   name: string;
-  /** Current order status: "Completed", "Active", "Pending", "Pending Signature" */
-  status: string;
-  /** Date/time the order was placed, e.g. "07-Apr-2021 08:00" */
+
+  /** Current lifecycle status. */
+  status: OrderStatus;
+
+  /** ISO-8601 date-time when the order was placed. */
   ordered: string;
-  /** Whether the order has been co-signed by the ordering clinician */
-  signed: boolean;
-  /** Order priority level (populated when creating orders via the UI) */
-  priority?: string;
 
-  // -- Additional fields from the alternative (new-format) normalizer --
+  /** ISO-8601 date-time when the order was signed/verified. */
+  signed?: string;
 
-  /** Description field used by the new-format normalizer */
-  description?: string;
-  /** Name of the ordering clinician */
-  orderedBy?: string;
-  /** Timestamp when the order was placed (alternative field name) */
-  orderedTime?: string;
+  /** Clinical urgency. */
+  priority: OrderPriority;
 }
 
 // ---------------------------------------------------------------------------
 // Lab Results
 // ---------------------------------------------------------------------------
 
+/** Abnormality flag for a lab value. */
+export type LabFlag = 'H' | 'L' | 'HH' | 'LL' | 'C' | 'normal' | '';
+
 /**
- * A single laboratory result value.
- *
- * The `range` field corresponds to the original JSON "range" key.
- * The `normalRange` field is used when data is normalized from the alternative
- * input format. Consumers should check both fields.
+ * A single laboratory test result.
  */
 export interface LabResult {
-  /** Name of the test, e.g. "Haemoglobin", "Potassium" */
+  /** Name of the test, e.g. "Haemoglobin", "Sodium". */
   test: string;
-  /** Result value as a string, e.g. "139", "9.1", "0.41" */
+
+  /** Result value as a display string (may include qualitative results). */
   value: string;
-  /** Unit of measurement, e.g. "g/L", "mmol/L", or empty string */
+
+  /** Unit of measurement, e.g. "g/L", "mmol/L". */
   unit: string;
-  /** Reference range in the original flat format, e.g. "120-180", ">60" */
-  range?: string;
-  /** Reference range from the normalized format, e.g. "120-180" */
-  normalRange?: string;
-  /** Abnormality flag: "", "Low", "High", "CRITICAL HIGH", "Critical", etc. */
-  flag: string;
-}
-
-/**
- * Grouped laboratory results by category.
- *
- * The haematology and biochemistry arrays are always present (may be empty).
- * Additional categories are optional and populated based on available data.
- */
-export interface LabResults {
-  /** Full blood count, haemoglobin, WCC, platelets, etc. */
-  haematology: LabResult[];
-  /** Electrolytes (Na, K, Cl), renal function (Cr, eGFR, urea), glucose, etc. */
-  biochemistry: LabResult[];
-  /** Arterial or venous blood gas results (pH, pCO2, pO2, HCO3, lactate) */
-  bloodGas?: LabResult[];
-  /** Coagulation studies (INR, APTT, fibrinogen) */
-  coagulation?: LabResult[];
-  /** Urinalysis results */
-  urinalysis?: LabResult[];
-  /** Cardiac markers (troponin, BNP, CK) */
-  cardiac?: LabResult[];
-}
-
-// ---------------------------------------------------------------------------
-// Clinical Notes / Documentation
-// ---------------------------------------------------------------------------
-
-/**
- * A clinical documentation entry (progress note, admission note, nursing note, etc.).
- */
-export interface ClinicalNote {
-  /** Unique note identifier, e.g. "NOTE001" or "note-0" */
-  id: string;
-  /** Note category from the original format, e.g. "Progress Notes Inpatient", "Medical Admission Note" */
-  type?: string;
-  /** Brief display title, e.g. "Ward Round - Morning", "Admission - Emergency Department" */
-  title: string;
-  /** Author name with credentials, e.g. "DR SPACELY, GEORGE SMO" */
-  author: string;
-  /** Timestamp of the note, e.g. "07-Apr-2021 06:30:00 AEST" */
-  datetime: string;
-  /** Full text content of the clinical note (may contain newline characters) */
-  content: string;
-
-  // -- Optional fields from the normalized (new-format) data --
-
-  /** Note type classification from the alternative format (e.g. "progress", "admission") */
-  noteType?: string;
-  /** Clinical role of the author (e.g. "Consultant", "Registrar", "RN") */
-  role?: string;
-}
-
-// ---------------------------------------------------------------------------
-// Top-Level Patient
-// ---------------------------------------------------------------------------
-
-/**
- * Complete patient record as used throughout the EMR simulation.
- *
- * This is the canonical shape after normalization. All views (vitals, MAR,
- * orders, results, documentation, fluid balance) read from this interface.
- */
-export interface Patient {
-  /** Medical record number, e.g. "RBWH789456", "PAH599806" */
-  mrn: string;
-  /** Patient name in "LASTNAME, FIRSTNAME" format */
-  name: string;
-  /** Date of birth, e.g. "07-Apr-1963" */
-  dob: string;
-  /** Age as a display string, e.g. "62 years" */
-  age: string;
-  /** Gender: "M", "F", or other values */
-  gender: string;
-  /** Allergy information, e.g. "NKDA", "penicillin", "Penicillin (rash), Morphine (nausea)" */
-  allergies: string;
-  /** Ward/unit location, e.g. "RBWH Ward 5A: Bed 12" */
-  location: string;
-  /** Attending physician, e.g. "DR SPACELY, GEORGE" */
-  attending: string;
-  /** Admission date/time, e.g. "07-Apr-2021 06:15:00 AEST" */
-  admission: string;
-
-  /** Vital sign observations in reverse chronological order (most recent first) */
-  vitals: VitalSign[];
-  /** Fluid balance records */
-  fluidBalance: FluidBalanceEntry[];
-  /** Current medication orders */
-  medications: Medication[];
-  /** Clinical orders (lab, radiology, etc.) */
-  orders: Order[];
-  /** Grouped laboratory results */
-  results: LabResults;
-  /** Clinical documentation entries */
-  notes: ClinicalNote[];
 
   /**
-   * Medical history as a semicolon-separated string.
-   * Populated when normalizing from the alternative format where it arrives as an array.
+   * Normal reference range as a display string.
+   * Field is named `range` or `normalRange` depending on the data source.
    */
-  medicalHistory?: string;
+  range?: string;
+
+  /** Alias for `range` — some data sources use this key. */
+  normalRange?: string;
+
+  /** Abnormality flag indicating whether the result is out of range. */
+  flag?: LabFlag;
 }
 
 /**
- * A dictionary of patients keyed by MRN.
- * Used by the application store to hold all loaded patient records.
+ * Grouped laboratory results organised by clinical discipline.
+ * Each category contains an array of individual test results.
  */
-export type PatientMap = Record<string, Patient>;
+export interface LabResults {
+  /** Full blood count, film, ESR, etc. */
+  haematology: LabResult[];
+
+  /** Urea & electrolytes, LFTs, CRP, glucose, etc. */
+  biochemistry: LabResult[];
+
+  /** Arterial/venous blood gas analysis. */
+  bloodGas: LabResult[];
+
+  /** PT, APTT, INR, fibrinogen, D-dimer. */
+  coagulation: LabResult[];
+
+  /** Urine dipstick and microscopy results. */
+  urinalysis: LabResult[];
+
+  /** Troponin, BNP, CK-MB, and other cardiac markers. */
+  cardiac: LabResult[];
+}
+
+// ---------------------------------------------------------------------------
+// Clinical Notes
+// ---------------------------------------------------------------------------
+
+/** Type/category of clinical note. */
+export type NoteType =
+  | 'Progress'
+  | 'Admission'
+  | 'Discharge'
+  | 'Consultation'
+  | 'Procedure'
+  | 'Nursing'
+  | 'Handover'
+  | 'Other';
+
+/** Clinical role of the note author. */
+export type ClinicalRole =
+  | 'Physician'
+  | 'Nurse'
+  | 'Consultant'
+  | 'Registrar'
+  | 'Allied Health'
+  | 'Pharmacist'
+  | 'Other';
+
+/**
+ * A clinical note or documentation entry in the patient's chart.
+ */
+export interface ClinicalNote {
+  /** Unique note identifier. */
+  id: string;
+
+  /** Broad classification of the note. */
+  type: NoteType;
+
+  /** Display title / subject line. */
+  title: string;
+
+  /** Name of the clinician who authored the note. */
+  author: string;
+
+  /** ISO-8601 date-time when the note was written. */
+  datetime: string;
+
+  /** Full text content of the note (may contain markdown). */
+  content: string;
+
+  /** Specific note sub-type for finer categorisation. */
+  noteType?: string;
+
+  /** Role of the author at the time of writing. */
+  role?: ClinicalRole;
+}
+
+// ---------------------------------------------------------------------------
+// Composite Patient Record
+// ---------------------------------------------------------------------------
+
+/**
+ * Complete patient record combining demographics with all clinical data.
+ *
+ * This is the top-level type returned by patient data loaders and
+ * consumed by the main application shell and all clinical views.
+ *
+ * @example
+ * ```ts
+ * const patient: Patient = {
+ *   mrn: 'MRN-001234',
+ *   name: 'Smith, John',
+ *   dob: '1955-03-12',
+ *   age: 71,
+ *   gender: 'Male',
+ *   allergies: ['Penicillin'],
+ *   location: 'Ward 4B, Bed 12',
+ *   attending: 'Dr. A. Williams',
+ *   admission: '2026-02-10T08:30:00',
+ *   medicalHistory: ['Type 2 Diabetes'],
+ *   vitals: [],
+ *   fluidBalance: [],
+ *   medications: [],
+ *   orders: [],
+ *   results: {
+ *     haematology: [],
+ *     biochemistry: [],
+ *     bloodGas: [],
+ *     coagulation: [],
+ *     urinalysis: [],
+ *     cardiac: [],
+ *   },
+ *   notes: [],
+ * };
+ * ```
+ */
+export interface Patient extends PatientDemographics {
+  /** Chronological vital sign observations. */
+  vitals: VitalSign[];
+
+  /** Fluid balance entries (may be flat or hierarchical). */
+  fluidBalance: FluidBalanceEntry[];
+
+  /** Active and historical medication records. */
+  medications: Medication[];
+
+  /** Clinical orders. */
+  orders: Order[];
+
+  /** Grouped laboratory results by discipline. */
+  results: LabResults;
+
+  /** Clinical documentation / notes. */
+  notes: ClinicalNote[];
+}

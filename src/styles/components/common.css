@@ -1,0 +1,321 @@
+/**
+ * @file common.css
+ * @description Styles for reusable common components (DataTable, Autocomplete,
+ *              AlertDialog) and shared form/button primitives in the SimCerner EMR.
+ *
+ * Extracted from emr-sim-v2.html and ported to use CSS custom properties
+ * defined in cerner-theme.css.
+ */
+
+/* ========================================================================
+   Data Table
+   ======================================================================== */
+
+/** Reusable clinical data table used across results, orders, and MAR views. */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--cerner-font-size-base);
+}
+
+.data-table th {
+  background-color: var(--cerner-grid-header);
+  padding: 6px 10px;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 2px solid var(--cerner-border);
+  color: #333;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.data-table td {
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--cerner-border-light);
+  vertical-align: top;
+}
+
+/** Alternating row stripe for improved readability. */
+.data-table tbody tr:nth-child(even) {
+  background-color: var(--cerner-row-alt);
+}
+
+/** Hover highlight on table rows. */
+.data-table tbody tr:hover {
+  background-color: var(--cerner-selected);
+}
+
+/** Clickable row cursor style. */
+.data-table tbody tr.clickable {
+  cursor: pointer;
+}
+
+/** Flag / abnormal value cell highlighting. */
+.data-table td.flag-H,
+.data-table td.flag-HH {
+  color: var(--cerner-danger);
+  font-weight: 600;
+}
+
+.data-table td.flag-L,
+.data-table td.flag-LL {
+  color: var(--cerner-info);
+  font-weight: 600;
+}
+
+.data-table td.flag-C {
+  color: var(--cerner-warning);
+  font-weight: 600;
+}
+
+/* ========================================================================
+   Autocomplete
+   ======================================================================== */
+
+/** Container wrapping the input and dropdown for the autocomplete widget. */
+.autocomplete-container {
+  position: relative;
+  width: 100%;
+}
+
+/** Text input for the autocomplete component. */
+.autocomplete-input {
+  width: 100%;
+  padding: 6px 10px;
+  font-size: var(--cerner-font-size-base);
+  border: 1px solid var(--cerner-border);
+  border-radius: var(--cerner-radius-md);
+  outline: none;
+  font-family: var(--cerner-font-family);
+  transition: border-color var(--cerner-transition-fast);
+}
+
+.autocomplete-input:focus {
+  border-color: var(--cerner-blue);
+  box-shadow: 0 0 0 2px rgba(0, 102, 178, 0.15);
+}
+
+/** Dropdown list of matching suggestions. */
+.autocomplete-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  background-color: white;
+  border: 1px solid var(--cerner-border);
+  border-top: none;
+  border-radius: 0 0 var(--cerner-radius-md) var(--cerner-radius-md);
+  box-shadow: var(--cerner-shadow-md);
+  z-index: 100;
+}
+
+/** Individual suggestion item in the autocomplete dropdown. */
+.autocomplete-item {
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: var(--cerner-font-size-base);
+  transition: background-color var(--cerner-transition-fast);
+}
+
+.autocomplete-item:hover,
+.autocomplete-item.highlighted {
+  background-color: var(--cerner-light-blue);
+}
+
+.autocomplete-item.selected {
+  background-color: var(--cerner-selected);
+  font-weight: 600;
+}
+
+/* ========================================================================
+   Alert Dialog (Deterioration / Clinical Alerts)
+   ======================================================================== */
+
+/** Semi-transparent overlay behind the alert dialog. */
+.alert-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/** Centered dialog box for clinical alerts. */
+.alert-dialog {
+  background: white;
+  border-radius: var(--cerner-radius-lg);
+  box-shadow: var(--cerner-shadow-lg);
+  min-width: 360px;
+  max-width: 500px;
+  overflow: hidden;
+}
+
+/** Colour-coded header strip indicating alert severity. */
+.alert-dialog-header {
+  padding: 12px 16px;
+  font-weight: 600;
+  font-size: var(--cerner-font-size-md);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/** Informational severity (blue). */
+.alert-dialog-header--info {
+  background-color: var(--cerner-light-blue);
+  color: var(--cerner-blue);
+  border-bottom: 2px solid var(--cerner-blue);
+}
+
+/** Warning severity (amber/yellow). */
+.alert-dialog-header--warning {
+  background-color: #fff8e1;
+  color: #e65100;
+  border-bottom: 2px solid var(--cerner-warning);
+}
+
+/** Critical severity (red). */
+.alert-dialog-header--critical {
+  background-color: #fef2f2;
+  color: #b71c1c;
+  border-bottom: 2px solid var(--cerner-danger);
+}
+
+/** Dialog body text area. */
+.alert-dialog-body {
+  padding: 16px;
+  font-size: var(--cerner-font-size-base);
+  line-height: 1.6;
+  color: #333;
+}
+
+/** Footer area containing action buttons. */
+.alert-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--cerner-border-light);
+  background-color: var(--cerner-grid-header);
+}
+
+/* ========================================================================
+   Buttons
+   ======================================================================== */
+
+/** Base button styles shared across the application. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 5px 12px;
+  font-size: var(--cerner-font-size-base);
+  font-family: var(--cerner-font-family);
+  border: 1px solid var(--cerner-border);
+  border-radius: var(--cerner-radius-md);
+  cursor: pointer;
+  background-color: white;
+  color: #333;
+  transition: all var(--cerner-transition-fast);
+  white-space: nowrap;
+}
+
+.btn:hover {
+  background-color: var(--cerner-grid-header);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+/** Primary action button (Cerner blue). */
+.btn-primary {
+  background-color: var(--cerner-blue);
+  color: white;
+  border-color: var(--cerner-blue);
+}
+
+.btn-primary:hover {
+  background-color: var(--cerner-dark-blue);
+  border-color: var(--cerner-dark-blue);
+}
+
+/** Danger action button (red). */
+.btn-danger {
+  background-color: var(--cerner-danger);
+  color: white;
+  border-color: var(--cerner-danger);
+}
+
+.btn-danger:hover {
+  background-color: #c9302c;
+  border-color: #c9302c;
+}
+
+/** Small button variant. */
+.btn-sm {
+  padding: 3px 8px;
+  font-size: var(--cerner-font-size-sm);
+}
+
+/* ========================================================================
+   Form Controls
+   ======================================================================== */
+
+/** Wrapper for a label + control pair. */
+.form-group {
+  margin-bottom: 10px;
+}
+
+/** Form label text. */
+.form-label {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 600;
+  font-size: var(--cerner-font-size-base);
+  color: #555;
+}
+
+/** Standard text/select input control. */
+.form-control {
+  width: 100%;
+  padding: 6px 10px;
+  font-size: var(--cerner-font-size-base);
+  font-family: var(--cerner-font-family);
+  border: 1px solid var(--cerner-border);
+  border-radius: var(--cerner-radius-md);
+  outline: none;
+  transition: border-color var(--cerner-transition-fast);
+}
+
+.form-control:focus {
+  border-color: var(--cerner-blue);
+  box-shadow: 0 0 0 2px rgba(0, 102, 178, 0.15);
+}
+
+/* ========================================================================
+   Loading States
+   ======================================================================== */
+
+/** Full-area loading placeholder with centred spinner. */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  gap: 12px;
+  color: var(--cerner-muted);
+  font-size: 12px;
+  flex: 1;
+}

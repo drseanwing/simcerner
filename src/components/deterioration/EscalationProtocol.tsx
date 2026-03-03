@@ -1,267 +1,167 @@
-import type { ClinicalRisk, PatientStatus } from '@/types/vitals'
-import { getEscalationText, getRiskColor } from '@/services/qaddsCalculator'
+/**
+ * @file EscalationProtocol.tsx
+ * @description Displays clinical response recommendations based on Q-ADDS score.
+ *
+ * Shows a set of escalation cards coloured by severity, each describing the
+ * recommended monitoring frequency and escalation actions (Q-ADDS 5-tier):
+ * - Normal (0):     Routine 8-hourly observations
+ * - Low (1–3):      Increased observation, 4-hourly / 1-hourly
+ * - Moderate (4–5): RMO review within 30 minutes
+ * - High (6–7):     Registrar review within 30 minutes
+ * - MET (>=8 or E): MET call — emergency response
+ */
 
-interface EscalationProtocolProps {
-  risk: ClinicalRisk
-  status?: PatientStatus
+import type { ClinicalRisk } from '../../types';
+import '../../styles/components/views.css';
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+/** Props accepted by the EscalationProtocol component. */
+export interface EscalationProtocolProps {
+  /** The aggregate Q-ADDS score. */
+  score: number;
+  /** The derived clinical risk level. */
+  clinicalRisk: ClinicalRisk;
 }
 
-interface EscalationRow {
-  range: string
-  risk: ClinicalRisk
-  clinicalStatus: 'Deteriorating' | 'Stable/Improving'
-  patientStatusValue: PatientStatus
-  frequency: string
-  actions: string
-  color: string
-  textColor: string
+// ---------------------------------------------------------------------------
+// Escalation data
+// ---------------------------------------------------------------------------
+
+interface EscalationCard {
+  risk: ClinicalRisk;
+  scoreRange: string;
+  icon: string;
+  colour: string;
+  bgColour: string;
+  title: string;
+  frequency: string;
+  actions: string[];
 }
 
-const ESCALATION_ROWS: EscalationRow[] = [
+const ESCALATION_CARDS: EscalationCard[] = [
   {
-    range: '0',
-    risk: 'Routine',
-    clinicalStatus: 'Stable/Improving',
-    patientStatusValue: 'stable',
-    frequency: '8th hourly (min)',
-    actions: 'Nil',
-    color: '#ffffff',
-    textColor: '#333333',
+    risk: 'Normal',
+    scoreRange: '0',
+    icon: '✓',
+    colour: '#2e7d32',
+    bgColour: '#e8f5e9',
+    title: 'Routine Monitoring',
+    frequency: '8-hourly observations (minimum)',
+    actions: ['Continue routine Q-ADDS monitoring', 'Document observations as per protocol'],
   },
   {
-    range: '1\u20133',
     risk: 'Low',
-    clinicalStatus: 'Deteriorating',
-    patientStatusValue: 'deteriorating',
-    frequency: '1 hourly',
-    actions: 'Notify TL; Nurse escort',
-    color: '#fff3cd',
-    textColor: '#856404',
+    scoreRange: '1–3',
+    icon: '⬆',
+    colour: '#f9a825',
+    bgColour: '#fffde7',
+    title: 'Increased Observation',
+    frequency: '4-hourly (stable) / 1-hourly (deteriorating)',
+    actions: [
+      'Notify Team Leader',
+      'Nurse escort required for transfers',
+      'If deteriorating: increase to 1-hourly observations',
+    ],
   },
   {
-    range: '1\u20133',
-    risk: 'Low',
-    clinicalStatus: 'Stable/Improving',
-    patientStatusValue: 'stable',
-    frequency: '4th hourly (min)',
-    actions: 'May be modified by SMO',
-    color: '#fff3cd',
-    textColor: '#856404',
-  },
-  {
-    range: '4\u20135',
     risk: 'Moderate',
-    clinicalStatus: 'Deteriorating',
-    patientStatusValue: 'deteriorating',
-    frequency: '1 hourly',
-    actions:
-      'Notify TL; RMO review within 30 min; Nurse escort; If no review \u2192 call Registrar',
-    color: '#ffd699',
-    textColor: '#7a4100',
+    scoreRange: '4–5',
+    icon: '⚠',
+    colour: '#e65100',
+    bgColour: '#fff3e0',
+    title: 'RMO Review Required',
+    frequency: '2-hourly (stable) / 1-hourly (deteriorating)',
+    actions: [
+      'Notify Team Leader',
+      'Notify RMO to review within 30 minutes',
+      'Nurse escort required',
+      'If no RMO review → escalate to Registrar',
+    ],
   },
   {
-    range: '4\u20135',
-    risk: 'Moderate',
-    clinicalStatus: 'Stable/Improving',
-    patientStatusValue: 'stable',
-    frequency: '2nd hourly (min)',
-    actions: 'May be modified by SMO',
-    color: '#ffd699',
-    textColor: '#7a4100',
-  },
-  {
-    range: '6\u20137',
     risk: 'High',
-    clinicalStatus: 'Deteriorating',
-    patientStatusValue: 'deteriorating',
-    frequency: '\u00BD hourly',
-    actions:
-      'Notify TL; Registrar review within 30 min; Nurse escort; If no review \u2192 call MET/SMO',
-    color: '#f8d7da',
-    textColor: '#721c24',
+    scoreRange: '6–7',
+    icon: '🔶',
+    colour: '#bf360c',
+    bgColour: '#fbe9e7',
+    title: 'Registrar Review Required',
+    frequency: '1-hourly (stable) / ½-hourly (deteriorating)',
+    actions: [
+      'Notify Team Leader',
+      'Notify Registrar to review within 30 minutes',
+      'Nurse escort required',
+      'If no Registrar review → initiate MET call or escalate to SMO',
+    ],
   },
   {
-    range: '6\u20137',
-    risk: 'High',
-    clinicalStatus: 'Stable/Improving',
-    patientStatusValue: 'stable',
-    frequency: '1 hourly (min)',
-    actions: 'May be modified by SMO',
-    color: '#f8d7da',
-    textColor: '#721c24',
+    risk: 'MET',
+    scoreRange: '≥ 8 or E-zone',
+    icon: '🚨',
+    colour: '#7b1fa2',
+    bgColour: '#f3e5f5',
+    title: 'MET Call — Emergency Response',
+    frequency: '10-minutely observations (½-hourly if stable with MET-MEO)',
+    actions: [
+      'Initiate MET Call immediately',
+      'Registrar to ensure SMO/Consultant notified',
+      'Registrar and Nurse escort required',
+      'If MET-MEO plan active and stable: ½-hourly observations minimum',
+    ],
   },
-  {
-    range: '\u22658 or E',
-    risk: 'Emergency',
-    clinicalStatus: 'Deteriorating',
-    patientStatusValue: 'deteriorating',
-    frequency: '10 minutely',
-    actions:
-      'Initiate MET call; Registrar ensure SMO notified; Registrar & Nurse escort',
-    color: '#d5a6e6',
-    textColor: '#4a1a6b',
-  },
-]
+];
 
-export function EscalationProtocol({ risk, status }: EscalationProtocolProps) {
-  const effectiveStatus: PatientStatus = status ?? 'stable'
-  const escalationText = getEscalationText(risk, effectiveStatus)
-  const headerBg = getRiskColor(risk)
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 
-  const headerTextColor =
-    risk === 'Routine'
-      ? '#333333'
-      : risk === 'Low'
-        ? '#856404'
-        : risk === 'Moderate'
-          ? '#7a4100'
-          : risk === 'High'
-            ? '#721c24'
-            : '#4a1a6b'
-
-  const thStyle: React.CSSProperties = {
-    padding: '3px 6px',
-    borderBottom: '1px solid var(--cerner-border, #ccc)',
-    textAlign: 'left',
-    fontWeight: 600,
-    color: '#555',
-    fontSize: '10px',
-  }
-
+/**
+ * EscalationProtocol renders colour-coded escalation cards showing the
+ * recommended clinical response for each Q-ADDS risk tier. The card
+ * matching the current patient risk is visually highlighted.
+ */
+export default function EscalationProtocol({
+  clinicalRisk,
+}: EscalationProtocolProps) {
   return (
-    <div
-      style={{
-        border: '1px solid var(--cerner-border, #ccc)',
-        borderRadius: '3px',
-        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-        fontSize: '11px',
-        backgroundColor: '#ffffff',
-        overflow: 'hidden',
-      }}
-    >
-      {/* Colour-coded header bar */}
-      <div
-        style={{
-          backgroundColor: headerBg,
-          borderBottom: '1px solid var(--cerner-border, #ccc)',
-          padding: '8px 10px',
-          fontWeight: 700,
-          fontSize: '12px',
-          color: headerTextColor,
-        }}
-      >
-        Escalation Protocol &mdash; {risk}
-      </div>
-
-      {/* Current escalation instructions */}
-      <div
-        style={{
-          padding: '10px 12px',
-          borderBottom: '1px solid var(--cerner-border, #ccc)',
-          backgroundColor: '#fafafa',
-        }}
-      >
-        <div
-          style={{
-            fontWeight: 600,
-            fontSize: '11px',
-            color: 'var(--cerner-dark-blue, #004578)',
-            marginBottom: '4px',
-          }}
-        >
-          Recommended Response
-        </div>
-        <div style={{ color: '#333333', lineHeight: '16px' }}>{escalationText}</div>
-      </div>
-
-      {/* Q-ADDS Graded Response Reference Table */}
-      <div style={{ padding: '8px 12px' }}>
-        <div
-          style={{
-            fontWeight: 600,
-            fontSize: '11px',
-            color: 'var(--cerner-dark-blue, #004578)',
-            marginBottom: '6px',
-          }}
-        >
-          Q-ADDS Graded Response
-        </div>
-        <table
-          style={{
-            borderCollapse: 'collapse',
-            width: '100%',
-            fontSize: '11px',
-          }}
-        >
-          <thead>
-            <tr>
-              <th style={thStyle}>Score Range</th>
-              <th style={thStyle}>Clinical Status</th>
-              <th style={thStyle}>Observation Frequency</th>
-              <th style={thStyle}>Notification &amp; Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {ESCALATION_ROWS.map((row, idx) => {
-              const isActive =
-                row.risk === risk && row.patientStatusValue === effectiveStatus
-              return (
-                <tr key={idx}>
-                  <td
-                    style={{
-                      padding: '4px 6px',
-                      borderBottom: '1px solid #eee',
-                      borderLeft: isActive
-                        ? '4px solid ' + row.textColor
-                        : '4px solid transparent',
-                      backgroundColor: isActive ? row.color : undefined,
-                      color: row.textColor,
-                      fontWeight: isActive ? 700 : 400,
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {row.range}
-                  </td>
-                  <td
-                    style={{
-                      padding: '4px 6px',
-                      borderBottom: '1px solid #eee',
-                      fontWeight: isActive ? 700 : 400,
-                      color: '#333',
-                      backgroundColor: isActive ? row.color : undefined,
-                    }}
-                  >
-                    {row.clinicalStatus}
-                  </td>
-                  <td
-                    style={{
-                      padding: '4px 6px',
-                      borderBottom: '1px solid #eee',
-                      fontWeight: isActive ? 700 : 400,
-                      color: '#333',
-                      backgroundColor: isActive ? row.color : undefined,
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {row.frequency}
-                  </td>
-                  <td
-                    style={{
-                      padding: '4px 6px',
-                      borderBottom: '1px solid #eee',
-                      color: '#555',
-                      fontWeight: isActive ? 600 : 400,
-                      backgroundColor: isActive ? row.color : undefined,
-                    }}
-                  >
-                    {row.actions}
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
+    <div className="escalation-protocol">
+      <div className="escalation-protocol__title">Escalation Protocol</div>
+      <div className="escalation-protocol__cards">
+        {ESCALATION_CARDS.map((card) => {
+          const isActive = card.risk === clinicalRisk;
+          return (
+            <div
+              key={card.risk}
+              className={`escalation-card${isActive ? ' escalation-card--active' : ''}`}
+              style={{
+                borderLeftColor: card.colour,
+                backgroundColor: isActive ? card.bgColour : undefined,
+              }}
+            >
+              <div className="escalation-card__header">
+                <span className="escalation-card__icon">{card.icon}</span>
+                <span className="escalation-card__risk-title">{card.title}</span>
+                <span
+                  className="escalation-card__score-range"
+                  style={{ color: card.colour }}
+                >
+                  Score: {card.scoreRange}
+                </span>
+              </div>
+              <div className="escalation-card__frequency">
+                {card.frequency}
+              </div>
+              <ul className="escalation-card__actions">
+                {card.actions.map((action, i) => (
+                  <li key={i}>{action}</li>
+                ))}
+              </ul>
+            </div>
+          );
+        })}
       </div>
     </div>
-  )
+  );
 }

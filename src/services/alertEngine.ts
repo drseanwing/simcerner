@@ -345,7 +345,7 @@ export function evaluateAlerts(
 // ---------------------------------------------------------------------------
 // Legacy alert model (compatibility with origin/main)
 // ---------------------------------------------------------------------------
-// Retains the simplified alert API used by origin/main for backward compatibility.
+// Retains the simplified alert API from origin/main for backward compatibility with stored alert history.
 
 export type AlertSeverity = 'info' | 'warning' | 'critical'
 

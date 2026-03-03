@@ -58,21 +58,23 @@ export function calculateQADDS(vital: VitalSign): QADDSResult {
 
   // --- Respiratory Rate ---
   if (vital.rr != null) {
-    const score = calculateSubScore('respiratoryRate', vital.rr);
-    subScores.push({ parameter: 'Respiratory Rate', value: vital.rr, score });
+    const rrValue = Number(vital.rr);
+    const score = calculateSubScore('respiratoryRate', rrValue);
+    subScores.push({ parameter: 'Respiratory Rate', value: rrValue, score });
     if (score === 'E') eZoneParameters.push('Respiratory Rate');
   }
 
   // --- SpO2 (Standard scale) ---
   if (vital.spo2 != null) {
-    const score = calculateSubScore('spo2Standard', vital.spo2);
-    subScores.push({ parameter: 'SpO2', value: vital.spo2, score });
+    const spo2Value = Number(vital.spo2);
+    const score = calculateSubScore('spo2Standard', spo2Value);
+    subScores.push({ parameter: 'SpO2', value: spo2Value, score });
     if (score === 'E') eZoneParameters.push('SpO2');
   }
 
   // --- O2 Delivery (flow rate in L/min, default 0 = room air) ---
   {
-    const o2Value = vital.o2FlowRate ?? 0;
+    const o2Value = Number(vital.o2FlowRate ?? 0);
     const score = calculateSubScore('o2Delivery', o2Value);
     subScores.push({ parameter: 'O2 Delivery', value: o2Value, score });
     if (score === 'E') eZoneParameters.push('O2 Delivery');
@@ -80,28 +82,32 @@ export function calculateQADDS(vital: VitalSign): QADDSResult {
 
   // --- Systolic Blood Pressure ---
   if (vital.bp_sys != null) {
-    const score = calculateSubScore('systolicBP', vital.bp_sys);
-    subScores.push({ parameter: 'Systolic BP', value: vital.bp_sys, score });
+    const systolic = Number(vital.bp_sys);
+    const score = calculateSubScore('systolicBP', systolic);
+    subScores.push({ parameter: 'Systolic BP', value: systolic, score });
     if (score === 'E') eZoneParameters.push('Systolic BP');
   }
 
   // --- Heart Rate ---
   if (vital.hr != null) {
-    const score = calculateSubScore('heartRate', vital.hr);
-    subScores.push({ parameter: 'Heart Rate', value: vital.hr, score });
+    const hrValue = Number(vital.hr);
+    const score = calculateSubScore('heartRate', hrValue);
+    subScores.push({ parameter: 'Heart Rate', value: hrValue, score });
     if (score === 'E') eZoneParameters.push('Heart Rate');
   }
 
   // --- Temperature ---
   if (vital.temp != null) {
-    const score = calculateSubScore('temperature', vital.temp);
-    subScores.push({ parameter: 'Temperature', value: vital.temp, score });
+    const tempValue = Number(vital.temp);
+    const score = calculateSubScore('temperature', tempValue);
+    subScores.push({ parameter: 'Temperature', value: tempValue, score });
     if (score === 'E') eZoneParameters.push('Temperature');
   }
 
   // --- Consciousness (AVPU) ---
   if (vital.avpu != null) {
-    const avpuNumeric = AVPU_NUMERIC_MAP[vital.avpu] ?? 0;
+    const avpuKey = String(vital.avpu);
+    const avpuNumeric = AVPU_NUMERIC_MAP[avpuKey] ?? 0;
     const score = calculateSubScore('consciousness', avpuNumeric);
     subScores.push({ parameter: 'Consciousness', value: vital.avpu, score });
     if (score === 'E') eZoneParameters.push('Consciousness');

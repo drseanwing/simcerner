@@ -126,3 +126,59 @@ export const VITAL_PARAMETERS: readonly VitalParameter[] = [
     normalRange: { min: 0, max: 3 },
   },
 ] as const;
+
+// ---------------------------------------------------------------------------
+// Q-ADDS Scoring Types (legacy aliases maintained for compatibility)
+// ---------------------------------------------------------------------------
+
+/** Q-ADDS clinical risk classification. */
+export type ClinicalRisk = 'Routine' | 'Low' | 'Moderate' | 'High' | 'Emergency';
+
+/** Q-ADDS scored parameters (legacy naming). */
+export type QaddsParameter =
+  | 'rr'
+  | 'spo2'
+  | 'o2FlowRate'
+  | 'temperature'
+  | 'systolicBP'
+  | 'heartRate'
+  | 'consciousness';
+
+/** Q-ADDS sub-score values. */
+export type QaddsSubScoreValue = 0 | 1 | 2 | 3 | 4 | 'E';
+
+/** A sub-score for a single Q-ADDS parameter. */
+export interface QaddsSubScore {
+  parameter: QaddsParameter;
+  value: string | number;
+  score: QaddsSubScoreValue;
+}
+
+/** Map of parameter → sub-score. */
+export type QaddsSubScores = Record<QaddsParameter, QaddsSubScore>;
+
+/** Complete Q-ADDS score for a set of vitals. */
+export interface QaddsScore {
+  totalScore: number;
+  hasEmergency: boolean;
+  emergencyParameters: QaddsParameter[];
+  clinicalRisk: ClinicalRisk;
+  subScores: QaddsSubScores;
+}
+
+/** Q-ADDS score paired with timestamp (for trend graph). */
+export interface QaddsScoreTrend {
+  datetime: string;
+  score: QaddsScore;
+}
+
+/** Observation chart variant. */
+export type ChartVariant =
+  | 'standard'
+  | 'chronic_respiratory'
+  | 'SW150'
+  | 'SW626'
+  | 'SW1171';
+
+/** Patient clinical status for escalation pathway. */
+export type PatientStatus = 'deteriorating' | 'stable';

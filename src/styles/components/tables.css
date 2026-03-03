@@ -1,0 +1,73 @@
+/* Tables */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid var(--cerner-border);
+    font-size: 11px;
+}
+
+.data-table th {
+    background: var(--cerner-grid-header);
+    padding: 6px 8px;
+    text-align: left;
+    border: 1px solid var(--cerner-border);
+    font-weight: 600;
+    font-size: 10px;
+}
+
+.data-table td {
+    padding: 5px 8px;
+    border: 1px solid var(--cerner-border);
+}
+
+.data-table tbody tr:nth-child(even) {
+    background: var(--cerner-row-alt);
+}
+
+.data-table tbody tr:hover {
+    background: var(--cerner-selected);
+}
+
+/* Vital Signs Chart */
+.vitals-chart {
+    background: white;
+    border: 1px solid var(--cerner-border);
+    padding: 10px;
+    margin-bottom: 15px;
+}
+
+.chart-header {
+    font-weight: 600;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 2px solid var(--cerner-dark-blue);
+}
+
+.chart-grid {
+    display: grid;
+    grid-template-columns: 120px repeat(auto-fit, minmax(80px, 1fr));
+    gap: 1px;
+    background: var(--cerner-border);
+    border: 1px solid var(--cerner-border);
+}
+
+.chart-cell {
+    background: white;
+    padding: 6px;
+    font-size: 10px;
+}
+
+.chart-cell.header {
+    background: var(--cerner-grid-header);
+    font-weight: 600;
+}
+
+.chart-cell.label {
+    background: var(--cerner-grid-header);
+    font-weight: 600;
+}
+
+.chart-cell.abnormal {
+    color: #d9534f;
+    font-weight: 600;
+}

@@ -1,0 +1,114 @@
+/* Patient Search */
+.patient-search {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 20px;
+    background: white;
+    border: 1px solid var(--cerner-border);
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.patient-search h2 {
+    color: var(--cerner-dark-blue);
+    margin-bottom: 20px;
+    font-size: 16px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--cerner-border);
+    border-radius: 3px;
+    font-size: 12px;
+    margin-bottom: 15px;
+}
+
+/* Orders Section */
+.order-entry {
+    background: white;
+    border: 1px solid var(--cerner-border);
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.form-group {
+    margin-bottom: 12px;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: 600;
+    font-size: 11px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 6px;
+    border: 1px solid var(--cerner-border);
+    border-radius: 3px;
+    font-size: 11px;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--cerner-blue);
+}
+
+/* Autocomplete */
+.autocomplete-container {
+    position: relative;
+}
+
+.autocomplete-input {
+    width: 100%;
+    padding: 6px;
+    border: 1px solid var(--cerner-border);
+    border-radius: 3px;
+    font-size: 11px;
+}
+
+.autocomplete-input:focus {
+    outline: none;
+    border-color: var(--cerner-blue);
+}
+
+.autocomplete-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: 200px;
+    overflow-y: auto;
+    background: white;
+    border: 1px solid var(--cerner-border);
+    border-top: none;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    z-index: 1000;
+}
+
+.autocomplete-item {
+    padding: 8px;
+    cursor: pointer;
+    font-size: 11px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.autocomplete-item:hover {
+    background: var(--cerner-light-blue);
+}
+
+.autocomplete-item.selected {
+    background: var(--cerner-selected);
+}
+
+.autocomplete-item:last-child {
+    border-bottom: none;
+}
+
+.autocomplete-type {
+    font-size: 10px;
+    color: #666;
+    margin-left: 8px;
+}

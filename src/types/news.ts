@@ -222,3 +222,6 @@ export const CLINICAL_RISK_THRESHOLDS = {
 } as const;
 
 export type ClinicalRiskThresholds = typeof QADDS_RISK_THRESHOLDS;
+
+// Legacy colour code type used by existing Q-ADDS calculator/tests.
+export type QaddsColorCode = 'white' | 'yellow' | 'orange' | 'red' | 'purple';

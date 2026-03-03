@@ -16,7 +16,18 @@
 export type Gender = 'Male' | 'Female' | 'Other' | 'Unknown';
 
 /** AVPU consciousness scale used in vital sign observations. */
-export type AVPUScale = 'A' | 'C' | 'V' | 'P' | 'U';
+export type AVPUScale =
+  | 'A'
+  | 'C'
+  | 'V'
+  | 'P'
+  | 'U'
+  | 'Alert'
+  | 'Voice'
+  | 'Pain'
+  | 'Unresponsive'
+  | 'Changing Behaviour'
+  | '';
 
 /**
  * Core patient demographic and identity information.
@@ -84,37 +95,40 @@ export interface VitalSign {
   datetime: string;
 
   /** Core body temperature in °C. */
-  temp?: number;
+  temp?: number | string;
 
   /** Heart rate in beats per minute (bpm). */
-  hr?: number;
+  hr?: number | string;
 
   /** Respiratory rate in breaths per minute. */
-  rr?: number;
+  rr?: number | string;
 
   /** Systolic blood pressure in mmHg. */
-  bp_sys?: number;
+  bp_sys?: number | string;
 
   /** Diastolic blood pressure in mmHg. */
-  bp_dia?: number;
+  bp_dia?: number | string;
 
   /** Peripheral oxygen saturation as a percentage (0-100). */
-  spo2?: number;
+  spo2?: number | string;
 
   /** AVPU consciousness level. */
   avpu?: AVPUScale;
 
   /** Whether the patient is receiving supplemental oxygen. */
-  supplementalO2?: boolean;
+  supplementalO2?: boolean | string;
 
   /** Oxygen flow rate in L/min (0 = room air). */
-  o2FlowRate?: number;
+  o2FlowRate?: number | string;
 
   /** Calculated EWS aggregate score for this observation set. */
   ewsScore?: number;
 
   /** Patient-reported pain score (0-10 numeric rating scale). */
-  painScore?: number;
+  painScore?: number | string;
+
+  /** Staff concern flag that can trigger escalation regardless of score. */
+  nurseConcern?: boolean;
 }
 
 // ---------------------------------------------------------------------------

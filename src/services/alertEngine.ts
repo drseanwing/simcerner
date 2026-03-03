@@ -15,7 +15,11 @@
  * and an optional sepsis screening prompt per Queensland Health protocol.
  */
 
-import type { VitalSign } from '@/types/patient'
+import type { Patient, VitalSign } from '@/types/patient'
+import type {
+  QADDSResult,
+  QADDSRiskLevel,
+} from '@/types/news'
 import type { ChartVariant, ClinicalRisk, QaddsParameter } from '@/types/vitals'
 import { calculateQadds } from '@/services/qaddsCalculator'
 
@@ -336,4 +340,220 @@ export function evaluateAlerts(
   }
 
   return alerts
+}
+
+// ---------------------------------------------------------------------------
+// Legacy alert model (compatibility with origin/main)
+// ---------------------------------------------------------------------------
+
+export type AlertSeverity = 'info' | 'warning' | 'critical'
+
+export type AlertType =
+  | 'vital_out_of_range'
+  | 'news_score_elevated'
+  | 'news_score_critical'
+  | 'deterioration_trend'
+  | 'overdue_observation'
+
+export interface LegacyAlert {
+  id: string
+  type: AlertType
+  severity: AlertSeverity
+  message: string
+  timestamp: string
+  acknowledged: boolean
+  patientMrn: string
+}
+
+const LEGACY_VITAL_ALERT_THRESHOLDS: Record<
+  string,
+  {
+    warningLow?: number
+    warningHigh?: number
+    criticalLow?: number
+    criticalHigh?: number
+    label: string
+  }
+> = {
+  hr: {
+    warningLow: 50,
+    warningHigh: 110,
+    criticalLow: 40,
+    criticalHigh: 130,
+    label: 'Heart Rate',
+  },
+  rr: {
+    warningLow: 11,
+    warningHigh: 21,
+    criticalLow: 8,
+    criticalHigh: 25,
+    label: 'Respiratory Rate',
+  },
+  bp_sys: {
+    warningLow: 100,
+    warningHigh: 180,
+    criticalLow: 90,
+    criticalHigh: 220,
+    label: 'Systolic BP',
+  },
+  spo2: { warningLow: 94, criticalLow: 91, label: 'SpO2' },
+  temp: {
+    warningLow: 35.5,
+    warningHigh: 38.5,
+    criticalLow: 35.0,
+    criticalHigh: 39.1,
+    label: 'Temperature',
+  },
+}
+
+let legacyAlerts: LegacyAlert[] = []
+let legacyAlertIdCounter = 0
+
+function generateLegacyAlertId(): string {
+  legacyAlertIdCounter += 1
+  return `ALT-${String(legacyAlertIdCounter).padStart(4, '0')}`
+}
+
+/**
+ * Check a patient's latest vital signs against absolute thresholds.
+ * Mirrors the legacy alert model from origin/main for compatibility.
+ */
+export function checkVitals(
+  patient: Patient,
+  vital: VitalSign,
+): LegacyAlert[] {
+  const newAlerts: LegacyAlert[] = []
+  const now = new Date().toISOString()
+
+  for (const [key, thresholds] of Object.entries(LEGACY_VITAL_ALERT_THRESHOLDS)) {
+    const rawValue = vital[key as keyof VitalSign]
+    const value = rawValue == null ? undefined : Number(rawValue)
+    if (value == null || Number.isNaN(value)) continue
+
+    // Critical range
+    if (
+      (thresholds.criticalLow != null && value <= thresholds.criticalLow) ||
+      (thresholds.criticalHigh != null && value >= thresholds.criticalHigh)
+    ) {
+      newAlerts.push({
+        id: generateLegacyAlertId(),
+        type: 'vital_out_of_range',
+        severity: 'critical',
+        message: `CRITICAL: ${thresholds.label} = ${value} (outside safe range)`,
+        timestamp: now,
+        acknowledged: false,
+        patientMrn: patient.mrn,
+      })
+      continue
+    }
+
+    // Warning range
+    if (
+      (thresholds.warningLow != null && value <= thresholds.warningLow) ||
+      (thresholds.warningHigh != null && value >= thresholds.warningHigh)
+    ) {
+      newAlerts.push({
+        id: generateLegacyAlertId(),
+        type: 'vital_out_of_range',
+        severity: 'warning',
+        message: `WARNING: ${thresholds.label} = ${value} (approaching limits)`,
+        timestamp: now,
+        acknowledged: false,
+        patientMrn: patient.mrn,
+      })
+    }
+  }
+
+  legacyAlerts = [...legacyAlerts, ...newAlerts]
+  return newAlerts
+}
+
+/**
+ * Check a Q-ADDS EWS result against escalation thresholds (legacy alerts).
+ */
+export function checkEWSScore(
+  score: QADDSResult,
+  patientMrn: string,
+): LegacyAlert[] {
+  const newAlerts: LegacyAlert[] = []
+  const now = new Date().toISOString()
+  const riskMap: Record<
+    QADDSRiskLevel,
+    { severity: AlertSeverity; type: AlertType } | null
+  > = {
+    Normal: null,
+    Low: { severity: 'info', type: 'news_score_elevated' },
+    Moderate: { severity: 'warning', type: 'news_score_elevated' },
+    High: { severity: 'critical', type: 'news_score_critical' },
+    MET: { severity: 'critical', type: 'news_score_critical' },
+  }
+
+  const config = riskMap[score.riskLevel]
+  if (config) {
+    newAlerts.push({
+      id: generateLegacyAlertId(),
+      type: config.type,
+      severity: config.severity,
+      message: `Q-ADDS EWS ${score.totalScore} — ${score.riskLevel} risk. Escalation level ${score.escalationLevel}.`,
+      timestamp: now,
+      acknowledged: false,
+      patientMrn,
+    })
+  }
+
+  if (score.hasEZone) {
+    newAlerts.push({
+      id: generateLegacyAlertId(),
+      type: 'news_score_critical',
+      severity: 'critical',
+      message: `MET Call Criteria Met — E-zone vital sign: ${score.eZoneParameters.join(', ')}`,
+      timestamp: now,
+      acknowledged: false,
+      patientMrn,
+    })
+  }
+
+  const highParams = score.subScores.filter((s) => s.score === 4)
+  if (highParams.length > 0 && score.riskLevel !== 'High' && score.riskLevel !== 'MET') {
+    newAlerts.push({
+      id: generateLegacyAlertId(),
+      type: 'news_score_elevated',
+      severity: 'warning',
+      message: `Score 4 in: ${highParams.map((p) => p.parameter).join(', ')}. Requires increased monitoring.`,
+      timestamp: now,
+      acknowledged: false,
+      patientMrn,
+    })
+  }
+
+  legacyAlerts = [...legacyAlerts, ...newAlerts]
+  return newAlerts
+}
+
+/** Backward-compatible alias for {@link checkEWSScore}. */
+export const checkNEWSScore = checkEWSScore
+
+/** Mark an alert as acknowledged in the legacy alert list. */
+export function acknowledgeAlert(alertId: string): void {
+  legacyAlerts = legacyAlerts.map((a) =>
+    a.id === alertId ? { ...a, acknowledged: true } : a,
+  )
+}
+
+/** Retrieve all currently active (unacknowledged) legacy alerts. */
+export function getActiveAlerts(): LegacyAlert[] {
+  return legacyAlerts
+    .filter((a) => !a.acknowledged)
+    .sort((a, b) => b.timestamp.localeCompare(a.timestamp))
+}
+
+/** Retrieve all legacy alerts (acknowledged and unacknowledged). */
+export function getAllAlerts(): LegacyAlert[] {
+  return [...legacyAlerts].sort((a, b) => b.timestamp.localeCompare(a.timestamp))
+}
+
+/** Clear all legacy alerts (compatibility helper). */
+export function clearAlerts(): void {
+  legacyAlerts = []
+  legacyAlertIdCounter = 0
 }

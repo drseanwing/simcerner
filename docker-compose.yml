@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     container_name: simcerner
     ports:
-      - "8080:80"
+      - "9210:80"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:80/"]

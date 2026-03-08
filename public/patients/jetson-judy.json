@@ -10,6 +10,18 @@
   "admission": "07-Apr-2021 06:15:00 AEST",
   "vitals": [
     {
+      "datetime": "07-Apr-2021 16:00",
+      "temp": "38.6",
+      "hr": "128",
+      "rr": "28",
+      "bp_sys": "88",
+      "bp_dia": "52",
+      "spo2": "89",
+      "avpu": "Voice",
+      "supplementalO2": true,
+      "o2FlowRate": 8
+    },
+    {
       "datetime": "07-Apr-2021 14:00",
       "temp": "37.2",
       "hr": "92",
